@@ -78,7 +78,7 @@ void processNode(aiNode* node, const aiScene* scene, int scale, struct vertex *v
             
             if (mesh->HasTextureCoords(0))
             {
-                vtx[vert].uv[AXIS_U] = (int)(mesh->mTextureCoords[0][i].x * 32 * 32);
+                vtx[vert].uv[AXIS_U] = (int)(mesh->mTextureCoords[0][i].x * 32 * 32); /* Temporary: Will be replaced by actual axis length soon */
                 vtx[vert].uv[AXIS_V] = (int)(mesh->mTextureCoords[0][i].y * 32 * 32);
             }
 
@@ -106,12 +106,22 @@ void processNode(aiNode* node, const aiScene* scene, int scale, struct vertex *v
                 vtx[vert].rgba[CHANNEL_ALPHA] = 0xff;
             }
 
+            /* Ditto */
+
+            if (mesh->HasNormals())
+                vtx[vert].norm = (int)(mesh->mNormals[0][i]);
+
+            else
+                vtx[vert].norm = VTX_NORMAL_NONE; /* Fallback case */
+
             vtx[vert].map = VTX_DONT_SKIP; /* Optimizer default */
             vert++;
 
             /* Test output */
 
-            /* printf("TO %d %d %d %d\n", (int)(mesh->mVertices[i].x * scale), (int)(mesh->mVertices[i].y * scale), (int)(mesh->mVertices[i].z * scale), vert); */
+            #ifdef DEBUG
+            printf("TO %d %d %d %d\n", (int)(mesh->mVertices[i].x * scale), (int)(mesh->mVertices[i].y * scale), (int)(mesh->mVertices[i].z * scale), vert);
+            #endif
         }
     }
     return;
@@ -146,7 +156,10 @@ void writeVertices(struct vertex *vtx, std::string fileOut, int tVerts)
             vertexOut << "vertex " << vtx[i].vertPos[AXIS_X] << ", " << vtx[i].vertPos[AXIS_Y] << ", " << vtx[i].vertPos[AXIS_Z] << ",    \t";
             vertexOut << vtx[i].uv[AXIS_U] << ", " << vtx[i].uv[AXIS_V] << ",    \t" << vtx[i].rgba[CHANNEL_RED] << ", "; 
             vertexOut << vtx[i].rgba[CHANNEL_GREEN] << ", " << vtx[i].rgba[CHANNEL_BLUE] << ", " << vtx[i].rgba[CHANNEL_ALPHA] << "  \t\t# VERTEX #" << i + 1 << std::endl;
-            /* printf("BACK: vert xyz i rgba %d %d %d\t\t  %d\t\t  %d %d %d %d\n", vtx[i].vertPos[AXIS_X], vtx[i].vertPos[AXIS_Y], vtx[i].vertPos[AXIS_Z], i + 1, vtx[i].rgba[CHANNEL_RED], vtx[i].rgba[CHANNEL_RED], vtx[i].rgba[CHANNEL_GREEN], vtx[i].rgba[CHANNEL_BLUE], vtx[i].rgba[CHANNEL_ALPHA]); */
+            
+            #ifdef DEBUG2
+            printf("BACK: vert xyz i rgba %d %d %d\t\t  %d\t\t  %d %d %d %d\n", vtx[i].vertPos[AXIS_X], vtx[i].vertPos[AXIS_Y], vtx[i].vertPos[AXIS_Z], i + 1, vtx[i].rgba[CHANNEL_RED], vtx[i].rgba[CHANNEL_RED], vtx[i].rgba[CHANNEL_GREEN], vtx[i].rgba[CHANNEL_BLUE], vtx[i].rgba[CHANNEL_ALPHA]);
+            #endif
         }
     }
     return;
@@ -156,23 +169,35 @@ void writeVertices(struct vertex *vtx, std::string fileOut, int tVerts)
 
 bool compareVerts(struct vertex a, struct vertex b)
 {
-    bool matchPos, matchUvs, matchColors;
+    bool matchPos, matchUvs, matchColors, matchNormals;
 
     if ((a.vertPos[AXIS_X]    == b.vertPos[AXIS_X]) 
         && (a.vertPos[AXIS_Y] == b.vertPos[AXIS_Y]) 
         && (a.vertPos[AXIS_Z] == b.vertPos[AXIS_Z]))
-        {
-            matchPos = true;
-            printf("matched pos!\n");
-        }
+    {
+        matchPos = true;
+        #ifdef DEBUG
+        puts("matched pos!");
+        #endif
+    }
     
     if ((a.uv[AXIS_U]    == b.uv[AXIS_U])
         && (a.uv[AXIS_V] == b.uv[AXIS_V]))
-        {
-            matchUvs = true;
-            printf("matched uvs!\n");
-        }
-    if (matchPos && matchUvs)
+    {
+        matchUvs = true;
+        #ifdef DEBUG
+        puts("matched uvs!");
+        #endif
+    }
+    
+    if(a.norm == b.norm)
+    {
+        matchNormals == true;
+        #ifdef DEBUG
+        puts("matched normals!");
+        #endif
+    }
+    if (matchPos && matchUvs && matchColors && matchNormals)
         return true;
     else return false;
 }
@@ -217,9 +242,11 @@ void prepareVertices(std::string file, std::string fileOut, int scale, int f3d)
        
     /* Test output */
 
-    /* for (int i = 0; i < tVerts; i++)    
+    #ifdef DEBUG
+    for (int i = 0; i < tVerts; i++)    
         printf("BACK: vert xyz i rgba %d %d %d\t\t  %d\t\t  %d %d %d %d\n", vert[i].vertPos[AXIS_X], vert[i].vertPos[AXIS_Y], vert[i].vertPos[AXIS_Z], i + 1, vert[i].rgba[CHANNEL_RED], vert[i].rgba[CHANNEL_RED], vert[i].rgba[CHANNEL_GREEN], vert[i].rgba[CHANNEL_BLUE], vert[i].rgba[CHANNEL_ALPHA]); */
-    
+    #endif
+
     /* Optimize vertices */
 
     optimizeVertices(vert, tVerts);

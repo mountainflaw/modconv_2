@@ -10,7 +10,7 @@
 *       * Redistributions in binary form must reproduce the above copyright             *
 *         notice, this list of conditions and the following disclaimer in the           *
 *         documentation and/or other materials provided with the distribution.          *
-*       * Neither the name of the FBX2N64 developers nor the                            *
+*       * Neither the name of the Obsidian developers nor the                           *
 *         names of its contributors may be used to endorse or promote products          *
 *         derived from this software without specific prior written permission.         *
 *                                                                                       *
@@ -45,6 +45,10 @@ void errorMessage(int errorCode, std::string info)
             break;
         case ERROR_CANT_WRITE:
             std::cerr << "\e[1m[ERROR]\e[0m Cannot write to " << info << " . Do you have permission to write to it?" << std::endl;
+            break;
+        case ERROR_NO_TYPE:
+            std::cerr << "\e[1m[ERROR]\e[0m Invalid output type." << std::endl;
+
     }
     exit(1);
 }
@@ -98,7 +102,7 @@ void infoMessage(int infoCode)
             puts("\e[1m[INFO]\e[0m Finished!");
             break;
         case INFO_NOT_IMPLEMENTED_OPTIMIZER:
-            puts("\e[1m[INFO]\e[0m The optimizer is not yet implemented.");
+            puts("\e[1m[INFO]\e[0m The optimizer is not yet implemented."); /* UNUSED */
             break;
         case INFO_FINISHED_VTX:
             puts("\e[1m[INFO]\e[0m Finished building vertices.");
@@ -112,11 +116,11 @@ void infoMessage(int infoCode)
 
 int main(int argc, char* argv[])
 {
-    puts("\e[1m- ass2fast3d by red -\e[0m");
+    puts("\e[1m- obsidian by red -\e[0m");
     std::string filePath,
                 fileOut = "model",
                 ucode   =   "f3d";
-    int f3dModeNum, scale     = DEFAULT_SCALE;
+    int output, scale   = DEFAULT_SCALE;
     switch(argc)
     {
         case 2:
@@ -144,17 +148,15 @@ int main(int argc, char* argv[])
             break;
     }
 
-    if (ucode.compare("f3d") == 0)
-        f3dModeNum = F3D;
-
-    else if (ucode.compare("f3dex") == 0)
-        f3dModeNum = F3DEX;
-
-    else if (ucode.compare("rej") == 0)
-        f3dModeNum = REJ;
+    if (ucode.compare("f3d") == 0)              output = F3D;
+    else if (ucode.compare("f3dex") == 0)       output = F3DEX;
+    else if (ucode.compare("rej") == 0)         output = REJ;
+    else if (ucode.compare("goddard") == 0)     output = GODDARD;
+    else if (ucode.compare("collision") == 0)   output = COLLISION;
+    else errorMessage(ERROR_NO_TYPE, "");
 
     infoMessage(INFO_STARTED);
-    prepareVertices(filePath, fileOut, scale, f3dModeNum); /* Starts construction process */
+    prepareVertices(filePath, fileOut, scale, output); /* Starts construction process */
     infoMessage(INFO_FINISHED);
     return 0;
 }
