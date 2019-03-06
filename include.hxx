@@ -10,7 +10,7 @@
 *       * Redistributions in binary form must reproduce the above copyright             *
 *         notice, this list of conditions and the following disclaimer in the           *
 *         documentation and/or other materials provided with the distribution.          *
-*       * Neither the name of the FBX2N64 developers nor the                            *
+*       * Neither the name of the Obsidian developers nor the                           *
 *         names of its contributors may be used to endorse or promote products          *
 *         derived from this software without specific prior written permission.         *
 *                                                                                       *
@@ -46,53 +46,69 @@
 
 /* Error messages */
 
-#define ERROR_SYNTAX     0
-#define ERROR_CANT_READ  1
-#define ERROR_CANT_WRITE 2
+#define ERROR_SYNTAX     0 /* Launch syntax invalid */
+#define ERROR_CANT_READ  1 /* Cannot read file */
+#define ERROR_CANT_WRITE 2 /* Cannot write to file */
+#define ERROR_NO_TYPE    3 /* Invalid output */
 
 /* Warning messages */
 
-#define WARNING_BIG_TRIANGLE    0
-#define WARNING_LARGE_POLYCOUNT 1
-#define WARNING_LARGE_VERTCOUNT 2
+#define WARNING_BIG_TRIANGLE    0 /* When the triangle's area is dangerously large */
+#define WARNING_LARGE_POLYCOUNT 1 /* When the poly count is dangerously large */
+#define WARNING_LARGE_VERTCOUNT 2 /* When the vertex count is dangerously latge */
 
 /* Info  messages */
 
-#define INFO_NO_OUTPUT                  0
-#define INFO_NO_SCALE                   1
-#define INFO_NO_MICROCODE               2
-#define INFO_PREPARING_VTX              3
-#define INFO_PREPARING_DL               4
-#define INFO_BUILDING_VTX               5
-#define INFO_BUILDING_DL                6
-#define INFO_STARTED                    7
-#define INFO_FINISHED                   8
-#define INFO_NOT_IMPLEMENTED_OPTIMIZER  9
-#define INFO_FINISHED_VTX              10
-#define INFO_FINISHED_DL               11
+#define INFO_NO_OUTPUT                  0 /* Default */
+#define INFO_NO_SCALE                   1 /* Default */
+#define INFO_NO_MICROCODE               2 /* Default */
+#define INFO_PREPARING_VTX              3 /* Running checks on now acquired vertex data */
+#define INFO_PREPARING_DL               4 /* Running checks on inputted vertex data */
+#define INFO_BUILDING_VTX               5 /* Vertex writing started */
+#define INFO_BUILDING_DL                6 /* Display list writing started */
+#define INFO_STARTED                    7 /* Execution started */
+#define INFO_FINISHED                   8 /* Execution has finished */
+#define INFO_NOT_IMPLEMENTED_OPTIMIZER  9 /* UNUSED: Vertex optimizer not implemented */
+#define INFO_FINISHED_VTX              10 /* Finished building vertices */
+#define INFO_FINISHED_DL               11 /* Finished building display list */
 
+/*******************/
 /* Other constants */
+/*******************/
 
 #define DEFAULT_SCALE 350
+
+/* Output mode types */
 
 #define F3D 15
 #define F3DEX 30
 #define REJ 63
+#define GODDARD 64
+#define COLLISION 65
+
+/* UV mapping */
 
 #define AXIS_U 0
 #define AXIS_V 1
 
+/* Vertex positions */
+
 #define AXIS_X 0
 #define AXIS_Y 1
 #define AXIS_Z 2
+
+/* Vertex RGBA color channels */
 
 #define CHANNEL_RED 0
 #define CHANNEL_BLUE 1
 #define CHANNEL_GREEN 2
 #define CHANNEL_ALPHA 3
 
+/* Miscellaneous */
+
 #define WARNING_VERTS_NUMBER 4500
-#define VTX_DONT_SKIP -1 /* Signals the display list builder to not skip this vertex */
+#define VTX_DONT_SKIP        -1 /* Signals the display list builder to not skip this vertex */
+#define VTX_NORMAL_NONE      -1 /* Signals the display list builder that there are no normals */
 
 /* Prototype what we need from main.cxx */
 
@@ -113,6 +129,7 @@ struct vertex
     int vertPos[3];
     int      uv[2];
     int    rgba[4];
+    int       norm; /* Used for culling   */
     int        map; /* Used for optimizer */
 };
 
