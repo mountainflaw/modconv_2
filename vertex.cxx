@@ -189,6 +189,17 @@ bool compareVerts(struct vertex a, struct vertex b)
         puts("matched uvs!");
         #endif
     }
+
+    if ((a.rgba[CHANNEL_RED]      == b.rgba[CHANNEL_RED])
+        && (a.rgba[CHANNEL_GREEN] == b.rgba[CHANNEL_GREEN])
+        && (a.rgba[CHANNEL_BLUE]  == b.rgba[CHANNEL_BLUE])
+        && (a.rgba[CHANNEL_ALPHA] == b.rgba[CHANNEL_ALPHA]))
+        {
+            matchColors = true;
+            #ifdef DEBUG
+            puts("colors matched!");
+            #endif
+        }
     
     if(a.norm == b.norm)
     {
@@ -197,8 +208,14 @@ bool compareVerts(struct vertex a, struct vertex b)
         puts("matched normals!");
         #endif
     }
+
     if (matchPos && matchUvs && matchColors && matchNormals)
+    {
+        #ifdef DEBUG
+        puts("vertex removed!");
+        #endif
         return true;
+    }
     else return false;
 }
 
