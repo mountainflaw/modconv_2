@@ -10,7 +10,7 @@
 *       * Redistributions in binary form must reproduce the above copyright             *
 *         notice, this list of conditions and the following disclaimer in the           *
 *         documentation and/or other materials provided with the distribution.          *
-*       * Neither the name of the FBX2N64 developers nor the                            *
+*       * Neither the name of the Obsidian developers nor the                           *
 *         names of its contributors may be used to endorse or promote products          *
 *         derived from this software without specific prior written permission.         *
 *                                                                                       *
@@ -119,7 +119,7 @@ void processNode(aiNode* node, const aiScene* scene, int scale, struct vertex *v
 
             /* Test output */
 
-            #ifdef DEBUG
+            #ifdef DEBUG2
             printf("TO %d %d %d %d\n", (int)(mesh->mVertices[i].x * scale), (int)(mesh->mVertices[i].y * scale), (int)(mesh->mVertices[i].z * scale), vert);
             #endif
         }
@@ -167,74 +167,91 @@ void writeVertices(struct vertex *vtx, std::string fileOut, int tVerts)
 
 /* Compares verts to check if they're duplicates */
 
-bool compareVerts(struct vertex a, struct vertex b)
+bool compareVerts(struct vertex *vtx, int i, int j)
 {
-    bool matchPos, matchUvs, matchColors, matchNormals;
+    #ifdef DEBUG
+    puts("COMPARING VERTS");
+    #endif
+    bool matchPos     = false, 
+         matchUvs     = false, 
+         matchColors  = false, 
+         matchNormals = false;
 
-    if ((a.vertPos[AXIS_X]    == b.vertPos[AXIS_X]) 
-        && (a.vertPos[AXIS_Y] == b.vertPos[AXIS_Y]) 
-        && (a.vertPos[AXIS_Z] == b.vertPos[AXIS_Z]))
+        //printf("comparing pos! (%d %d %d vs %d %d %d)\n", vtx[i].vertPos[AXIS_X], vtx[i].vertPos[AXIS_Y] , vtx[i].vertPos[AXIS_Z],
+        //vtx[j].vertPos[AXIS_X], vtx[j].vertPos[AXIS_Y], vtx[j].vertPos[AXIS_Z]);
+
+    if ((vtx[i].vertPos[AXIS_X]    == vtx[j].vertPos[AXIS_X]) 
+        && (vtx[i].vertPos[AXIS_Y] == vtx[j].vertPos[AXIS_Y]) 
+        && (vtx[i].vertPos[AXIS_Z] == vtx[j].vertPos[AXIS_Z]) && i != j)
     {
         matchPos = true;
         #ifdef DEBUG
-        puts("matched pos!");
+        printf("matched pos! (%d %d %d vs %d %d %d)\n", vtx[i].vertPos[AXIS_X], vtx[i].vertPos[AXIS_Y] , vtx[i].vertPos[AXIS_Z],
+        vtx[j].vertPos[AXIS_X], vtx[j].vertPos[AXIS_Y], vtx[j].vertPos[AXIS_Z]);
         #endif
     }
     
-    if ((a.uv[AXIS_U]    == b.uv[AXIS_U])
-        && (a.uv[AXIS_V] == b.uv[AXIS_V]))
+    if ((vtx[i].uv[AXIS_U]    == vtx[j].uv[AXIS_U])
+        && (vtx[i].uv[AXIS_V] == vtx[j].uv[AXIS_V]) && i != j)
     {
         matchUvs = true;
         #ifdef DEBUG
-        puts("matched uvs!");
+        printf("matched uvs! %d %d vs %d %d\n", vtx[i].uv[AXIS_U], vtx[i].uv[AXIS_V], vtx[j].uv[AXIS_U], vtx[j].uv[AXIS_V]);
         #endif
     }
 
-    if ((a.rgba[CHANNEL_RED]      == b.rgba[CHANNEL_RED])
-        && (a.rgba[CHANNEL_GREEN] == b.rgba[CHANNEL_GREEN])
-        && (a.rgba[CHANNEL_BLUE]  == b.rgba[CHANNEL_BLUE])
-        && (a.rgba[CHANNEL_ALPHA] == b.rgba[CHANNEL_ALPHA]))
+    if ((vtx[i].rgba[CHANNEL_RED]      == vtx[j].rgba[CHANNEL_RED])
+        && (vtx[i].rgba[CHANNEL_GREEN] == vtx[j].rgba[CHANNEL_GREEN])
+        && (vtx[i].rgba[CHANNEL_BLUE]  == vtx[j].rgba[CHANNEL_BLUE])
+        && (vtx[i].rgba[CHANNEL_ALPHA] == vtx[j].rgba[CHANNEL_ALPHA]) && i != j)
         {
             matchColors = true;
             #ifdef DEBUG
-            puts("colors matched!");
+            printf("colors matched! %d %d %d %d vs %d %d %d %d\n", vtx[i].rgba[CHANNEL_RED], vtx[i].rgba[CHANNEL_GREEN],
+            vtx[i].rgba[CHANNEL_BLUE], vtx[i].rgba[CHANNEL_ALPHA], vtx[j].rgba[CHANNEL_RED], vtx[j].rgba[CHANNEL_GREEN],
+            vtx[j].rgba[CHANNEL_BLUE], vtx[j].rgba[CHANNEL_ALPHA]);
             #endif
         }
     
-    if(a.norm == b.norm)
+    if(vtx[i].norm == vtx[j].norm && i != j)
     {
-        matchNormals == true;
+        matchNormals = true;
         #ifdef DEBUG
         puts("matched normals!");
         #endif
     }
 
-    if (matchPos && matchUvs && matchColors && matchNormals)
+    if (matchPos && matchUvs && matchColors && matchNormals && vtx[i].map == -1 && j < i)
     {
-        #ifdef DEBUG
-        puts("vertex removed!");
-        #endif
+        printf("[DBG] VERTEX %d IS IDENTICAL TO %d!\n", i, j);
         return true;
     }
-    else return false;
+
+    else
+    {
+        #ifdef DEBUG
+        puts("vertex did not match!");
+        #endif
+        return false;
+    }
 }
 
 /* Optimize our vertices per vertex buffer group (varies depending on graphics microcode) */
 
 void optimizeVertices(struct vertex *vtx, int tVerts)
 {
-    for (int i; i < tVerts; i++)
+    puts("reached optimized vertices");
+    for (int i = 0; i < 14; i++)
     {
-        if (i < 15)
-            for (int j; j < 14; j++)
+            for (int j = 0; j < 14; j++)
             {
-                if (compareVerts(vtx[j], vtx[i]) && i != 0)
+                if (compareVerts(vtx, i, j) && i != j)
                 {
-                    vtx[j].map = j;
+                    printf("%d is identical to %d\n", i, j);
+                    vtx[i].map = j;
                 }
             }
     }
-    return;
 }
 
 void prepareVertices(std::string file, std::string fileOut, int scale, int f3d)
@@ -259,7 +276,7 @@ void prepareVertices(std::string file, std::string fileOut, int scale, int f3d)
        
     /* Test output */
 
-    #ifdef DEBUG
+    #ifdef DEBUG2
     for (int i = 0; i < tVerts; i++)    
         printf("BACK: vert xyz i rgba %d %d %d\t\t  %d\t\t  %d %d %d %d\n", vert[i].vertPos[AXIS_X], vert[i].vertPos[AXIS_Y], vert[i].vertPos[AXIS_Z], i + 1, vert[i].rgba[CHANNEL_RED], vert[i].rgba[CHANNEL_RED], vert[i].rgba[CHANNEL_GREEN], vert[i].rgba[CHANNEL_BLUE], vert[i].rgba[CHANNEL_ALPHA]); */
     #endif
