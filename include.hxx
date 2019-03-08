@@ -131,6 +131,7 @@ struct vertex
     int    rgba[4];
     int       norm; /* Used for culling   */
     int        map; /* Used for optimizer */
+    int     newmap; /* New post-optimizer order */
 };
 
 

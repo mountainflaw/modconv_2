@@ -119,7 +119,7 @@ void processNode(aiNode* node, const aiScene* scene, int scale, struct vertex *v
 
             /* Test output */
 
-            #ifdef DEBUG2
+            #ifdef DEBUG_OUTPUT
             printf("TO %d %d %d %d\n", (int)(mesh->mVertices[i].x * scale), (int)(mesh->mVertices[i].y * scale), (int)(mesh->mVertices[i].z * scale), vert);
             #endif
         }
@@ -185,7 +185,7 @@ bool compareVerts(struct vertex *vtx, int i, int j)
         && (vtx[i].vertPos[AXIS_Z] == vtx[j].vertPos[AXIS_Z]) && i != j)
     {
         matchPos = true;
-        #ifdef DEBUG
+        #ifdef DEBUG_OPTIMIZER
         printf("matched pos! (%d %d %d vs %d %d %d)\n", vtx[i].vertPos[AXIS_X], vtx[i].vertPos[AXIS_Y] , vtx[i].vertPos[AXIS_Z],
         vtx[j].vertPos[AXIS_X], vtx[j].vertPos[AXIS_Y], vtx[j].vertPos[AXIS_Z]);
         #endif
@@ -195,7 +195,7 @@ bool compareVerts(struct vertex *vtx, int i, int j)
         && (vtx[i].uv[AXIS_V] == vtx[j].uv[AXIS_V]) && i != j)
     {
         matchUvs = true;
-        #ifdef DEBUG
+        #ifdef DEBUG_OPTIMIZER
         printf("matched uvs! %d %d vs %d %d\n", vtx[i].uv[AXIS_U], vtx[i].uv[AXIS_V], vtx[j].uv[AXIS_U], vtx[j].uv[AXIS_V]);
         #endif
     }
@@ -206,7 +206,7 @@ bool compareVerts(struct vertex *vtx, int i, int j)
         && (vtx[i].rgba[CHANNEL_ALPHA] == vtx[j].rgba[CHANNEL_ALPHA]) && i != j)
         {
             matchColors = true;
-            #ifdef DEBUG
+            #ifdef DEBUG_OPTIMIZER
             printf("colors matched! %d %d %d %d vs %d %d %d %d\n", vtx[i].rgba[CHANNEL_RED], vtx[i].rgba[CHANNEL_GREEN],
             vtx[i].rgba[CHANNEL_BLUE], vtx[i].rgba[CHANNEL_ALPHA], vtx[j].rgba[CHANNEL_RED], vtx[j].rgba[CHANNEL_GREEN],
             vtx[j].rgba[CHANNEL_BLUE], vtx[j].rgba[CHANNEL_ALPHA]);
@@ -216,20 +216,22 @@ bool compareVerts(struct vertex *vtx, int i, int j)
     if(vtx[i].norm == vtx[j].norm && i != j)
     {
         matchNormals = true;
-        #ifdef DEBUG
+        #ifdef DEBUG_OPTIMIZER
         puts("matched normals!");
         #endif
     }
 
     if (matchPos && matchUvs && matchColors && matchNormals && vtx[i].map == -1 && j < i)
     {
+        #ifdef DEBUG_OPTIMIZER
         printf("[DBG] VERTEX %d IS IDENTICAL TO %d!\n", i, j);
+        #endif
         return true;
     }
 
     else
     {
-        #ifdef DEBUG
+        #ifdef DEBUG_OPTIMIZER
         puts("vertex did not match!");
         #endif
         return false;
@@ -240,15 +242,15 @@ bool compareVerts(struct vertex *vtx, int i, int j)
 
 void optimizeVertices(struct vertex *vtx, int tVerts)
 {
-    puts("reached optimized vertices");
+    int order = 0;
     for (int i = 0; i < 14; i++)
     {
             for (int j = 0; j < 14; j++)
             {
                 if (compareVerts(vtx, i, j) && i != j)
                 {
-                    printf("%d is identical to %d\n", i, j);
-                    vtx[i].map = j;
+                    vtx[i].map = order;
+                    order++;
                 }
             }
     }
@@ -276,7 +278,7 @@ void prepareVertices(std::string file, std::string fileOut, int scale, int f3d)
        
     /* Test output */
 
-    #ifdef DEBUG2
+    #ifdef DEBUG_OUTPUT
     for (int i = 0; i < tVerts; i++)    
         printf("BACK: vert xyz i rgba %d %d %d\t\t  %d\t\t  %d %d %d %d\n", vert[i].vertPos[AXIS_X], vert[i].vertPos[AXIS_Y], vert[i].vertPos[AXIS_Z], i + 1, vert[i].rgba[CHANNEL_RED], vert[i].rgba[CHANNEL_RED], vert[i].rgba[CHANNEL_GREEN], vert[i].rgba[CHANNEL_BLUE], vert[i].rgba[CHANNEL_ALPHA]); */
     #endif
@@ -290,6 +292,6 @@ void prepareVertices(std::string file, std::string fileOut, int scale, int f3d)
     infoMessage(INFO_BUILDING_VTX);
     writeVertices(vert, fileOut, tVerts);
     infoMessage(INFO_FINISHED_VTX);
-    //prepareDisplayList(fileOut, vert, f3d, tVerts);
+    prepareDisplayList(fileOut, vert, f3d, tVerts);
     return;
 }
