@@ -3,12 +3,15 @@
 
 ###############################################################################################################
 # default build configuration: release
+
 libs="-Bstatic -lassimp"
 flags="-O3"
 defines=""
 files="main.cxx vertex.cxx displaylist.cxx"
 output="build/obsidian"
+
 # project info
+
 project="obsidian"
 author="red"
 builds="release debug\ndebug_all debug_optimizer\ndebug_output"
@@ -33,7 +36,7 @@ if [[ $1 == "help" ]]; then
 fi
 
 function compile () {
-    echo "[INFO] Building obsidian..."
+    echo "[INFO] Building $project..."
     rm *.o &> /dev/null
     rm -r build &> /dev/null
     mkdir build &> /dev/null

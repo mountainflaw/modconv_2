@@ -65,9 +65,9 @@ int getNumVertices(aiNode* node, const aiScene* scene)
 
 void processNode(aiNode* node, const aiScene* scene, int scale, struct vertex *vtx)
 {
-    for (int i = 0; i < node->mNumMeshes; i++)
+    for (int j = 0; j < node->mNumMeshes; j++)
     {
-        aiMesh* mesh = scene->mMeshes[node->mMeshes[i]]; 
+        aiMesh* mesh = scene->mMeshes[node->mMeshes[j]]; 
         for(int i = 0; i < mesh->mNumVertices; i++)
         {
             vtx[vert].vertPos[AXIS_X] = (int)(mesh->mVertices[i].x * scale);
@@ -114,8 +114,11 @@ void processNode(aiNode* node, const aiScene* scene, int scale, struct vertex *v
             else
                 vtx[vert].norm = VTX_NORMAL_NONE; /* Fallback case */
 
+            vtx[vert].mesh = j;            
+
             vtx[vert].map = VTX_DONT_SKIP; /* Optimizer default */
             vert++;
+
 
             /* Test output */
 
