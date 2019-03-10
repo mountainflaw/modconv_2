@@ -44,15 +44,6 @@ int verts = 0;
 bool g_lighting = false;
 bool texcoords  = false;
 
-void replaceAllChar(std::string& str, const std::string& from, const std::string& to) {
-    size_t start_pos = 0;
-    while((start_pos = str.find(from, start_pos)) != std::string::npos) {
-        size_t end_pos = start_pos + from.length();
-        str.replace(start_pos, end_pos, to);
-        start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
-    }
-}
-
 int getNumVertices(aiNode* node, const aiScene* scene)
 {
     for (int i = 0; i < node->mNumMeshes; i++)
