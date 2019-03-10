@@ -4,8 +4,9 @@
 ###############################################################################################################
 # default build configuration: release
 
-libs="-Bstatic -lassimp"
+libs="-Bstatic -lassimp -lstdc++fs"
 flags="-O3"
+forceflags="-std=c++17"
 defines=""
 files="main.cxx vertex.cxx displaylist.cxx"
 output="build/obsidian"
@@ -40,7 +41,7 @@ function compile () {
     rm *.o &> /dev/null
     rm -r build &> /dev/null
     mkdir build &> /dev/null
-    g++ $flags $files -o $output $libs $defines
+    g++ $flags $forceflags $files -o $output $libs $defines
     if [ $? == 0 ]; then
         echo "[✓] Build succeeded!"
     else
@@ -74,7 +75,7 @@ fi
 ###############################################################################################################
 
 if [[ $1 == "debug" ]]; then
-    flags="-g -v"
+    flags="-g -fsanitize=address,undefined"
     compile
     exit 0
 fi
