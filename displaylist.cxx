@@ -1,7 +1,10 @@
+/* Bigass function that builds the display list */
+
 #include "include.hxx"
 
-void buildDisplayList(std::string fileOut, int tVerts)
+void buildDisplayList(std::string fileOut, int tVerts, std::string *mats)
 {
+    std::cout << mats[0] << std::endl;
     int bVert = -1, /* This is set to -1 because it's immediately added to when the DL generation begins. */
     gVert     =  0, /* Amount of verts in the current buffer */
     tCount    =  0; /* Amount of triangles */
@@ -13,7 +16,7 @@ void buildDisplayList(std::string fileOut, int tVerts)
 
     for (int i = 0; i < tVerts;)
     {
-        if (!(gVert % 5))
+        if (!(gVert % 15))
         {
             gVert = 0;
             bVert++;
@@ -30,8 +33,9 @@ void buildDisplayList(std::string fileOut, int tVerts)
     }
 }
 
-void prepareDisplayList(std::string fileOut, struct vertex *vtx, int f3d, int tVerts)
+void prepareDisplayList(std::string fileOut, struct vertex *vtx, int f3d, int tVerts, std::string *mats)
 {
+    std::cout << mats[0] << std::endl;
     infoMessage(INFO_PREPARING_DL);
-    buildDisplayList(fileOut, tVerts);
+    buildDisplayList(fileOut, tVerts, mats);
 }

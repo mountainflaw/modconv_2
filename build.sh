@@ -4,12 +4,13 @@
 ###############################################################################################################
 # default build configuration: release
 
-libs="-Bstatic -lassimp -lstdc++fs"
-flags="-O3"
-forceflags="-std=c++17"
-defines=""
-files="main.cxx vertex.cxx displaylist.cxx"
-output="build/obsidian"
+deps="deps/lodepng.cpp"                     # non-library dependencies
+libs="-Bstatic -lassimp -lstdc++fs -lpng"   # libraries
+flags="-O3"                                 # compiler flags
+forceflags="-std=c++17"                     # flags that are always enabled regardless of build selection
+defines=""                                  # defines
+files="main.cxx vertex.cxx displaylist.cxx" # files to compile
+output="build/obsidian"                     # output location
 
 # project info
 
@@ -23,10 +24,14 @@ builds="release debug\ndebug_all debug_optimizer\ndebug_output"
 ###############################################################################################################
 
 
+# clean folder
+
 if [[ $1 == "clean" ]]; then
     rm -r build/
     exit 0
 fi
+
+# output help menu
 
 if [[ $1 == "help" ]]; then
     echo "========" $project "========"
@@ -36,12 +41,14 @@ if [[ $1 == "help" ]]; then
     exit 0
 fi
 
+# Compiling occurs here
+
 function compile () {
     echo "[INFO] Building $project..."
     rm *.o &> /dev/null
     rm -r build &> /dev/null
     mkdir build &> /dev/null
-    g++ $flags $forceflags $files -o $output $libs $defines
+    g++ $flags $forceflags $files $deps -o $output $libs $defines
     if [ $? == 0 ]; then
         echo "[✓] Build succeeded!"
     else

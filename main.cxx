@@ -48,7 +48,10 @@ void errorMessage(int errorCode, std::string info)
             break;
         case ERROR_NO_TYPE:
             std::cerr << "\e[1m[ERROR]\e[0m Invalid output type." << std::endl;
-
+            break;
+        case ERROR_WONKY_FILE:
+            std::cerr << "\e[1m[ERROR]\e[0m Error: File with invalid characters in name. Valid characters are A-Z, a-z, 1-0, and _";
+            break;
     }
     exit(1);
 }

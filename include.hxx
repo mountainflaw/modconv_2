@@ -50,6 +50,7 @@
 #define ERROR_CANT_READ  1 /* Cannot read file */
 #define ERROR_CANT_WRITE 2 /* Cannot write to file */
 #define ERROR_NO_TYPE    3 /* Invalid output */
+#define ERROR_WONKY_FILE 4 /* Weird characters in file name */
 
 /* Warning messages */
 
@@ -122,18 +123,18 @@ void prepareVertices(std::string file, std::string fileOut, int scale, int f3d);
 
 /* Prototype what we need from displaylist.cxx */
 
-void prepareDisplayList(std::string fileOut, struct vertex *vtx, int f3d, int tVerts);
+void prepareDisplayList(std::string fileOut, struct vertex *vtx, int f3d, int tVerts, std::string *mats);
 
 struct vertex
 {
-    int vertPos[3];
-    int      uv[2];
-    int    rgba[4];
-    int       norm; /* Used for culling   */
-    int        map; /* Used for optimizer */
-    int     oldmap; /* Old pre-optimizer order */
-    int     newmap; /* New post-optimizer order */
-    int       mesh; /* Used for materials */
+    int       vertPos[3];
+    int       uv[2];
+    int       rgba[4];
+    int       norm;    /* Used for culling   */
+    int       map;     /* Used for optimizer */
+    int       oldmap;  /* Old pre-optimizer order */
+    int       newmap;  /* New post-optimizer order */
+    int       mesh[2]; /* Used for materials. Index 0 and 1 are used for mesh # and wrapping mode respectively */
 };
 
 
