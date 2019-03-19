@@ -30,7 +30,7 @@
 
 #include <filesystem>
 
-#include <png.h>
+#include "deps/lodepng.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/mesh.h>
@@ -58,38 +58,17 @@ void resetFile(std::string fileOut)
 	file.close();
 }
 
-/* Adapted from http://zarb.org/~gc/html/libpng.html */
 int getDimension(int mode, std::string path)
 {
-      	png_uint_32 dimension;
-  	FILE *fp = fopen(path.c_str(), "rb");
-  	png_structp png = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-
-	if (!png)
-		abort();
-  	png_infop info = png_create_info_struct(png);
-
-	if (!info)
-		abort();
-	png_init_io(png, fp);
-	png_read_info(png, info);
-
-
-	if (!mode)
-	{
-		printf("%u\n", png_get_image_width(png, info));
-		dimension = png_get_image_width(png, info);
-		png_destroy_write_struct(&png, &info);
-		return dimension;
-	}
-
-	else
-	{
-		printf("%u\n", png_get_image_height(png, info));
-		dimension = png_get_image_height(png, info);
-		png_destroy_write_struct(&png, &info);
-		return dimension;
-	}
+	unsigned int w, h;
+	std::vector<unsigned char> buffer;
+	std::vector<unsigned char> image;
+	lodepng::load_file(buffer, path);
+	lodepng::State state;
+	lodepng::decode(image, w, h, state, buffer);
+	
+	if (!mode) return w;
+	else return h;
 }
 
 int getNumVertices(aiNode* node, const aiScene* scene)
@@ -140,8 +119,8 @@ void processNode(aiNode* node, const aiScene* scene, int scale, struct vertex *v
             {
 		std::string passPath = path.data;
 		std::cout << passPath << std::endl;		
-                vtx[vert].uv[AXIS_U] = (int)(mesh->mTextureCoords[0][i].x * 32 * getDimension(0, passPath)); /* Temporary: Will be replaced by actual axis length soon */
-                vtx[vert].uv[AXIS_V] = (int)(mesh->mTextureCoords[0][i].y * 32 * getDimension(1, passPath));
+                vtx[vert].uv[AXIS_U] = (int)(mesh->mTextureCoords[0][i].x * 32 * getDimension(AXIS_U, passPath)); /* Temporary: Will be replaced by actual axis length soon */
+                vtx[vert].uv[AXIS_V] = (int)(mesh->mTextureCoords[0][i].y * 32 * getDimension(AXIS_V, passPath));
             }
 
             else
