@@ -29,9 +29,14 @@ void buildDisplayList(std::string fileOut, int tVerts, std::string *mats, const 
             else
                 displayListOut << "gsSPVertex " << fileOut << "_vertex_" << bVert << " 15, 0" << std::endl;
         }
-        //std::cout << "mesh: " << vtx[0].mesh[0] << std::endl;
+        
+        if (!bVert)
+            displayListOut << "gsSPClearGeometryMode G_LIGHTING" << std::endl;
+
         if (vtx[i].mesh[0] > lastMesh)
         {
+            displayListOut << "gsDPPipeSync" << std::endl;
+            displayListOut << "gsDPSetCombineMode1Cycle G_CCMUX_TEXEL0, G_CCMUX_0, G_CCMUX_SHADE, G_CCMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE" << std::endl;
             lastMesh++;
             displayListOut << "gsDPLoadTextureBlock " << mats[lastMesh] << ", G_IM_FMT_RGBA, " << "G_IM_SIZ_16b, " << vtx[i].mesh[2] << ", " << vtx[i].mesh[3] << ", 0, " << "G_TX_WRAP | G_TX_NOMIRROR, " << "G_TX_WRAP | G_TX_NOMIRROR, " << (int)log2(vtx[i].mesh[2]) << ", " << (int)log2(vtx[i].mesh[3]) << ", " << "G_TX_NOLOD, G_TX_NOLOD" << std::endl;   
         }
