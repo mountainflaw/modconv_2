@@ -31,6 +31,7 @@ void buildDisplayList(std::string fileOut, int tVerts, std::string *mats, const 
         }
         
         if (!bVert)
+            displayListOut << "gsSPSetGeometryMode G_SHADE" << std::endl;
             displayListOut << "gsSPClearGeometryMode G_LIGHTING" << std::endl;
 
         if (vtx[i].mesh[0] > lastMesh)
