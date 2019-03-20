@@ -1,6 +1,7 @@
 /* Bigass function that builds the display list */
 
 #include "include.hxx"
+#include <math.h>
 
 void buildDisplayList(std::string fileOut, int tVerts, std::string *mats, const struct vertex *vtx)
 {
@@ -32,7 +33,7 @@ void buildDisplayList(std::string fileOut, int tVerts, std::string *mats, const 
         if (vtx[i].mesh[0] > lastMesh)
         {
             lastMesh++;
-            displayListOut << "gsDPLoadTextureBlock " << mats[lastMesh] << ", G_IM_FMT_RGBA, " << "G_IM_SIZ_16b, " << vtx[i].mesh[2] << ", " << vtx[i].mesh[3] << ", 0, " << "G_TX_WRAP | G_TX_NOMIRROR, " << "G_TX_WRAP | G_TX_NOMIRROR, " << "4, " << "4, " << "G_TX_NOLOD, G_TX_NOLOD" << std::endl;   
+            displayListOut << "gsDPLoadTextureBlock " << mats[lastMesh] << ", G_IM_FMT_RGBA, " << "G_IM_SIZ_16b, " << vtx[i].mesh[2] << ", " << vtx[i].mesh[3] << ", 0, " << "G_TX_WRAP | G_TX_NOMIRROR, " << "G_TX_WRAP | G_TX_NOMIRROR, " << (int)log2(vtx[i].mesh[2]) << ", " << (int)log2(vtx[i].mesh[3]) << ", " << "G_TX_NOLOD, G_TX_NOLOD" << std::endl;   
         }
         displayListOut << "gsSP1Triangle " << gVert++ << ", " << gVert++ << ", " << gVert++ << std::endl;
         i +=3;
