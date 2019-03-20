@@ -123,7 +123,7 @@ void prepareVertices(std::string file, std::string fileOut, int scale, int f3d);
 
 /* Prototype what we need from displaylist.cxx */
 
-void prepareDisplayList(std::string fileOut, struct vertex *vtx, int f3d, int tVerts, std::string *mats);
+void prepareDisplayList(std::string fileOut, const struct vertex *vtx, int f3d, int tVerts, std::string *mats);
 
 struct vertex
 {
@@ -134,7 +134,7 @@ struct vertex
     int       map;     /* Used for optimizer */
     int       oldmap;  /* Old pre-optimizer order */
     int       newmap;  /* New post-optimizer order */
-    int       mesh[2]; /* Used for materials. Index 0 and 1 are used for mesh # and wrapping mode respectively */
+    int       mesh[5]; /* Used for materials. Index 0 and 1 are used for mesh # and wrapping mode respectively */
 };
 
 

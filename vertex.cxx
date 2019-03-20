@@ -93,7 +93,7 @@ int getNumVertices(aiNode* node, const aiScene* scene)
 void processNode(aiNode* node, const aiScene* scene, int scale, struct vertex *vtx, const std::string &output)
 {
     aiString path;
-
+    std::string passPath;
     for (int j = 0; j < node->mNumMeshes; j++)
     {
         if (scene->HasMaterials())
@@ -118,8 +118,8 @@ void processNode(aiNode* node, const aiScene* scene, int scale, struct vertex *v
             
             if (mesh->HasTextureCoords(0) && path.data != NULL)
             {
-        std::string passPath = path.data;
-        //std::cout << passPath << std::endl;        
+                passPath = path.data;
+                //std::cout << passPath << std::endl;        
                 vtx[vert].uv[AXIS_U] = (int)(mesh->mTextureCoords[0][i].x * 32 * getDimension(AXIS_U, passPath)); /* Temporary: Will be replaced by actual axis length soon */
                 vtx[vert].uv[AXIS_V] = (int)(mesh->mTextureCoords[0][i].y * 32 * getDimension(AXIS_V, passPath));
             }
@@ -160,13 +160,16 @@ void processNode(aiNode* node, const aiScene* scene, int scale, struct vertex *v
             vtx[vert].map = VTX_DONT_SKIP; /* Optimizer default */
             vert++;
             vtx[vert].mesh[0] = meshId;
-            meshId++;
+            vtx[vert].mesh[2] = getDimension(AXIS_U, passPath); 
+            vtx[vert].mesh[3] = getDimension(AXIS_V, passPath);
+            //printf("vtx mesh: %d\n", vtx[vert].mesh[0]);
             /* Test output */
 
             #ifdef DEBUG_OUTPUT
             printf("TO %d %d %d %d\n", (int)(mesh->mVertices[i].x * scale), (int)(mesh->mVertices[i].y * scale), (int)(mesh->mVertices[i].z * scale), vert);
             #endif
         }
+        meshId++;
     }
     return;
 }
@@ -313,12 +316,13 @@ void writeMaterials(aiNode* node, const aiScene* scene, const std::string &outpu
             if (path.data != NULL)
             {   
                 mats[meshId] = basename(path.data);
-                mats[meshId] = mats[meshId].substr(0, mats[meshId].length() - 4); /* TODO: THIS IS A HACK, FIND A BETTER WAY LOSER */
+                mats[meshId] = mats[meshId].substr(0, mats[meshId].length() - 4); 
+                /* TODO: ^ THIS IS A HACK, FIND A BETTER WAY LOSER ^ */
                 matOut << mats[meshId] << ":" << std::endl; 
                 matOut << ".incbin " << R"(")" << mats[meshId] << R"(")" << std::endl;
             }
         }
-    meshId++;
+        meshId++;
     }
 }
 
