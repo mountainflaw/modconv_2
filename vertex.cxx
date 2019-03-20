@@ -122,6 +122,9 @@ void processNode(aiNode* node, const aiScene* scene, int scale, struct vertex *v
                 //std::cout << passPath << std::endl;        
                 vtx[vert].uv[AXIS_U] = (int)(mesh->mTextureCoords[0][i].x * 32 * getDimension(AXIS_U, passPath)); /* Temporary: Will be replaced by actual axis length soon */
                 vtx[vert].uv[AXIS_V] = (int)(mesh->mTextureCoords[0][i].y * 32 * getDimension(AXIS_V, passPath));
+                vtx[vert].mesh[0] = meshId;
+                vtx[vert].mesh[2] = getDimension(AXIS_U, passPath); 
+                vtx[vert].mesh[3] = getDimension(AXIS_V, passPath);
             }
 
             else
@@ -159,9 +162,6 @@ void processNode(aiNode* node, const aiScene* scene, int scale, struct vertex *v
 
             vtx[vert].map = VTX_DONT_SKIP; /* Optimizer default */
             vert++;
-            vtx[vert].mesh[0] = meshId;
-            vtx[vert].mesh[2] = getDimension(AXIS_U, passPath); 
-            vtx[vert].mesh[3] = getDimension(AXIS_V, passPath);
             //printf("vtx mesh: %d\n", vtx[vert].mesh[0]);
             /* Test output */
 
@@ -350,7 +350,7 @@ void prepareVertices(std::string file, std::string fileOut, int scale, int f3d)
     if (tVerts >= WARNING_VERTS_NUMBER)
         warnMessage(WARNING_LARGE_VERTCOUNT, tVerts, 0, 0, 0);
 
-    struct vertex vert[tVerts];
+    struct vertex vert[tVerts] = {0};
     
     for (int i = 0; i < scene->mRootNode->mNumChildren; i++)
         processNode(scene->mRootNode->mChildren[i], scene, scale, vert, fileOut); /* Red DESTROYS Node Meme (NOT CLICKBAIT) */

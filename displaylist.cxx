@@ -41,11 +41,11 @@ void buildDisplayList(std::string fileOut, int tVerts, std::string *mats, const 
         displayListOut << "gsSPEndDisplayList" << std::endl;
 }
 
-void prepareDisplayList(std::string fileOut, const struct vertex *vtx, int f3d, int tVerts, std::string *mats)
+void prepareDisplayList(std::string fileOut, struct vertex *vtx, int f3d, int tVerts, std::string *mats)
 {
 
-    std::cout << vtx[0].mesh[0] << std::endl;
-    std::cout << mats[0] << std::endl;
+    //std::cout << vtx[0].mesh[0] << std::endl;
+    //std::cout << vtx[0].mesh[2] << std::endl;
     infoMessage(INFO_PREPARING_DL);
     buildDisplayList(fileOut, tVerts, mats, vtx);
 }
