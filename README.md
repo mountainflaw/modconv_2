@@ -13,7 +13,7 @@ This project aims to provide a model converter that converts to three-four forma
 
 Crossed out entries are features already implemented.
 * ~~Implement support for nodes.~~
-* Basic RGBA16 32x32 texmapping
+* ~~Basic RGBA16 32x32 texmapping~~
 * Vertex optimizer
 * Full texture support
 * Integrate collision converter
