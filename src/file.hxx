@@ -9,6 +9,8 @@
 #include <sys/stat.h>
 #endif
 
+#include "deps/lodepng.h"
+
 /* 
  * Easily accessible functions to accomplish the following tasks:
  * 1.) Reset a file. (Creating is done on a per file basis with fstreams)
