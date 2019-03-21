@@ -105,4 +105,9 @@ class material
                 break;
         }
     }
+	
+	std::string getGeometryModes(bool *geo)
+	{
+		if (bool[0]->
+	}
 }
