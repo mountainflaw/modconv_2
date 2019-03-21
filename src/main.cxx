@@ -26,7 +26,7 @@
 *   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                        *
 */
 
-#include "main.hxx"
+#include "common.cxx"
 
 #include "f3d/vertex.hxx"
 #include "f3d/displaylist.hxx"
