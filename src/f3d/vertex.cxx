@@ -35,12 +35,17 @@ class material
     s16 type, primcolors[3], dimension[4] textype;
     std::string path, name, texmode[2];
 
-    std::string GetPalette(int mode) /* Creates palettes for CI and I(A) */
-    {
+    //std::string GetPalette(int mode) /* Creates palettes for CI and I(A) */
+    /*{
         switch (mode)
         {
             case 
         }
+    }*/
+
+    void SetTextureType(const std::string &filename)
+    {
+	    
     }
 
     std::string GetTextureLoad()
@@ -60,6 +65,19 @@ class material
         }
     }
 
+    std::string GetSetCombine()
+    {
+        switch (type)
+	{
+		case SOLID_COLOR:
+                	return "gsDPSetCombineMode1Cycle G_CCMUX_PRIMITIVE0, G_CCMUX_0, G_CCMUX_SHADE, G_CCMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE\n";
+			break;
+		case default:
+			return "gsDPSetCombineMode1Cycle G_CCMUX_TEXEL0, G_CCMUX_0, G_CCMUX_SHADE, G_CCMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE\n";
+			break;
+	}
+    }
+
     public:
     std::string getMaterial()
     {
@@ -68,8 +86,8 @@ class material
         switch (type)
         {
             case SOLID_COLOR:
-                toReturn = "gsDPPipeSync\ngsDPSetCombineMode1Cycle G_CCMUX_PRIMITIVE0, G_CCMUX_0, G_CCMUX_SHADE, G_CCMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE\n";
-                toReturn += "gsDPSetPrimColor 0, 0, " + primcolors[0] + ", " + primcolors[1] + ", " + primcolors[2] + "\n";
+		toReturn = "gsDPPipeSync\n" + GetSetCombine();
+		toReturn += "gsDPSetPrimColor 0, 0, " + primcolors[0] + ", " + primcolors[1] + ", " + primcolors[2] + "\n";
         	return toReturn;
 		break;
 
@@ -79,23 +97,12 @@ class material
                     return toReturn;
 
             case ENV_MAPPED:
-                switch (textype)
                 {
                     toReturn = "gsDPPipeSync\ngsDPSetEnvColor 255, 255, 255, 255\ngsSPSetGeometryMode G_LIGHTING | G_TEXTURE_GEN";
-                    toReturn += "gsDPSetCombineMode1Cycle G_CCMUX_TEXEL0, G_CCMUX_0, G_CCMUX_SHADE, G_CCMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE\n";
-
-                    case RGBA32:
-                        toReturn += "gsDPLoadTextureBlock " + name + ", G_IM_FMT_RGBA, G_IM_SIZ_32b, " + "0, " + texmode[0] + ", "  + texmode[1] + ", " + (int)log2(dimension[0]) + ", " + (int)log2(dimension[1]) + ", G_TX_NOLOD, G_TX_NOLOD\n";
-                        return toReturn;
-                        break;
-
-                    case RGBA16:
-                        toReturn += "gsDPLoadTextureBlock " + name + ", G_IM_FMT_RGBA, G_IM_SIZ_16b, " + "0, " + texmode[0] + ", "  + texmode[1] + ", " + (int)log2(dimension[0]) + ", " + (int)log2(dimension[1]) + ", G_TX_NOLOD, G_TX_NOLOD\n";
-                        return toReturn;
-                        break;
-
-                    default:
-                        error_message("Texture type not implemented.");
+                    toReturn += GetSetCombine();
+                    toReturn += GetTextureLoad();
+                    return toReturn;
+                    break;
                 }
         }
     }
