@@ -29,4 +29,5 @@ Optional:
 ## Credits
 
 * Trenavix, Robinerd, Davideesk for answering stupid F3D questions
+* Davideesk again for cleaning up the F3D macros (especially LoadTextureBlock!)
 * Kaze and stomatol for material ideas
