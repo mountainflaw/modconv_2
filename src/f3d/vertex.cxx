@@ -92,18 +92,17 @@ class material
 		break;
 
             case TEXTURE: /* TODO: Make this support more than just RGBA. */ 
-                    toReturn = "gsDPPipeSync\ngsDPSetCombineMode1Cycle G_CCMUX_TEXEL0, G_CCMUX_0, G_CCMUX_SHADE, G_CCMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE\n";
-                    toReturn += GetTextureLoad();
-                    return toReturn;
+                 toReturn = "gsDPPipeSync\ngsDPSetCombineMode1Cycle G_CCMUX_TEXEL0, G_CCMUX_0, G_CCMUX_SHADE, G_CCMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE\n";
+                 toReturn += GetTextureLoad();
+                 return toReturn;
 
             case ENV_MAPPED:
-                {
-                    toReturn = "gsDPPipeSync\ngsDPSetEnvColor 255, 255, 255, 255\ngsSPSetGeometryMode G_LIGHTING | G_TEXTURE_GEN";
-                    toReturn += GetSetCombine();
-                    toReturn += GetTextureLoad();
-                    return toReturn;
-                    break;
-                }
+                toReturn = "gsDPPipeSync\ngsDPSetEnvColor " primcolors[0] + ", " + primcolors[1] + ", " + primcolors[2] + ", 255, 255\n";
+		toReturn += "gsSPSetGeometryMode G_LIGHTING | G_TEXTURE_GEN\n";
+                toReturn += GetSetCombine();
+                toReturn += GetTextureLoad();
+                return toReturn;
+                break;
         }
     }
 }
