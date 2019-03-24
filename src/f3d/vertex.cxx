@@ -190,7 +190,7 @@ class material
     std::string getGeometryMode(bool *geo)
     {
         std::string geobuffer = "", cleargeobuffer = "";
-        bool newgeo = false, oring = false, clear = false;
+        bool newgeo = false, oring = false, clearoring = false, clear = false;
 
         /* Environment mapping */
 
@@ -204,7 +204,7 @@ class material
         if (!(ourgeo[TEXGEN]) && geo[TEXGEN]) /* Disable */
         {
             clear = true;
-            oring = true;
+            clearoring = true;
             cleargeobuffer += "G_TEXTURE_GEN";
         }
 
@@ -222,7 +222,7 @@ class material
         if (!(ourgeo[TEXGEN]) && geo[TEXGEN]) /* Disable */
         {
             clear = true;
-            if (oring)
+            if (clearoring)
                 cleargeobuffer += "| G_TEXTURE_GEN";
             else
                 cleargeobuffer += "G_TEXTURE_GEN";
