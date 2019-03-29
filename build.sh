@@ -5,16 +5,16 @@
 # default build configuration: release
 
 deps="deps/lodepng.cpp"                     # non-library dependencies
-libs="-Bstatic -lassimp -lstdc++fs -lpng"   # libraries
+libs="-lassimp -lstdc++fs"                  # libraries
 flags="-O3"                                 # compiler flags
 forceflags="-std=c++17"                     # flags that are always enabled regardless of build selection
 defines=""                                  # defines
-files="main.cxx vertex.cxx displaylist.cxx" # files to compile
+files="src/f3d/vertex.cxx" # files to compile
 output="build/obsidian"                     # output location
 
 # project info
 
-project="obsidian"
+project="obsidian 2"
 author="red"
 builds="release debug\ndebug_all debug_optimizer\ndebug_output"
 ###############################################################################################################

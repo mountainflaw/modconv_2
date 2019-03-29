@@ -5,8 +5,13 @@
 
 #include <math.h>
 
-//#include "vertex.hxx"
+#include <assimp/Importer.hxx>
+#include <assimp/mesh.h>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
 #include "../common.hxx"
+#include "../file.hxx"
 
 class vertex
 {
@@ -43,7 +48,7 @@ class material
     private:
     s16 type, dimension[4], textype;
     s8 primcolors[3];
-    std::string path, name, texmode[2];
+    std::string path, texname, name, texmode[2];
     bool ourgeo[8];
 
     //std::string GetPalette(int mode) /* Creates palettes for CI and I(A) */
@@ -87,45 +92,51 @@ class material
             std::cout << "DBG - Texture is of type CI8!" << std::endl;
         }
 
-       /* IA8 */
+        /* IA8 */
 
-       else if (filename.find("ia8") != std::string::npos)
-       {
-            textype = IA8;
-            std::cout << "DBG - Texture is of type IA8!" << std::endl;
-       }
+        else if (filename.find("ia8") != std::string::npos)
+        {
+             textype = IA8;
+             std::cout << "DBG - Texture is of type IA8!" << std::endl;
+        }
 
-       /* I8 */
+        /* I8 */
 
-       else if (filename.find("i8") != std::string::npos)
-       {
-            textype = I8;
-            std::cout << "DBG - Texture is of type I8!" << std::endl;
-       }
+        else if (filename.find("i8") != std::string::npos)
+        {
+             textype = I8;
+             std::cout << "DBG - Texture is of type I8!" << std::endl;
+        }
 
-       /* CI4 */
+        /* CI4 */
 
-       else if (filename.find("ci4") != std::string::npos)
-       {
-            textype = CI4;
-            std::cout << "DBG - Texture is of type CI4!" << std::endl;
-       }
+        else if (filename.find("ci4") != std::string::npos)
+        {
+             textype = CI4;
+             std::cout << "DBG - Texture is of type CI4!" << std::endl;
+        }
 
-       /* IA4 */
+        /* IA4 */
 
-       else if (filename.find("ia4") != std::string::npos)
-       {
-            textype = IA4;
-            std::cout << "DBG - Texture is of type IA4!" << std::endl;
-       }
+        else if (filename.find("ia4") != std::string::npos)
+        {
+             textype = IA4;
+             std::cout << "DBG - Texture is of type IA4!" << std::endl;
+        }
 
-       /* I4 */
+        /* I4 */
 
-       else if (filename.find("i4") != std::string::npos)
-       {
+        else if (filename.find("i4") != std::string::npos)
+        {
             textype = I4;
-            std::cout << "DBG - Texture is of type I4!" << std::endl;
-       }
+             std::cout << "DBG - Texture is of type I4!" << std::endl;
+        }
+
+        else
+        {
+            textype = RGBA16;
+            std::cout << "DBG - You better hope RGBA16 works fucker." << std::endl;
+        }
     }
 
     std::string GetTextureLoad()
@@ -159,34 +170,6 @@ class material
 	}
     }
 
-    public:
-    std::string getMaterial()
-    {
-        std::string toReturn;
-
-        switch (type)
-        {
-            case SOLID_COLOR:
-                toReturn = "gsDPPipeSync\n" + GetSetCombine();
-                toReturn += "gsDPSetPrimColor 0, 0, " + std::to_string(primcolors[0]) + ", " + std::to_string(primcolors[1]) + ", " + std::to_string(primcolors[2]) + "\n";
-                return toReturn;
-                break;
-
-            case TEXTURED:
-                 toReturn = "gsDPPipeSync\ngsDPSetCombineMode1Cycle G_CCMUX_TEXEL0, G_CCMUX_0, G_CCMUX_SHADE, G_CCMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE\n";
-                 toReturn += GetTextureLoad();
-                 return toReturn;
-
-            case ENV_MAPPED:
-                toReturn = "gsDPPipeSync\ngsDPSetEnvColor " + std::to_string(primcolors[0]) + ", " + std::to_string(primcolors[1]) + ", " + std::to_string(primcolors[2]) + ", 255, 255\n";
-                toReturn += "gsSPSetGeometryMode G_LIGHTING | G_TEXTURE_GEN\n";
-                toReturn += GetSetCombine();
-                toReturn += GetTextureLoad();
-                return toReturn;
-                break;
-        }
-    }
-
     std::string getGeometryMode(bool *geo)
     {
         std::string geobuffer = "", cleargeobuffer = "";
@@ -212,6 +195,15 @@ class material
 
         if (ourgeo[TEXGEN] && !(geo[TEXGEN])) /* Enable */
         { 
+            clear = true;
+            if (clearoring)
+                cleargeobuffer += " | G_CULL_BACK";
+            else
+                cleargeobuffer += "G_CULL_BACK";
+        }
+
+        if (!(ourgeo[TEXGEN]) && geo[TEXGEN]) /* Disable */
+        {
             newgeo = true;
             if (oring)
                 geobuffer += " | G_TEXTURE_GEN";
@@ -219,23 +211,87 @@ class material
                 geobuffer += "G_TEXTURE_GEN";
         }
 
-        if (!(ourgeo[TEXGEN]) && geo[TEXGEN]) /* Disable */
-        {
-            clear = true;
-            if (clearoring)
-                cleargeobuffer += "| G_TEXTURE_GEN";
-            else
-                cleargeobuffer += "G_TEXTURE_GEN";
-        }
-
         if (newgeo)
-            geobuffer      = "gsSPSetGeometryMode " + geobuffer + "\n";
+            geobuffer  = "gsSPSetGeometryMode " + geobuffer + "\n";
         else geobuffer = "";
 
         if (clear)
-            cleargeobuffer = "gsSPClearGeometryMode " + cleargeobuffer + "\n";
+            cleargeobuffer  = "gsSPClearGeometryMode " + cleargeobuffer + "\n";
         else cleargeobuffer = "";
 
         return geobuffer + cleargeobuffer;
     }
+
+    public:
+
+    /**
+     * Public method to set the material type for the dl builder.
+     * SYNOPSIS:
+     * path is the file path (or name for relative paths) given to us by ASSIMP.
+     * name is the material named if assigned one.
+     * primX are the primitive colors for red, green, and blue respectively.
+     *
+     * Note that #backface in particular DISABLES backface culling when enabled,
+     * as it is already enabled by default.
+     */
+    void setMaterial(const std::string &path, const std::string &name, s8 primr, s8 primg, s8 primb)
+    {
+        /* Disable backface culling */
+        if (name.find("#backface") != std::string::npos)
+            ourgeo[BKFACE] = true;
+        else ourgeo[BKFACE] = false;
+
+        /* Environment mapping */
+        if (name.find("#envmap") != std::string::npos)
+            ourgeo[TEXGEN] = true;
+        else ourgeo[TEXGEN] = false;
+
+        /* Determine if there's a texture */
+
+        //if (path == NULL)
+        //    std::cout << "DBG - FLAT SHADED!" << std::endl;
+    }
+
+    std::string getMaterial()
+    {
+        std::string toReturn;
+
+        switch (type)
+        {
+            case SOLID_COLOR:
+                toReturn = "gsDPPipeSync\n" + GetSetCombine();
+                toReturn += "gsDPSetPrimColor 0, 0, " + std::to_string(primcolors[0]) + ", " + std::to_string(primcolors[1]) + ", " + std::to_string(primcolors[2]) + "\n";
+                return toReturn;
+                break;
+
+            case TEXTURED:
+                toReturn = "gsDPPipeSync\ngsDPSetCombineMode1Cycle G_CCMUX_TEXEL0, G_CCMUX_0, G_CCMUX_SHADE, G_CCMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE\n";
+                toReturn += GetTextureLoad();
+                return toReturn;
+        }
+    }
 };
+
+/** Main function for vertex phase. Calls the vertex generator and vertex builder, sets up materials, etc. It consists of seven stages:
+ * 1.) Find the amount of meshes/materials
+ * 2.) Create and modify material objects
+ * 3.) Add texture includes
+ * 4.) Create vertex objects
+ * 5.) Get vertices from ASSIMP
+ * 6.) Optimize vertices
+ * 7.) Print vertices
+ */
+void vertex_phase(const std::string &file, const std::string &fileOut, int scale, int f3d)
+{
+    Assimp::Importer importer;
+    const aiScene* scene = importer.ReadFile(file, aiProcess_ValidateDataStructure);
+    /* Reset the directory just in case */
+    reset_directory(fileOut);
+
+    /* Get amount of meshes/materials */
+    /* Get amount of verts */
+    /* Create vert classes */
+    /* Get vertices */
+    /* One day: optimize verts */
+    /* Output vertices */
+}
