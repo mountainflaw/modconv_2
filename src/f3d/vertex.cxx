@@ -5,13 +5,17 @@
 
 #include <math.h>
 
-#include <assimp/Importer.hxx>
+#include <assimp/Importer.hpp>
 #include <assimp/mesh.h>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
 #include "../common.hxx"
 #include "../file.hxx"
+
+s16 vert   = 0, //! Used by vertex builder
+    verts  = 0, //! Total amount of vertices
+    meshId = 0; //! Recorded into each vert
 
 class vertex
 {
@@ -289,6 +293,8 @@ void vertex_phase(const std::string &file, const std::string &fileOut, int scale
     reset_directory(fileOut);
 
     /* Get amount of meshes/materials */
+
+
     /* Get amount of verts */
     /* Create vert classes */
     /* Get vertices */
