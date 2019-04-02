@@ -2,6 +2,14 @@
  * TYPE DEFINES                                                                 *
  ********************************************************************************/
 
+#include <stdio.h>
+#include <iostream>
+#include <fstream>
+
+/********************************************************************************
+ * TYPE DEFINES                                                                 *
+ ********************************************************************************/
+
 typedef signed char            s8;
 typedef unsigned char          u8;
 typedef signed short int       s16;
@@ -27,6 +35,7 @@ typedef double f64;
  * DEFINES                                                                      *
  ********************************************************************************/
 
+#define DEFAULT_SCALE 350
 /* Main GFX outputs */
 
 /* 
@@ -63,6 +72,8 @@ enum matTypes
     ALPHA_BLEND,
     DEFAULT
 };
+
+enum wrappingModes { TEXWRAP, TEXCLAMP, TEXUNUSED, TEXMIRROR };
 
 enum texTypes { RGBA32, RGBA16, IA16, CI8, IA8, I8, CI4, IA4, I4 };
 enum geoTypes { TEXGEN, BKFACE, TBS0, TBS1, TBS2, TBS3, TBS4, TBS5 };

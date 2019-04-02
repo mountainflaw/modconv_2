@@ -9,7 +9,7 @@ libs="-lassimp -lstdc++fs"                  # libraries
 flags="-O3"                                 # compiler flags
 forceflags="-std=c++17"                     # flags that are always enabled regardless of build selection
 defines=""                                  # defines
-files="src/f3d/vertex.cxx" # files to compile
+files="src/main.cxx src/f3d/vertex.cxx" # files to compile
 output="build/obsidian"                     # output location
 
 # project info

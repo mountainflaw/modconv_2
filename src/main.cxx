@@ -26,28 +26,28 @@
 *   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                        *
 */
 
-#include "common.cxx"
+#include "common.hxx"
 
-#include "f3d/vertex.hxx"
-#include "f3d/displaylist.hxx"
-#include "collision/prototypes.hxx"
-#include "goddard/prototypes.hxx"
+//#include "f3d/vertex.hxx"
+//#include "f3d/displaylist.hxx"
+//#include "collision/prototypes.hxx"
+//#include "goddard/prototypes.hxx"
 
 void error_message(std::string message)
 {
-    std::cout << "\e[ERROR]\e " << message << std::endl;
+    std::cout << "\e[1mERROR:\e[0m " << message << std::endl;
     exit(1);
 }
 
 void warn_message(std::string message)
 {
-    std::cout << "\e[WARNING]\e " << message << std::endl;
+    std::cout << "\e[1mWARNING:\e[0m " << message << std::endl;
     return;
 }
 
 void info_message(std::string message)
 {
-    std::cout << "\e[INFO]\e " << message << std::endl;
+    std::cout << "\e[1mINFO:\e[0m " << message << std::endl;
     return;
 }
 
@@ -62,38 +62,41 @@ int main(int argc, char* argv[])
     {
         case 2:
             filePath =        argv[1];
-            infoMessage("No output provided. Using 'model'.");
+            info_message("No output provided. Using 'model'.");
             break;
         case 3:
             filePath =        argv[1];
             fileOut  =        argv[2];
-            infoMessage("No scale provided. Using default scale size.");
+            info_message("No scale provided. Using default scale size.");
             break;
         case 4:
             filePath =        argv[1];
             fileOut  =        argv[2];
             scale = std::stoi(argv[3]);
-            infoMessage("No microcode provided. Using Fast3D.");
+            info_message("No microcode provided. Using Fast3D.");
             break;
         case 5:
             filePath =        argv[1];
             fileOut  =        argv[2];
             scale = std::stoi(argv[3]);
             ucode    =        argv[4];
+            break;
         default:
-            errorMessage("Syntax error.");
+            error_message("Syntax error.");
             break;
     }
 
-    if (ucode.compare("f3d") == 0)              output = F3D;
-    else if (ucode.compare("f3dex") == 0)       output = F3DEX;
-    else if (ucode.compare("rej") == 0)         output = REJ;
-    else if (ucode.compare("goddard") == 0)     output = GODDARD;
-    else if (ucode.compare("collision") == 0)   output = COLLISION;
-    else errorMessage("Invalid output type.");
-
-    infoMessage("Starting...");
-    prepareVertices(filePath, fileOut, scale, output); /* Starts construction process */
-    infoMessage("Finished!");
+    if (ucode.compare("f3d") == 0)              output = OUTPUT_F3D;
+    else if (ucode.compare("f3dex") == 0)       output = OUTPUT_F3DEX;
+    else if (ucode.compare("rej") == 0)         output = OUTPUT_REJ;
+    else if (ucode.compare("rej2") == 0)        output = OUTPUT_REJ2;
+    else if (ucode.compare("goddard") == 0)     output = OUTPUT_GODDARD;
+    else if (ucode.compare("collision") == 0)   output = OUTPUT_COLLISION;
+    else error_message("Invalid output type.");
+    std::cout << "args: " << argc << std::endl;
+    void vertex_phase(const std::string &file, const std::string &fileOut, s16 scale, s8 f3d);
+    info_message("Starting...");
+    vertex_phase(filePath, fileOut, scale, output); /* Starts construction process */
+    info_message("Finished!");
     return 0;
 }
