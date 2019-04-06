@@ -166,16 +166,46 @@ void write_vtx(Vertex *vtx, const std::string &fileOut, s8 output)
     }
 }
 
-/**
- * Main function for vertex phase. Calls the vertex generator and vertex builder, sets up materials, etc. It consists of seven stages:
- * 1.) Find the amount of meshes/materials
- * 2.) Create and modify material objects
- * 3.) Add texture includes
- * 4.) Create vertex objects
- * 5.) Get vertices from ASSIMP
- * 6.) Optimize vertices
- * 7.) Print vertices
- */
+/** Writes materials to file. */
+void write_materials(Material *mat, const std::string &fileOut)
+{
+    /* PHASE 1: Setup string array */ /* TODO: make this entire function not retarded. */
+    std::string matOutputs[meshId] = {"CONV_UNUSED"};
+    for (int i = 0; i < meshId; i++)
+    {
+        std::string matName = mat[i].getFileNameNoExtension();
+        if (!(matName.find("CONV_UN") != std::string::npos) && mat[i].isTextured())
+        {
+            matOutputs[i] = matName + ":\n" + ".incbin " + R"(")" + matName + R"(")" + "\n";
+        }
+    }
+
+    /* PHASE 2: Optimize the material string array so we don't incbin twice */
+    for (int i = 0; i < meshId; i++)
+    {
+        for (int j = 0; j < meshId; j++)
+        {
+            if (matOutputs[i].compare(matOutputs[j]) == 0 && i > j)
+                matOutputs[i] = "CONV_UN";
+        }
+    }
+
+    /* PHASE 3: Actually write the materials */
+    std::fstream materialOut;
+    materialOut.open(fileOut + "/model.s", std::iostream::out | std::iostream::app);
+    for (int i = 0; i < meshId; i++)
+    {
+        if (!(matOutputs[i].find("CONV_UN") != std::string::npos) && (mat[i].isTextured()))
+        {
+            std::cout << "DBG - a" << std::endl;
+            materialOut << matOutputs[i];
+        }
+        /*else
+           materialOut << matOutputs[i];*/
+    }
+}
+
+/** Main function for the vertex phase. */
 void vertex_phase(const std::string &file, const std::string &fileOut, s16 scale, s8 f3d)
 {
     Assimp::Importer importer;
@@ -183,7 +213,6 @@ void vertex_phase(const std::string &file, const std::string &fileOut, s16 scale
 
     /* Some file operations */
     reset_directory(fileOut);
-    reset_directory(fileOut + "/model");
     reset_file(fileOut + "/model.s");
 
     /* Get amount of verts and create vertex objects */
@@ -196,10 +225,12 @@ void vertex_phase(const std::string &file, const std::string &fileOut, s16 scale
     for (s16 i = 0; i < scene->mRootNode->mNumChildren; i++)
         setup_vtx(scene->mRootNode->mChildren[i], scene, scale, vtx, mat, fileOut, file);
 
+    write_materials(mat, fileOut);
+
     /* One day: optimize verts */
     /* Output vertices */
     write_vtx(vtx, fileOut, f3d);
-    
+
     /* Build display list */
     build_displaylist(fileOut, vtx, mat, verts, f3d);
 }

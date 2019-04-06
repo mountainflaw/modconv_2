@@ -7,7 +7,7 @@
 deps="deps/lodepng.cpp"
 libs="-lassimp -lstdc++fs"
 flags="-O3"
-forceflags="-std=c++17"
+forceflags="-Wall -Wextra -std=c++17"
 defines=""
 files="src/main.cxx src/f3d/vertex.cxx src/f3d/displaylist.cxx src/file.cxx"
 output="build/obsidian"

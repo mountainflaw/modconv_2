@@ -40,3 +40,6 @@ bool file_exists(const std::string &path);
 
 /** Checks if path provided is a directory */
 bool is_directory(const std::string &path);
+
+/** Returns file name. */
+std::string get_filename(const std::string &path);

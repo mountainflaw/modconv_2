@@ -74,5 +74,5 @@ bool is_directory(const std::string &path)
 /** Returns the filename only */
 std::string get_filename(const std::string &path)
 {
-    return fs::path(path).filename();
+    return std::filesystem::path(path).filename();
 }

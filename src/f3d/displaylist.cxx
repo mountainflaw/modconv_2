@@ -10,6 +10,7 @@ void build_displaylist(const std::string fileOut, Vertex *vtx, Material *mat, s3
     std::ofstream displayListOut;
     displayListOut.open(fileOut + "/model.s", std::ofstream::out | std::ofstream::app);
 
+    displayListOut << std::endl << fileOut << "_dl:" << std::endl;
     for (int i = 0; i < verts;)
     {
         /* Materials */
@@ -20,7 +21,7 @@ void build_displaylist(const std::string fileOut, Vertex *vtx, Material *mat, s3
             displayListOut << mat[matId].getMaterial();
         }
 
-        switch (f3d)
+        switch (f3d) /* todo: make this not retarded. a switch is not needed. */
         {
             case OUTPUT_F3D:
                 if (!(gVert % OUTPUT_F3D))
@@ -46,7 +47,7 @@ void build_displaylist(const std::string fileOut, Vertex *vtx, Material *mat, s3
                         displayListOut << "gsSPVertex " << fileOut << "_vertex_" << bVert << " " << (verts - i) << ", 0" << std::endl;
 
                     else
-                        displayListOut << "gsSPVertex " << fileOut << "_vertex_" << bVert << " 15, 0" << std::endl;
+                        displayListOut << "gsSPVertex " << fileOut << "_vertex_" << bVert << " 30, 0" << std::endl;
                 }
                 break;
 
@@ -60,7 +61,7 @@ void build_displaylist(const std::string fileOut, Vertex *vtx, Material *mat, s3
                         displayListOut << "gsSPVertex " << fileOut << "_vertex_" << bVert << " " << (verts - i) << ", 0" << std::endl;
 
                     else
-                        displayListOut << "gsSPVertex " << fileOut << "_vertex_" << bVert << " 15, 0" << std::endl;
+                        displayListOut << "gsSPVertex " << fileOut << "_vertex_" << bVert << " 63, 0" << std::endl;
                 }
                 break;
 
@@ -74,7 +75,7 @@ void build_displaylist(const std::string fileOut, Vertex *vtx, Material *mat, s3
                         displayListOut << "gsSPVertex " << fileOut << "_vertex_" << bVert << " " << (verts - i) << ", 0" << std::endl;
 
                     else
-                        displayListOut << "gsSPVertex " << fileOut << "_vertex_" << bVert << " 15, 0" << std::endl;
+                        displayListOut << "gsSPVertex " << fileOut << "_vertex_" << bVert << " 78, 0" << std::endl;
                 }
                 break;
         }

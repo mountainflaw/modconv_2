@@ -1,6 +1,8 @@
 //class Vertex;
 //class Material;
 
+#include <libgen.h>
+
 class Vertex
 {
     private:
@@ -11,7 +13,7 @@ class Vertex
     public:
     bool compareMaterials(s16 material)
     {
-        std::cout << "DGB - " << std::to_string(mat) << "vs" << std::to_string(material) << std::endl;
+//        std::cout << "DGB - " << std::to_string(mat) << "vs" << std::to_string(material) << std::endl;
         if (material == mat)
             return true;
         else return false;
@@ -38,7 +40,7 @@ class Material
     s16 type, dimension[2], textype;
     u8 primcolors[3];
     std::string path, texname, name, texmode[2];
-    bool ourgeo[8];
+    bool ourgeo[8], textured = false;
 
     //std::string GetPalette(int mode) /* Creates palettes for CI and I(A) */
     /*{
@@ -133,16 +135,17 @@ class Material
         switch (textype)
         {
             case RGBA32:
-                return "gsDPLoadTextureBlock " + name + " 0, G_IM_FMT_RGBA, G_IM_SIZ_32b, " + "G_TX_WRAP | G_TX_NOMIRROR, G_TX_WRAP | G_TX_NOMIRROR, " + std::to_string((s16)log2(dimension[0])) + ", " + std::to_string((s16)log2(dimension[1])) + ", G_TX_NOLOD, G_TX_NOLOD\n";
+                return "gsDPLoadTextureBlock " + getFileNameNoExtension() + ", 0, G_IM_FMT_RGBA, G_IM_SIZ_32b, " + "G_TX_WRAP | G_TX_NOMIRROR, G_TX_WRAP | G_TX_NOMIRROR, " + std::to_string((s16)log2(dimension[0])) + ", " + std::to_string((s16)log2(dimension[1])) + ", G_TX_NOLOD, G_TX_NOLOD\n";
                 break;
 
             case RGBA16:
 
-                return "gsDPLoadTextureBlock " + name + " 0, G_IM_FMT_RGBA, G_IM_SIZ_16b, " + "G_TX_WRAP | G_TX_NOMIRROR, G_TX_WRAP | G_TX_NOMIRROR, " + std::to_string((s16)log2(dimension[0])) + ", " + std::to_string((s16)log2(dimension[1])) + ", G_TX_NOLOD, G_TX_NOLOD\n";
+                return "gsDPLoadTextureBlock " + getFileNameNoExtension() + ", 0, G_IM_FMT_RGBA, G_IM_SIZ_16b, " + "G_TX_WRAP | G_TX_NOMIRROR, G_TX_WRAP | G_TX_NOMIRROR, " + std::to_string((s16)log2(dimension[0])) + ", " + std::to_string((s16)log2(dimension[1])) + ", G_TX_NOLOD, G_TX_NOLOD\n";
                 break;
 
             default:
                 error_message("Texture type not implemented.");
+                return "";
         }
     }
 
@@ -213,6 +216,9 @@ class Material
 
     public:
 
+    /** Used for material writer for determining if the material is a textured material */
+    bool isTextured() { return textured; }
+
     /**
      * Public method to set the material type for the dl builder.
      * SYNOPSIS:
@@ -224,7 +230,7 @@ class Material
      * as it is already enabled by default.
      */
 
-    void setMaterial(const std::string &path, const std::string &name, u8 primr, u8 primg, u8 primb, s8 modein_x, s8 modein_y)
+    void setMaterial(const std::string &pathin, const std::string &name, u8 primr, u8 primg, u8 primb, s8 modein_x, s8 modein_y)
     {
         /* Disable backface culling */
         if (name.find("#backface") != std::string::npos)
@@ -236,7 +242,7 @@ class Material
             ourgeo[TEXGEN] = true;
         else ourgeo[TEXGEN] = false;
 
-        if (path.compare("CONV_UNUSED") == 0)
+        if (pathin.find("CONV_UNUSED") != std::string::npos)
         {
             type = SOLID_COLOR;
             primcolors[C_RED]   = primr;
@@ -246,6 +252,8 @@ class Material
 
         else
         {
+            textured = true;
+            path = pathin;
             type = TEXTURED;
             SetTextureType(path);
             dimension[AXIS_X] = get_dimension(AXIS_X, path);
@@ -256,6 +264,13 @@ class Material
     }
 
     s16 getDimension(s8 axis) { return dimension[axis]; }
+
+    std::string getFileNameNoExtension()
+    {
+        std::cout << "DBG - In: " << path << " Out: " << get_filename(path) << std::endl;
+        std::string toReturn = get_filename(path);
+        return toReturn.substr(0, toReturn.length() - 4); /* <- Hack */
+    }
 
     std::string getMaterial()
     {
