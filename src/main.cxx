@@ -33,19 +33,19 @@
 //#include "collision/prototypes.hxx"
 //#include "goddard/prototypes.hxx"
 
-void error_message(std::string message)
+void error_message(const std::string &message)
 {
     std::cout << "\e[1mERROR:\e[0m " << message << std::endl;
     exit(1);
 }
 
-void warn_message(std::string message)
+void warn_message(const std::string &message)
 {
     std::cout << "\e[1mWARNING:\e[0m " << message << std::endl;
     return;
 }
 
-void info_message(std::string message)
+void info_message(const std::string &message)
 {
     std::cout << "\e[1mINFO:\e[0m " << message << std::endl;
     return;

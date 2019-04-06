@@ -142,8 +142,7 @@ class Material
                 break;
 
             default:
-                exit(1);
-                //error_message("Texture type not implemented.");
+                error_message("Texture type not implemented.");
         }
     }
 
