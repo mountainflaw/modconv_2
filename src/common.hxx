@@ -1,13 +1,28 @@
+#pragma once
 /********************************************************************************
- * TYPE DEFINES                                                                 *
+ * FILE INCLUDES                                                                *
  ********************************************************************************/
 
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
 
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <cstdlib>
+
+#include <math.h>
+
+#include <assimp/Importer.hpp>
+#include <assimp/mesh.h>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
+#include "file.hxx"
+
 /********************************************************************************
- * TYPE DEFINES                                                                 *
+ * TYPE DEFINITIONS                                                             *
  ********************************************************************************/
 
 typedef signed char            s8;

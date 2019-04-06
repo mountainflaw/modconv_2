@@ -4,13 +4,13 @@
 ###############################################################################################################
 # default build configuration: release
 
-deps="deps/lodepng.cpp"                     # non-library dependencies
-libs="-lassimp -lstdc++fs"                  # libraries
-flags="-O3"                                 # compiler flags
-forceflags="-std=c++17"                     # flags that are always enabled regardless of build selection
-defines=""                                  # defines
-files="src/main.cxx src/f3d/vertex.cxx" # files to compile
-output="build/obsidian"                     # output location
+deps="deps/lodepng.cpp"
+libs="-lassimp -lstdc++fs"
+flags="-O3"
+forceflags="-std=c++17"
+defines=""
+files="src/main.cxx src/f3d/vertex.cxx src/f3d/displaylist.cxx src/file.cxx"
+output="build/obsidian"
 
 # project info
 
