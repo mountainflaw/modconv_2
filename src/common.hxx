@@ -92,6 +92,7 @@ enum wrappingModes { TEXWRAP, TEXCLAMP, TEXUNUSED, TEXMIRROR };
 
 enum texTypes { RGBA32, RGBA16, IA16, CI8, IA8, I8, CI4, IA4, I4 };
 enum geoTypes { TEXGEN, BKFACE, TBS0, TBS1, TBS2, TBS3, TBS4, TBS5 };
+
 /********************************************************************************
  * PROTOTYPES                                                                   *
  ********************************************************************************/
@@ -99,3 +100,5 @@ enum geoTypes { TEXGEN, BKFACE, TBS0, TBS1, TBS2, TBS3, TBS4, TBS5 };
 void error_message(const std::string &message);
 void warn_message(const std::string &message);
 void info_message(const std::string &message);
+
+void collision_converter_main(const std::string &file, const std::string &fileOut, s16 scale);

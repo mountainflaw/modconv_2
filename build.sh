@@ -4,12 +4,12 @@
 ###############################################################################################################
 # default build configuration: release
 
-deps="deps/lodepng.cpp"
+deps="deps/lodepng.cpp deps/exoquant.c"
 libs="-lassimp -lstdc++fs"
 flags="-O3"
-forceflags="-Wall -Wextra -std=c++17"
+forceflags="-Wall -std=c++17"
 defines=""
-files="src/main.cxx src/f3d/vertex.cxx src/f3d/displaylist.cxx src/file.cxx"
+files="src/main.cxx src/f3d/vertex.cxx src/f3d/displaylist.cxx src/collision/collision.cxx src/file.cxx"
 output="build/obsidian"
 
 # project info

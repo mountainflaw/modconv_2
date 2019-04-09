@@ -96,7 +96,11 @@ int main(int argc, char* argv[])
     std::cout << "args: " << argc << std::endl;
     void vertex_phase(const std::string &file, const std::string &fileOut, s16 scale, s8 f3d);
     info_message("Starting...");
-    vertex_phase(filePath, fileOut, scale, output); /* Starts construction process */
+
+    if (output == OUTPUT_COLLISION)
+        collision_converter_main(filePath, fileOut, scale);
+    else
+        vertex_phase(filePath, fileOut, scale, output); /* Starts construction process */
     info_message("Finished!");
     return 0;
 }

@@ -10,7 +10,7 @@ void build_displaylist(const std::string fileOut, Vertex *vtx, Material *mat, s3
     std::ofstream displayListOut;
     displayListOut.open(fileOut + "/model.s", std::ofstream::out | std::ofstream::app);
 
-    displayListOut << std::endl << fileOut << "_dl:" << std::endl;
+    displayListOut << std::endl << "glabel " << fileOut << "_dl" << std::endl;
     for (int i = 0; i < verts;)
     {
         /* Materials */
