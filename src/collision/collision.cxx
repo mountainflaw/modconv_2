@@ -1,5 +1,6 @@
 /* This file handles creating collision data out of a model imported with ASSIMP. */
 #include "../common.hxx"
+#include "surfaces.hxx"
 
 s32 vertex = 0, tri = 0, vtx = 0; /* Globals */
 

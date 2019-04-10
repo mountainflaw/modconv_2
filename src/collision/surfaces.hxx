@@ -1,6 +1,6 @@
 #include "../common.hxx"
 
-std::string[56] = 
+std::string surfaces[] = 
 {
     "!SURF_ENV_DEFAULT",        "!SURF_BURNING",        "!SURF_04",
     "!SURF_CEILING",            "!SURF_SLOW",           "!SURF_DEATH_FLOOR",
@@ -21,5 +21,4 @@ std::string[56] =
     "!SURF_CAM_75",             "!SURF_FLAG_SURF_76",   "!SURF_FLAG_SURF_77",
     "!SURF_UNK_NOISE",          "!SURF_SLIPPERY_79",    "!SURF_ACTIVATE",
     "!SURF_VAN_CAP_WALL",       "!SURF_POOL_WARP",      "!SURF_TRAPDOOR"
-
 };
