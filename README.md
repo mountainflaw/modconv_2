@@ -14,7 +14,7 @@ To build the default release version, simply run ``./build.sh``. To build the de
 
 ``./obsidian <path to file> <output directory and name> <scale> <output type>``
 
-The output type currently supports
+Output is the format the converter will export. Currently the formats supported are Fast3D (``f3d``), Fast3DEX (``f3dex``), and a collision mesh (``collision``).
 
 ## Planned Differences
 
