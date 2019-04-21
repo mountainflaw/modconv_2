@@ -62,10 +62,7 @@ void reset_file(const std::string &fileOut)
 
 /** Deletes a directory and creates it again. */
 void reset_directory(const std::string &output)
-{
-    std::filesystem::remove_all(output);
-    std::filesystem::create_directory(output);
-}
+{ std::filesystem::create_directory(output); }
 
 /** Uses LodePNG to get dimensions from a PNG image. */
 u16 get_dimension(u8 mode, const std::string &path)
@@ -83,33 +80,23 @@ u16 get_dimension(u8 mode, const std::string &path)
 
 /** Easy way to get a path leading to the directory only */
 std::string get_path(const std::string &path)
-{
-    return std::filesystem::path(path).remove_filename();
-}
+{ return std::filesystem::path(path).remove_filename(); }
 
 /** Checks if a exists (including directories) */
 bool file_exists(const std::string &path)
-{
-    return std::filesystem::exists(path);
-}
+{ return std::filesystem::exists(path); }
 
 /** Checks if path provided is a directory */
 bool is_directory(const std::string &path)
-{
-    return std::filesystem::is_directory(path);
-}
+{ return std::filesystem::is_directory(path); }
 
 /** Returns the filename only */
 std::string get_filename(const std::string &path)
-{
-    return std::filesystem::path(path).filename();
-}
+{ return std::filesystem::path(path).filename(); }
 
 /** Acceptable characters */
-std::string acceptableChars = "abcdefghijklmnopqrstuvwxyz0123456789";
-
-/** Capital characters -- NOT OK */
-std::string capitalChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+std::string acceptableChars = "abcdefghijklmnopqrstuvwxyz0123456789",
+               capitalChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 /** Sanitizes input string for use with gas labels. */
 std::string sanitize_output(const std::string &input)
@@ -136,6 +123,5 @@ std::string sanitize_output(const std::string &input)
                 toReturn += input.substr(i);
         }
     }
-
     return toReturn;
 }
