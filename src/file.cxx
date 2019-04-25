@@ -26,6 +26,8 @@
 *   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                        *
 */
 
+/* TODO: A lot of these can easily be cleanly converted to macros. */
+
 #include <filesystem>
 #include "common.hxx"
 
@@ -101,7 +103,6 @@ std::string acceptableChars = "abcdefghijklmnopqrstuvwxyz0123456789",
 /** Sanitizes input string for use with gas labels. */
 std::string sanitize_output(const std::string &input)
 {
-
     std::string toReturn = "";
     for (u16 i = 0; i < input.length(); i++)
     {
@@ -114,7 +115,7 @@ std::string sanitize_output(const std::string &input)
                 toReturn += input.substr(i);
         }
 
-        /* Sanitize input by removing anything not a-z 0-9 or with _. */
+        /* Sanitize input by removing anything not a-z 0-9 with _. */
         for (u16 k = 0; k < 35; k++)
         {
             if (input.substr(i).compare(acceptableChars.substr(k)) != 0)
@@ -124,4 +125,77 @@ std::string sanitize_output(const std::string &input)
         }
     }
     return toReturn;
+}
+
+void copy_file(const std::string &a, const std::string &b)
+{ std::filesystem::copy(a, b); }
+
+/* Setup functions */
+
+static void create_level_script(const std::string &output)
+{
+    if (!(file_exists(output + "/script.s"))) /* Don't reset if already exists. */
+    {
+        reset_file(output + "/script.s");
+    }
+}
+
+static void create_level_geo(const std::string &output)
+{
+    if (!(file_exists(output + "/geo.s"))) /* Don't reset if it already exists. */
+    {
+        reset_file(output + "/geo.s");
+    }
+}
+
+/** Creates the level header. */
+static void create_level_header(const std::string &output)
+{
+    reset_file(output + "/header.s");
+    std::fstream header;
+
+    header.open(output + "/header.s", std::ios::out | std::ios::app);
+    header << ".include " << R"(")" << "macros.inc" << R"(")" << std::endl;
+    header << ".include " << R"(")" << "level_commands.inc" << R"(")" << std::endl;
+    header << ".include " << R"(")" << "geo_commands.inc" << R"(")" << std::endl;
+
+    header << "leveldata " << output << std::endl;
+    header << "levelscript " << output << std::endl;
+    header << "levelgeo " << output << std::endl;
+
+    header.close();
+}
+
+static void create_level_area(const std::string &output, u8 area)
+{
+    std::string areaDir = output + "/areas/" + std::to_string((u16)area) + "/1";
+    reset_directory(areaDir);
+    reset_file(areaDir + "/model.s");
+}
+
+/* I don't know why I didn't do this originally... */
+
+/** Sets up the output directory. */
+void f3d_init_directory(const std::string &output, u8 area)
+{
+    /* Levels */
+    if (output.substr(0, 5).compare("level_") == 0)
+    {
+        std::string realOut = output.substr(5, output.length());
+
+        reset_directory(realOut);
+        create_level_script(realOut);
+        create_level_geo(realOut);
+
+        create_level_area(realOut, area);
+
+        /* Setup files */
+        create_level_header(realOut);
+        reset_file(realOut + "/texture.s"); /* The rest of this file is generated in vertex.cxx */
+    }
+
+    else /* Actors */
+    {
+
+    }
 }

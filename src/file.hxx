@@ -76,3 +76,6 @@ std::string get_filename(const std::string &path);
 
 /** Sanitize string for gas. */
 std::string sanitize_output(const std::string &input);
+
+/** Initialize output directory. */
+void f3d_init_directory(const std::string &fileOut, u8 area);

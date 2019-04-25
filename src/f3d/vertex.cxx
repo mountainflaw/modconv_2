@@ -154,12 +154,16 @@ void setup_vtx(aiNode* node, const aiScene* scene, s16 scale, Vertex *vtx, Mater
 }
 
 /** Writes vertices to file */
-void write_vtx(Vertex *vtx, const std::string &fileOut, s8 output)
+void write_vtx(Vertex *vtx, const std::string &fileOut, s8 output, s8 area)
 {
     u16 vtxGroup = 0;
     std::ofstream vertexOut;
 
-    vertexOut.open(fileOut + "/model.s", std::iostream::out | std::iostream::app);
+    if (area > 0)
+        vertexOut.open(fileOut + "/" + std::to_string((u16)area) + "/1/model.s", std::iostream::out | std::iostream::app);
+    else
+        vertexOut.open(fileOut + "/model.s", std::iostream::out | std::iostream::app);
+
     for (u32 i = 0; i < verts; i++)
     {
         if (!(i % output)) /* F3D type */
@@ -183,9 +187,7 @@ void write_materials(Material *mat, const std::string &fileOut)
     {
         std::string matName = mat[i].getFileNameNoExtension();
         if (!(matName.find("CONV_UN") != std::string::npos) && mat[i].isTextured())
-        {
-            matOutputs[i] = matName + ":\n" + ".incbin " + R"(")" + matName + R"(")" + "\n";
-        }
+            matOutputs[i] = matName + ":\n" + ".incbin " + R"(")" + sanitize_output(matName) + R"(")" + "\n";
     }
 
     /* PHASE 2: Optimize the material string array so we don't incbin twice */
@@ -208,19 +210,28 @@ void write_materials(Material *mat, const std::string &fileOut)
             std::cout << "DBG - a" << std::endl;
             materialOut << matOutputs[i];
         }
-        /*else
-           materialOut << matOutputs[i];*/
+
+
+        if (!(matOutputs[i].find("CONV_UN") != std::string::npos) && (mat[i].isTextured())
+            && (matOutputs[i].find("ci4") != std::string::npos || matOutputs[i].find("ci8") != std::string::npos)
+            && mat[i].isTextured())
+        {
+            std::cout << "DBG - CI TEXTURE INCLUDE" << std::endl;
+            std::string matName = sanitize_output(mat[i].getFileNameNoExtension());
+            materialOut << matName << "_pal:" << std::endl;
+            materialOut << ".incbin " << R"(")" << matName << R"(.pal")" << std::endl;
+        }
     }
 }
 
 /** Main function for the vertex phase. */
-void vertex_phase(const std::string &file, const std::string &fileOut, s16 scale, s8 f3d)
+void vtx_phase(const std::string &file, const std::string &fileOut, s16 scale, u8 f3d, u8 area)
 {
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(file, aiProcess_ValidateDataStructure);
 
     /* Some file operations */
-    reset_directory(fileOut);
+    //reset_directory(fileOut);
     reset_file(fileOut + "/model.s");
 
     /* Get amount of verts and create vertex objects */
@@ -237,7 +248,7 @@ void vertex_phase(const std::string &file, const std::string &fileOut, s16 scale
 
     /* One day: optimize verts */
     /* Output vertices */
-    write_vtx(vtx, fileOut, f3d);
+    write_vtx(vtx, fileOut, f3d, area);
 
     /* Build display list */
     build_displaylist(fileOut, vtx, mat, verts, f3d);

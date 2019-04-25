@@ -1,0 +1,14 @@
+CHANGES
+
+0.5
+- Added collision support
+
+0.6
+- Added support for all textures that aren't RGBA (no YUV though)
+- Added support for more than the default collision type
+- Made the default material not produce errors when assembled
+- Added level and geoscript templates
+- - Use by prefixing level_ to the output directory field
+- The output directory is no longer cleared
+- collision.s is now reset like it should've been whenever you build collision
+- Add support for tup

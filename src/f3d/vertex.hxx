@@ -29,8 +29,6 @@
 //class Vertex;
 //class Material;
 
-#include <libgen.h>
-
 class Vertex
 {
     private:
@@ -163,12 +161,15 @@ class Material
         switch (textype)
         {
             case RGBA32:
-                return "gsDPLoadTextureBlock " + getFileNameNoExtension() + ", G_IM_FMT_RGBA, G_IM_SIZ_32b, " + std::to_string(dimension[0]) + ", " + std::to_string(dimension[1]) + ", 0, G_TX_WRAP | G_TX_NOMIRROR, G_TX_WRAP | G_TX_NOMIRROR, " + std::to_string((s16)log2(dimension[0])) + ", " + std::to_string((s16)log2(dimension[1])) + ", G_TX_NOLOD, G_TX_NOLOD\n";
+                return "gsDPLoadTextureBlock " + sanitize_output(getFileNameNoExtension()) + ", G_IM_FMT_RGBA, G_IM_SIZ_32b, " + std::to_string(dimension[0]) + ", " + std::to_string(dimension[1]) + ", 0, G_TX_WRAP | G_TX_NOMIRROR, G_TX_WRAP | G_TX_NOMIRROR, " + std::to_string((s16)log2(dimension[0])) + ", " + std::to_string((s16)log2(dimension[1])) + ", G_TX_NOLOD, G_TX_NOLOD\n";
                 break;
 
             case RGBA16:
-                return "gsDPLoadTextureBlock " + getFileNameNoExtension() + ", G_IM_FMT_RGBA, G_IM_SIZ_16b, " + std::to_string(dimension[0]) + ", " + std::to_string(dimension[1]) + ", 0, G_TX_WRAP | G_TX_NOMIRROR, G_TX_WRAP | G_TX_NOMIRROR, " + std::to_string((s16)log2(dimension[0])) + ", " + std::to_string((s16)log2(dimension[1])) + ", G_TX_NOLOD, G_TX_NOLOD\n";
+                return "gsDPLoadTextureBlock " + sanitize_output(getFileNameNoExtension()) + ", G_IM_FMT_RGBA, G_IM_SIZ_16b, " + std::to_string(dimension[0]) + ", " + std::to_string(dimension[1]) + ", 0, G_TX_WRAP | G_TX_NOMIRROR, G_TX_WRAP | G_TX_NOMIRROR, " + std::to_string((s16)log2(dimension[0])) + ", " + std::to_string((s16)log2(dimension[1])) + ", G_TX_NOLOD, G_TX_NOLOD\n";
                 break;
+
+          //  case CI8:
+          //      break;
 
             default:
                 error_message("Texture type not implemented.");

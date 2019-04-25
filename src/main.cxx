@@ -28,10 +28,7 @@
 
 #include "common.hxx"
 
-//#include "f3d/vertex.hxx"
-//#include "f3d/displaylist.hxx"
-//#include "collision/prototypes.hxx"
-//#include "goddard/prototypes.hxx"
+void vtx_phase(const std::string &file, const std::string &fileOut, s16 scale, u8 f3d, u8 area);
 
 void error_message(const std::string &message)
 {
@@ -95,13 +92,22 @@ int main(int argc, char* argv[])
     else if (ucode.compare("collision") == 0)   output = OUTPUT_COLLISION;
     else error_message("Invalid output type.");
     std::cout << "args: " << argc << std::endl;
-    void vertex_phase(const std::string &file, const std::string &fileOut, s16 scale, s8 f3d);
     info_message("Starting...");
 
     if (output == OUTPUT_COLLISION)
         collision_converter_main(filePath, fileOut, scale);
     else
-        vertex_phase(filePath, fileOut, scale, output); /* Starts construction process */
+    {
+        f3d_init_directory(fileOut, 1);
+
+        if (fileOut.substr(0, 5).compare("level_") == 0)
+        {
+            std::cout << "DBG - Is a level" << std::endl;
+            fileOut = fileOut.substr(5, fileOut.length());
+        }
+        vtx_phase(filePath, fileOut, scale, output, 1); /* Starts construction process */
+    }
+
     info_message("Finished!");
     return 0;
 }
