@@ -28,7 +28,7 @@
 
 #include "../common.hxx"
 
-std::string surfaces[] = 
+std::string surfaces[] =
 {
     "!SURF_ENV_DEFAULT",        "!SURF_BURNING",        "!SURF_04",
     "!SURF_CEILING",            "!SURF_SLOW",           "!SURF_DEATH_FLOOR",

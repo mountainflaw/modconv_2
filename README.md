@@ -12,9 +12,15 @@ To build the default release version, simply run ``./build.sh``. To build the de
 
 ### Using
 
-``./obsidian <path to file> <output directory and name> <scale> <output type>``
+``./modconv <flags> path/to/model``
 
-Output is the format the converter will export. Currently the formats supported are Fast3D (``f3d``), Fast3DEX (``f3dex``), and a collision mesh (``collision``).
+modconv accepts the following flags:
+
+* ``--dir`` - The output directory.
+* ``--level`` - Export as level (defaults to actor otherwise).
+* ``--scale`` - Multiplier to scale the imported model by.
+* ``--type`` - What to export. (f3d, f3dex, rej (64 vtx buffer), rej2 (80 vtx buffer), goddard (Mario head), collision).
+
 
 ## Planned Differences
 
@@ -31,7 +37,7 @@ For texture mapping, I will be supporting every texture that is not YUV, with au
 
 ## Roadmap
 
-* Full material class (CI support)
+* ~~Full material class (CI support)~~
 * Optimizer
 * ~~Collision~~
 * Mario head

@@ -7,14 +7,14 @@
 deps="deps/lodepng.cpp deps/exoquant.c"
 libs="-lassimp -lstdc++fs"
 flags="-O3"
-forceflags="-Wall -Wextra -Werror -std=c++17"
+forceflags="-Wall -Werror -std=c++17"
 defines=""
 files="src/main.cxx src/f3d/vertex.cxx src/f3d/displaylist.cxx src/collision/collision.cxx src/file.cxx"
 output="build/obsidian"
 
 # project info
 
-project="obsidian 2"
+project="modconv 2"
 author="red"
 builds="release debug\ndebug_all debug_optimizer\ndebug_output"
 ###############################################################################################################

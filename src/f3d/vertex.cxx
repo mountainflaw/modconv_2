@@ -154,15 +154,11 @@ void setup_vtx(aiNode* node, const aiScene* scene, s16 scale, Vertex *vtx, Mater
 }
 
 /** Writes vertices to file */
-void write_vtx(Vertex *vtx, const std::string &fileOut, s8 output, s8 area)
+void write_vtx(Vertex *vtx, const std::string &fileOut, s8 output, const std::string &path)
 {
     u16 vtxGroup = 0;
     std::ofstream vertexOut;
-
-    if (area > 0)
-        vertexOut.open(fileOut + "/" + std::to_string((u16)area) + "/1/model.s", std::iostream::out | std::iostream::app);
-    else
-        vertexOut.open(fileOut + "/model.s", std::iostream::out | std::iostream::app);
+    vertexOut.open(path, std::iostream::out | std::iostream::app);
 
     for (u32 i = 0; i < verts; i++)
     {
@@ -229,10 +225,15 @@ void vtx_phase(const std::string &file, const std::string &fileOut, s16 scale, u
 {
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(file, aiProcess_ValidateDataStructure);
+    std::string path;
 
     /* Some file operations */
     //reset_directory(fileOut);
-    reset_file(fileOut + "/model.s");
+
+    if (area > 0)
+        path = fileOut + "/areas/" + std::to_string(area) + "/model.s"; /* Area */
+    else
+        path = fileOut + "/model.s"; /* Actor */
 
     /* Get amount of verts and create vertex objects */
     get_num_of_verts(scene->mRootNode, scene);
@@ -248,7 +249,7 @@ void vtx_phase(const std::string &file, const std::string &fileOut, s16 scale, u
 
     /* One day: optimize verts */
     /* Output vertices */
-    write_vtx(vtx, fileOut, f3d, area);
+    write_vtx(vtx, fileOut, f3d, path);
 
     /* Build display list */
     build_displaylist(fileOut, vtx, mat, verts, f3d);

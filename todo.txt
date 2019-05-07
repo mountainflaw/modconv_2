@@ -1,0 +1,10 @@
+may 7
+1. finish file refactor
+2. finish ci4
+3. add up axis option
+4. if theres time add backface culling toggle
+
+summer break (no particular order)
+optimizer
+goddard
+finish collision
