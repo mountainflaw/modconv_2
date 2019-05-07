@@ -101,7 +101,7 @@ int main(int argc, char* argv[])
         if (arg.compare("--level") == 0)
         {
             std::cout << "DBG - Level mode enabled" << std::endl;
-            area = std::stoi(flw);
+            area = 1;
         }
 
         if (arg.compare("--dir") == 0)

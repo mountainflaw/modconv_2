@@ -169,8 +169,10 @@ static void create_level_header(const std::string &output)
 
 static void create_level_area(const std::string &output, u8 area)
 {
-    std::string areaDir = output + "/areas/" + std::to_string((u16)area) + "/1";
+    reset_directory(output + "/areas");
+    std::string areaDir = output + "/areas/" + std::to_string((u16)area);
     reset_directory(areaDir);
+    reset_directory(areaDir + "/1"); /* C++17 won't recursively let us make folders. */
     reset_file(areaDir + "/model.s");
 }
 
@@ -187,18 +189,12 @@ void f3d_init_directory(const std::string &output, u8 area)
     {
         std::cout << "DBG - Creating level directory." << std::endl;
 
+        create_level_header(output);
         create_level_script(output);
         create_level_geo(output);
-
         create_level_area(output, area);
 
         /* Setup files */
-        create_level_header(output);
         reset_file(output + "/texture.s"); /* The rest of this file is generated in vertex.cxx */
-    }
-
-    else /* Actors */
-    {
-
     }
 }
