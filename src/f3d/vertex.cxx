@@ -158,6 +158,7 @@ void write_vtx(Vertex *vtx, const std::string &fileOut, s8 output, const std::st
 {
     u16 vtxGroup = 0;
     std::ofstream vertexOut;
+    std::cout << "Opening path " << path << std::endl;
     vertexOut.open(path, std::iostream::out | std::iostream::app);
 
     for (u32 i = 0; i < verts; i++)
@@ -231,7 +232,7 @@ void vtx_phase(const std::string &file, const std::string &fileOut, s16 scale, u
     //reset_directory(fileOut);
 
     if (area > 0)
-        path = fileOut + "/areas/" + std::to_string(area) + "/model.s"; /* Area */
+        path = fileOut + "/areas/" + std::to_string(area) + "/1/model.s"; /* Area */
     else
         path = fileOut + "/model.s"; /* Actor */
 
