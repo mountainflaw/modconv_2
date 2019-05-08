@@ -57,6 +57,7 @@ void setup_vtx(aiNode* node, const aiScene* scene, s16 scale, Vertex *vtx, Mater
     {
         if (scene->HasMaterials())
         {
+            /* TODO: Make this search for an env texture first and then check for diffuse. */
             scene->mMaterials[j]->GetTexture(aiTextureType_DIFFUSE, 0, &path);
             scene->mMaterials[j]->Get(AI_MATKEY_NAME, name);
 
@@ -79,15 +80,7 @@ void setup_vtx(aiNode* node, const aiScene* scene, s16 scale, Vertex *vtx, Mater
                 std::cout << "DBG - PATH EXISTS (RELATIVE)"
                           << get_path(file) + pathString << std::endl;
 
-                //if (AI_SUCCESS != scene->mMaterials[j]->Get(AI_MATKEY_MAPPINGMODE_U_DIFFUSE(5), textureWrap[AXIS_X]) ||
-                //                  scene->mMaterials[j]->Get(AI_MATKEY_MAPPINGMODE_V(j, aiTextureType_DIFFUSE), textureWrap[AXIS_Y]))
-                //     mat[meshId].setMaterial(get_path(file) + pathString, nameString, 0, 0, 0, 0, 0);
-                //else
-                //{
-                //    std::cout << "DBG - WARNING: FALLING BACK ON TEXWRAP MODE!" << std::endl;
-                    mat[meshId].setMaterial(get_path(file) + pathString, nameString, 0, 0, 0, textureWrap[AXIS_X], textureWrap[AXIS_Y]);
-                //}
-                //std::cout << "DBG - TEXWRAP XY: " << std::to_string(textureWrap[AXIS_X]) << " " << std::to_string(textureWrap[AXIS_Y]) << std::endl;
+                mat[meshId].setMaterial(get_path(file) + pathString, nameString, 0, 0, 0, textureWrap[AXIS_X], textureWrap[AXIS_Y]);
             }
 
             else
@@ -176,7 +169,7 @@ void write_vtx(Vertex *vtx, const std::string &fileOut, s8 output, const std::st
 }
 
 /** Writes materials to file. */
-void write_materials(Material *mat, const std::string &fileOut)
+void write_materials(Material *mat, const std::string &fileOut, u8 area)
 {
     /* PHASE 1: Setup string array */ /* TODO: make this entire function not retarded. */
     std::string matOutputs[meshId] = {"CONV_UNUSED"};
@@ -199,7 +192,11 @@ void write_materials(Material *mat, const std::string &fileOut)
 
     /* PHASE 3: Actually write the materials */
     std::fstream materialOut;
-    materialOut.open(fileOut + "/model.s", std::iostream::out | std::iostream::app);
+
+    if (area > 0)
+        materialOut.open(fileOut + "/texture.s", std::iostream::out | std::iostream::app);
+    else materialOut.open(fileOut + "/model.s", std::iostream::out | std::iostream::app);
+
     for (u16 i = 0; i < meshId; i++)
     {
         if (!(matOutputs[i].find("CONV_UN") != std::string::npos) && (mat[i].isTextured()))
@@ -246,12 +243,12 @@ void vtx_phase(const std::string &file, const std::string &fileOut, s16 scale, u
     for (u16 i = 0; i < scene->mRootNode->mNumChildren; i++)
         setup_vtx(scene->mRootNode->mChildren[i], scene, scale, vtx, mat, file);
 
-    write_materials(mat, fileOut);
+    write_materials(mat, fileOut, area);
 
     /* One day: optimize verts */
     /* Output vertices */
     write_vtx(vtx, fileOut, f3d, path);
 
     /* Build display list */
-    build_displaylist(fileOut, vtx, mat, verts, f3d);
+    build_displaylist(fileOut, vtx, mat, verts, f3d, path);
 }

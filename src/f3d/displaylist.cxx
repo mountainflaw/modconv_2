@@ -32,14 +32,14 @@
 class Vertex;
 class Material;
 
-void build_displaylist(const std::string fileOut, Vertex *vtx, Material *mat, s32 verts, s8 f3d)
+void build_displaylist(const std::string fileOut, Vertex *vtx, Material *mat, u32 verts, u8 f3d, const std::string &path)
 {
     s16 bVert = -1, gVert = 0, matId = -1;
     std::ofstream displayListOut;
-    displayListOut.open(fileOut + "/model.s", std::ofstream::out | std::ofstream::app);
+    displayListOut.open(path, std::ofstream::out | std::ofstream::app);
 
     displayListOut << std::endl << "glabel " << fileOut << "_dl" << std::endl;
-    for (int i = 0; i < verts;)
+    for (u32 i = 0; i < verts;)
     {
         /* Materials */
 

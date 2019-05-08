@@ -28,4 +28,4 @@
 
 #pragma once
 #include "vertex.hxx"
-void build_displaylist(const std::string fileOut, Vertex *vtx, Material *mats, s32 verts, s8 f3d);
+void build_displaylist(const std::string fileOut, Vertex *vtx, Material *mat, u32 verts, u8 f3d, const std::string &path);
