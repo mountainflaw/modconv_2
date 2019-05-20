@@ -29,11 +29,13 @@
 //class Vertex;
 //class Material;
 
+extern u8 output;
+
 class Vertex
 {
     private:
     s16  pos[3], st[2], mat;
-    s32  flag[2];
+    u16  flag[3]; /* optimizer flag */
     u8   col[4];
 
     public:
@@ -316,5 +318,34 @@ class Material
                 return toReturn;
                 break;
         }
+    }
+};
+
+/* Used in the F3D DL builder. */
+class VertexBuffer
+{
+    private:
+    bool cprVert(Vertex *a, Vertex *b)
+    {
+        return true;
+    }
+
+    public:
+    Vertex vtx[78];
+    u16 bufferIndex = 0;
+    u8 vtxCount   = 0,
+       bufferSize = 15;
+
+    bool isBufferComplete() { return vtxCount == bufferSize; }
+
+    void optimizeVerts()
+    {
+
+    }
+
+    Vertex getVtx(u8 index)
+    {
+        vtxCount++;
+        return vtx[index];
     }
 };

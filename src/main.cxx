@@ -28,6 +28,8 @@
 
 #include "common.hxx"
 
+u8 output = OUTPUT_F3D;
+
 void vtx_phase(const std::string &file, const std::string &fileOut, s16 scale, u8 f3d, u8 area);
 
 void error_message(const std::string &message)
@@ -65,11 +67,12 @@ void print_help(const std::string &name)
     std::cout << "  - collision - Export collision mesh" << std::endl;
     std::cout << "  - goddard   - Export Mario head mesh" << std::endl;
     std::cout << "--up    - Direction for the up axis (Defaults to Z)" << std::endl;
+    std::cout << "  - Acceptable inputs are Y and Z." << std::endl;
     std::cout << "--help  - Bring up this menu and quit" << std::endl;
     std::cout << std::endl;
     std::cout << "\e[1mTIPS:\e[0m" << std::endl;
     std::cout << "- If you use SketchUp, set up direction to the Y axis using --up" << std::endl;
-    std::cout << "- If your model lags, consider using Fast3DEX (--f3dex)" << std::endl;
+    std::cout << "- If your model lags, consider using Fast3DEX (--type f3dex)" << std::endl;
     std::cout << "- If on console and or angrylion's you experience triangle warping, subdivide the problematic triangle" << std::endl;
 }
 
@@ -82,42 +85,35 @@ int main(int argc, char* argv[])
     std::string filePath = argv[argc - 1],
                 fileOut  = "model";
     s16 scale            = DEFAULT_SCALE;
-    u8 output            = OUTPUT_F3D,
-       axis              = AXIS_Z,
+    u8 axis              = AXIS_Z,
        area              = 0;
 
-    if (argc < 2)
-    {
+    if (argc < 2) {
         print_help(argv[0]);
         error_message("Too few arguments.");
     }
 
     /* Parse arguments */
-    for (int i = 1; i < argc - 1; i++)
-    {
+    for (int i = 1; i < argc - 1; i++) {
         std::string arg = argv[i],
                     flw = argv[i + 1];
 
-        if (arg.compare("--level") == 0)
-        {
+        if (arg.compare("--level") == 0) {
             std::cout << "DBG - Level mode enabled" << std::endl;
-            area = 1;
+            area = 1; /* TODO: Level generator idea was scrapped. Change this to a bool. */
         }
 
-        if (arg.compare("--dir") == 0)
-        {
+        if (arg.compare("--dir") == 0) {
             std::cout << "DBG - Output is " << flw << std::endl;
             fileOut = flw;
         }
 
-        if (arg.compare("--scale") == 0)
-        {
+        if (arg.compare("--scale") == 0) {
             scale = std::stoi(flw);
             std::cout << "DBG - Scale: " << scale << std::endl;
         }
 
-        if (arg.compare("--type") == 0)
-        {
+        if (arg.compare("--type") == 0) {
             std::cout << "DBG - Type: " << flw << std::endl;
 
             if (flw.compare("f3d") == 0)              output = OUTPUT_F3D;
@@ -129,37 +125,35 @@ int main(int argc, char* argv[])
             else error_message("Invalid output type.");
         }
 
-        if (arg.compare("--up") == 0)
-        {
-            if (flw.compare("x") == 0 || flw.compare("X") == 0)      axis = AXIS_X;
-            else if (flw.compare("y") == 0 || flw.compare("Y") == 0) axis = AXIS_Y;
+        if (arg.compare("--up") == 0) {
+            if (flw.compare("y") == 0 || flw.compare("Y") == 0) axis = AXIS_Y;
             else if (flw.compare("z") == 0 || flw.compare("Z") == 0) axis = AXIS_Z;
             else error_message("Invalid up direction.");
         }
 
-        if (arg.compare("--help") == 0)
-        {
+        if (arg.compare("--help") == 0) {
             print_help(argv[0]);
             exit(0);
         }
     }
 
-    if (filePath.compare("--help") == 0) /* If the only argument is help, bring up help instead of converting. */
-    {
+    if (filePath.compare("--help") == 0) { /* If the only argument is help, bring up help instead of converting. */
         print_help(argv[0]);
         exit(0);
     }
 
-    if (!(file_exists(filePath)))
+    if (!(file_exists(filePath))) {
         error_message(filePath + " does not exist.");
+    }
 
     std::cout << "DBG - Args: " << argc << std::endl;
     info_message("Starting...");
 
-    if (output == OUTPUT_COLLISION)
+    if (output == OUTPUT_COLLISION) {
         collision_converter_main(filePath, fileOut, scale);
-    else
-    {
+    }
+
+    else {
         f3d_init_directory(fileOut, area);
         vtx_phase(filePath, fileOut, scale, output, area); /* Starts construction process */
     }

@@ -105,24 +105,23 @@ std::string acceptableChars = "abcdefghijklmnopqrstuvwxyz0123456789",
 std::string sanitize_output(const std::string &input)
 {
     std::string toReturn = "";
-    for (u16 i = 0; i < input.length(); i++)
-    {
+    for (u16 i = 0; i < input.length(); i++) {
         /* Convert C++ string to lowercase because goddamnit the standard library doesn't have this built in in a sane way. */
-        for (u16 j = 0; j < 25; j++)
-        {
-            if (input.substr(i).compare(capitalChars.substr(j)) == 0)
+        for (u16 j = 0; j < 25; j++) {
+            if (input.substr(i).compare(capitalChars.substr(j)) == 0) {
                 toReturn += acceptableChars.substr(j);
-            else
-                toReturn += input.substr(i);
+            }
+
+            else toReturn += input.substr(i);
         }
 
         /* Sanitize input by removing anything not a-z 0-9 with _. */
-        for (u16 k = 0; k < 35; k++)
-        {
-            if (input.substr(i).compare(acceptableChars.substr(k)) != 0)
+        for (u16 k = 0; k < 35; k++) {
+            if (input.substr(i).compare(acceptableChars.substr(k)) != 0) {
                 toReturn += "_";
-            else
-                toReturn += input.substr(i);
+            }
+
+            else toReturn += input.substr(i);
         }
     }
     return toReturn;
@@ -131,69 +130,13 @@ std::string sanitize_output(const std::string &input)
 void copy_file(const std::string &a, const std::string &b)
 { std::filesystem::copy(a, b); }
 
-/* Setup functions */
-
-static void create_level_script(const std::string &output)
-{
-    if (!(file_exists(output + "/script.s"))) /* Don't reset if already exists. */
-    {
-        reset_file(output + "/script.s");
-    }
-}
-
-static void create_level_geo(const std::string &output)
-{
-    if (!(file_exists(output + "/geo.s"))) /* Don't reset if it already exists. */
-    {
-        reset_file(output + "/geo.s");
-    }
-}
-
-/** Creates the level header. */
-static void create_level_header(const std::string &output)
-{
-    reset_file(output + "/header.s");
-    std::fstream header;
-
-    header.open(output + "/header.s", std::ios::out | std::ios::app);
-    header << ".include " << R"(")" << "macros.inc" << R"(")" << std::endl;
-    header << ".include " << R"(")" << "level_commands.inc" << R"(")" << std::endl;
-    header << ".include " << R"(")" << "geo_commands.inc" << R"(")" << std::endl;
-
-    header << "leveldata " << output << std::endl;
-    header << "levelscript " << output << std::endl;
-    header << "levelgeo " << output << std::endl;
-
-    header.close();
-}
-
-static void create_level_area(const std::string &output, u8 area)
-{
-    reset_directory(output + "/areas");
-    std::string areaDir = output + "/areas/" + std::to_string((u16)area);
-    reset_directory(areaDir);
-    reset_directory(areaDir + "/1"); /* C++17 won't recursively let us make folders. */
-    reset_file(areaDir + "/model.s");
-}
-
-/* I don't know why I didn't do this originally... */
-
 /** Sets up the output directory. */
 void f3d_init_directory(const std::string &output, u8 area)
 {
-
     reset_directory(output);
 
     /* Levels */
-    if (area > 0)
-    {
-        std::cout << "DBG - Creating level directory." << std::endl;
-
-        create_level_header(output);
-        create_level_script(output);
-        create_level_geo(output);
-        create_level_area(output, area);
-
+    if (area > 0) {
         /* Setup files */
         reset_file(output + "/texture.s"); /* The rest of this file is generated in vertex.cxx */
     }

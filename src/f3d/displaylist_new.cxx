@@ -3,7 +3,7 @@
 *   All rights reserved.                                                                *
 *                                                                                       *
 *   Redistribution and use in source and binary forms, with or without                  *
-*   modification, are permitted provided that the following conditions are met:         *  
+*   modification, are permitted provided that the following conditions are met:         *
 *                                                                                       *
 *       * Redistributions of source code must retain the above copyright                *
 *         notice, this list of conditions and the following disclaimer.                 *
@@ -26,44 +26,42 @@
 *   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                        *
 */
 
-#include "../common.hxx"
+/*
+ * New Fast3D display list builder
+ *
+ * This is much more sanely built and is modeled after the collision and goddard
+ * converters, which utilize the face structs instead of making assumptions about
+ * vertex orders.
+ *
+ * The goals accomplished by this are the following:
+ * 1.) Do not assume vertex order at all.
+ * 2.) Implement TRI2 support.
+ * 3.) Implement the vertex optimizer.
+ */
 #include "vertex.hxx"
+#include "../common.hxx"
 
-class Vertex;
-class Material;
+u8 approachVtx = 0;
 
-void build_displaylist(const std::string fileOut, Vertex *vtx, Material *mat, u32 verts, u8 f3d, const std::string &path)
+static inline void write_dl(const std::string &fileOut, aiNode* node, u16 nodeId, const aiScene* scene)
 {
-    s16 bVert = -1, gVert = 0, matId = -1;
-    std::ofstream displayListOut;
-    displayListOut.open(path, std::ofstream::out | std::ofstream::app);
+    u8 maxVtx = output;
+    std::fstream dlOut;
+    collisionOut.open(fileOut + "/model.s", std::iostream::out | std::iostream::app);
 
-    displayListOut << std::endl << "glabel " << fileOut << "_dl" << std::endl;
-    for (u32 i = 0; i < verts;) {
-        /* Materials */
+    for (u16 i = 0; i < node->mNumMeshes; i++) {
+        aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+        dlOut << mats[i].getMaterial();
 
-        if (!(vtx[i].compareMaterials(matId))) {
-            matId++;
-            displayListOut << mat[matId].getMaterial();
+        for (u16 j = 0; j < mesh->mNumFaces; j++) {
+
+            dlOut << "gsSP1Triangle " << get_vtx(nodeId, i, mesh->mFaces[j].mIndices[0],
+                    mesh->mFaces[j].mIndices[1], mesh->mFaces[j].mIndices[2]) << std::endl;
         }
-
-        if (!(gVert % f3d)) {
-            gVert = 0;
-            bVert++;
-
-            if (verts - i + 1 < f3d) {
-                displayListOut << "gsSPVertex " << fileOut << "_vertex_" << bVert << " " << (verts - i) << ", 0" << std::endl;
-            }
-
-            else {
-                displayListOut << "gsSPVertex " << fileOut << "_vertex_" << bVert << std::to_string(f3d) << ", 0" << std::endl;
-            }
-        }
-
-        displayListOut << "gsSP1Triangle " << gVert << ", " << gVert + 1 << ", " << gVert + 2 << std::endl;
-        gVert += 3;
-        i += 3;
     }
+}
 
-    displayListOut << "gsSPEndDisplayList" << std::endl;
+void displaylist_builder()
+{
+    write_dl();
 }

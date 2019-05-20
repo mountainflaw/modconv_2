@@ -3,7 +3,7 @@
 *   All rights reserved.                                                                *
 *                                                                                       *
 *   Redistribution and use in source and binary forms, with or without                  *
-*   modification, are permitted provided that the following conditions are met:         *  
+*   modification, are permitted provided that the following conditions are met:         *
 *                                                                                       *
 *       * Redistributions of source code must retain the above copyright                *
 *         notice, this list of conditions and the following disclaimer.                 *
@@ -30,6 +30,20 @@
 #include "../common.hxx"
 #include "surfaces.hxx"
 
+/*
+ * Collision macros
+ * These will be replaced with proper macros soon
+ * instead of gas directives.
+ */
+
+#define COLTRI ".hword "
+#define COLTRI_END ".word 0x0041"
+
+#define COLVTX_INIT ".hword 0x0040, "
+#define COLVTX ".hword "
+
+#define COL_END ".hword 0x0042"
+
 s32 vertex = 0, tri = 0, vtx = 0; /* Globals */
 
 void write_vertex(aiNode* node, const aiScene* scene, const std::string &fileOut, s16 scale)
@@ -37,11 +51,11 @@ void write_vertex(aiNode* node, const aiScene* scene, const std::string &fileOut
     std::fstream collisionOut;
     collisionOut.open(fileOut + "/collision.s", std::iostream::out | std::iostream::app);
 
-    for (u16 i = 0; i < node->mNumMeshes; i++)
-    {
+    for (u16 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        for (u16 i = 0; i < mesh->mNumVertices; i++)
-            collisionOut << "colVertex " << std::to_string((s16)(mesh->mVertices[i].x * scale)) << ", " << std::to_string((s16)(mesh->mVertices[i].y * scale)) << ", " << std::to_string((s16)(mesh->mVertices[i].z * scale)) << std::endl;
+        for (u16 i = 0; i < mesh->mNumVertices; i++) {
+            collisionOut << COLVTX << std::to_string((s16)(mesh->mVertices[i].x * scale)) << ", " << std::to_string((s16)(mesh->mVertices[i].y * scale)) << ", " << std::to_string((s16)(mesh->mVertices[i].z * scale)) << std::endl;
+        }
     }
 }
 
@@ -50,8 +64,7 @@ void write_triangle(aiNode* node, const aiScene* scene, const std::string &fileO
     std::fstream collisionOut;
     collisionOut.open(fileOut + "/collision.s", std::iostream::out | std::iostream::app);
 
-    for (u16 i = 0; i < node->mNumMeshes; i++)
-    {
+    for (u16 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
         std::string terrainType = "SURF_ENV_DEFAULT";
 
@@ -60,11 +73,12 @@ void write_triangle(aiNode* node, const aiScene* scene, const std::string &fileO
             /* Search for collision name shit here */
 //        }
 
-        /* Triangle */  
+        /* Triangle */
         collisionOut << std::endl << "colTrisInit " << terrainType << " " << std::to_string(mesh->mNumFaces) << std::endl;
 
-        for (u16 i = 0; i < mesh->mNumFaces; i++)
+        for (u16 i = 0; i < mesh->mNumFaces; i++) {
             collisionOut << "colTri " << vertex + mesh->mFaces[i].mIndices[0] << ", " << vertex + mesh->mFaces[i].mIndices[1] << ", " << vertex + mesh->mFaces[i].mIndices[2] << std::endl;
+        }
 
         vertex += mesh->mNumVertices;
     }
@@ -72,8 +86,7 @@ void write_triangle(aiNode* node, const aiScene* scene, const std::string &fileO
 
 void set_tri_amount(aiNode* node, const aiScene* scene)
 {
-    for (u16 i = 0; i < node->mNumMeshes; i++)
-    {
+    for (u16 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
         tri += mesh->mNumFaces;
     }
@@ -81,8 +94,7 @@ void set_tri_amount(aiNode* node, const aiScene* scene)
 
 void set_vtx_amount(aiNode* node, const aiScene* scene)
 {
-    for (u16 i = 0; i < node->mNumMeshes; i++)
-    {
+    for (u16 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
         vtx += mesh->mNumVertices;
     }
@@ -97,19 +109,23 @@ void collision_converter_main(const std::string &file, const std::string &fileOu
     collisionOut.open(fileOut + "/collision.s", std::iostream::out | std::iostream::app);
     collisionOut << "glabel " << fileOut << "_collision" << std::endl << "colInit" << std::endl;
 
-    for (u16 i = 0; i < scene->mRootNode->mNumChildren; i++)
+    for (u16 i = 0; i < scene->mRootNode->mNumChildren; i++) { /* I don't think this is used anywhere. */
         set_tri_amount(scene->mRootNode->mChildren[i], scene);
+    }
 
-    for (u16 i = 0; i < scene->mRootNode->mNumChildren; i++)
+    for (u16 i = 0; i < scene->mRootNode->mNumChildren; i++) {
         set_vtx_amount(scene->mRootNode->mChildren[i], scene);
+    }
 
-    collisionOut << std::endl << "colVertexInit " << vtx << std::endl;
-    for (u16 i = 0; i < scene->mRootNode->mNumChildren; i++)
+    collisionOut << std::endl << COLVTX_INIT << vtx << std::endl;
+    for (u16 i = 0; i < scene->mRootNode->mNumChildren; i++) {
             write_vertex(scene->mRootNode->mChildren[i], scene, fileOut, scale);
+    }
 
-    for (u16 i = 0; i < scene->mRootNode->mNumChildren; i++)
+    for (u16 i = 0; i < scene->mRootNode->mNumChildren; i++) {
             write_triangle(scene->mRootNode->mChildren[i], scene, fileOut);
+    }
 
-    collisionOut << std::endl << "colTriStop" << std::endl;
-    collisionOut << "colEnd" << std::endl;
+    collisionOut << std::endl << COLTRI_END << std::endl;
+    collisionOut << COL_END << std::endl;
 }

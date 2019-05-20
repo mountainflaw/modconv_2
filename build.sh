@@ -9,8 +9,8 @@ libs="-lassimp -lstdc++fs"
 flags="-O3"
 forceflags="-Wall -Werror -std=c++17"
 defines=""
-files="src/main.cxx src/f3d/vertex.cxx src/f3d/displaylist.cxx src/collision/collision.cxx src/file.cxx"
-output="build/obsidian"
+files="src/main.cxx src/f3d/vtx_new.cxx src/f3d/displaylist.cxx src/collision/collision.cxx src/file.cxx"
+output="build/modconv2"
 
 # project info
 
