@@ -38,8 +38,8 @@
  * 2.) Implement TRI2 support.
  * 3.) Implement the vertex optimizer.
  */
-#include "vertex.hxx"
-#include "../common.hxx"
+
+#include "f3d.hxx"
 
 u8 approachVtx = 0;
 

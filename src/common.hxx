@@ -106,23 +106,6 @@ typedef double f64;
  ********************************************************************************/
 
 enum axis { AXIS_X, AXIS_Y, AXIS_Z };
-enum color { C_RED, C_GREEN, C_BLUE, C_ALPHA };
-
-/* MATERIALS */
-
-enum matTypes 
-{
-    SOLID_COLOR, 
-    TEXTURED, 
-    ENV_MAPPED, 
-    ALPHA_BLEND,
-    DEFAULT
-};
-
-enum wrappingModes { TEXWRAP, TEXCLAMP, TEXUNUSED, TEXMIRROR };
-
-enum texTypes { RGBA32, RGBA16, IA16, CI8, IA8, I8, CI4, IA4, I4 };
-enum geoTypes { TEXGEN, BKFACE, TBS0, TBS1, TBS2, TBS3, TBS4, TBS5 };
 
 /********************************************************************************
  * PROTOTYPES                                                                   *

@@ -26,8 +26,7 @@
 *   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                        *
 */
 
-#include "../common.hxx"
-#include "displaylist.hxx"
+#include "f3d.hxx"
 
 u32 vert     = 0;
 u16 meshId   = 0,
@@ -46,7 +45,11 @@ u16 meshId   = 0,
  *     is easily achievable.
  */
 
-/* More reliable way to count vertices. */
+/*
+ * More reliable way to count vertices.
+ * I changed this since I'm not too sure whether ASSIMP
+ * counts loose vertices or not.
+ */
 static void count_vtx(aiNode* node, const aiScene* scene)
 {
     for (u16 i = 0; i < node->mNumMeshes; i++) {
@@ -63,6 +66,7 @@ static void count_vtx(aiNode* node, const aiScene* scene)
 u16 vBufferCt = 0,
     vBufferVt = 0;
 /* Materials are no longer setup here. */
+/* TODO: make this go by triangle indices. not too hard :) */
 static void setup_vtx(aiNode* node, const aiScene* scene, s16 scale,
     VertexBuffer* vBuffer, s16 vBuffers, const std::string &file)
 {
@@ -75,9 +79,8 @@ static void setup_vtx(aiNode* node, const aiScene* scene, s16 scale,
 
             if (mesh->HasTextureCoords(0)) {
                 u16 uvX, uvY = 0;
-                /* Get material to multiply UV data by. */
                 aiString path;
-                scene->mMaterials[j]->GetTexture(aiTextureType_DIFFUSE, 0, &path);
+                scene->mMaterials[j]->GetTexture(aiTextureType_DIFFUSE, 0, &path); /* we gotta multiply uv data by the dimensions. thanks sgi. */
                 std::string nameString = path;
 
                 if (file_exists(get_path(path)) && !(is_directory(get_path(path)))) {
@@ -100,7 +103,7 @@ static void setup_vtx(aiNode* node, const aiScene* scene, s16 scale,
                 vBuffer[vBufferCt].vtx[vBufferVt].setTextureCoords(AXIS_Y, 0);
             }
 
-            if (mesh->HasVertexColors(0)) {
+            if (mesh->HasVertexColors(0)) { /* TODO: Modify this so normal lighting can be an option too. */
                 vBuffer[vBufferCt].vtx[vBufferVt].setColor(C_RED,   (u8)(mesh->mColors[0][j].r * 0xff));
                 vBuffer[vBufferCt].vtx[vBufferVt].setColor(C_GREEN, (u8)(mesh->mColors[0][j].g * 0xff));
                 vBuffer[vBufferCt].vtx[vBufferVt].setColor(C_BLUE,  (u8)(mesh->mColors[0][j].b * 0xff));
@@ -113,12 +116,19 @@ static void setup_vtx(aiNode* node, const aiScene* scene, s16 scale,
                 vBuffer[vBufferCt].vtx[vBufferVt].setColor(C_BLUE,  0xff);
                 vBuffer[vBufferCt].vtx[vBufferVt].setColor(C_ALPHA, 0xff);
             }
+
+            vBufferVt++;
+
+            if (vBufferVt % vBuffer[vBufferCt].bufferSize == 0) {
+                vBufferCt++;
+                vBufferVt = 0;
+            }
         }
     }
 }
 
 /** Writes materials to file. */
-static void write_materials(Material *mat, const std::string &fileOut, u8 area)
+static void vtx_write_materials(Material *mat, const std::string &fileOut, u8 area)
 {
     /* PHASE 1: Setup string array */ /* TODO: make this entire function not retarded. */
     std::string matOutputs[meshId] = {"CONV_UNUSED"};
