@@ -80,9 +80,8 @@ int main(int argc, char* argv[])
     std::string filePath = argv[argc - 1],
                 fileOut  = "model";
     s16 scale            = DEFAULT_SCALE;
-    u8 axis              = AXIS_Z;
-    bool level           = false
-         yUp             = true;
+    bool level           = false,
+         yUp             = false;
 
     if (argc < 2) {
         print_help(argv[0]);
@@ -148,7 +147,7 @@ int main(int argc, char* argv[])
         case OUTPUT_F3DEX:
         case OUTPUT_REJ:
         case OUTPUT_REJ2:
-        f3d_main(filePath, fileOut, scale, output, level, yup);
+        f3d_main(filePath, fileOut, scale, output, level, yUp);
             break;
         case OUTPUT_COLLISION:
             break;

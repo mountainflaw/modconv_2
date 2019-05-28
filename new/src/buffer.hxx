@@ -46,7 +46,7 @@ class VertexBuffer
     Vertex vtx[77];
     u16 bufferIndex = 0;
     u8 vtxCount   = 0,
-       bufferSize = 14;
+       bufferSize = 15;
 
     bool isBufferComplete() { return vtxCount == bufferSize; }
 
@@ -77,9 +77,8 @@ class VertexBuffer
         vtxCount++;
     }
 
-    Vertex getVtx(u8 index)
+    u8 getVtx()
     {
-        vtxCount++;
-        return vtx[index];
+        return vtxCount++;
     }
 };

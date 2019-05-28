@@ -66,7 +66,7 @@ static void count_vtx(aiNode* node, const aiScene* scene)
 
 /** Add vertices to vertex buffers. */
 static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
-        VertexBuffer* vBuf, const std::string &file)
+        VertexBuffer* vBuf, const std::string &file, bool yUp)
 {
     for (u16 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
@@ -74,31 +74,36 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
         /* we go by faces instead of verts so we don't accidentally add what we don't need */
         for (u32 j = 0; j < mesh->mNumFaces; j++) {
             printf("[dbg] face %d\n", j);
-            for (u8 k = 0; k < 3; k++) {
+            for (u8 k = 0; k <= 2; k++) {
                 u32 currVtx = mesh->mFaces[j].mIndices[k];
 
                 if (vBuf[vBuffer].isBufferComplete()) {
                     vBuf[vBuffer].vtxCount = 0;
                     vBuffer++;
 
-                    if (vBuffer == vBuffers) { /* set the max amount for the final vbuffer */
+                    if (vBuffer == vBuffers - 1) { /* set the max amount for the final vbuffer */
                         vBuf[vBuffer].bufferSize = vert - vert2;
                     }
                 }
-                vert2++;
-                u8 rgba[4] = {0xff, 0xff, 0xff, 0xff};
 
-                if (mesh->HasVertexColors(0)) { /* Get around potential exception. */
-                    rgba[C_RED] = mesh->mColors[0][currVtx].r * 0xff;
-                    rgba[C_GRN] = mesh->mColors[0][currVtx].g * 0xff;
-                    rgba[C_BLU] = mesh->mColors[0][currVtx].b * 0xff;
-                    rgba[C_APH] = mesh->mColors[0][currVtx].a * 0xff;
+                s16 pos[3];
+
+                if (yUp) { /* y axis up */
+                    pos[AXIS_X] = (s16)mesh->mVertices[currVtx].x * scale;
+                    pos[AXIS_Y] = (s16)mesh->mVertices[currVtx].y * scale;
+                    pos[AXIS_Z] = (s16)mesh->mVertices[currVtx].z * scale;
+                }
+
+                else { /* default setting (z axis up) */
+                    pos[AXIS_X] = (s16)mesh->mVertices[currVtx].x * scale;
+                    pos[AXIS_Y] = (s16)mesh->mVertices[currVtx].z * scale;
+                    pos[AXIS_Z] = (s16)mesh->mVertices[currVtx].y * scale;
                 }
 
                 s16 uv[2] = {0x00};
 
                 /* We have to look at material data so we can multiply the UV data. */
-                if (scene->HasMaterials()) { /* Ditto */
+                if (scene->HasMaterials()) { /* ditto */
                     aiString aiPath;
                     scene->mMaterials[i]->GetTexture(aiTextureType_DIFFUSE, 0, &aiPath);
                     std::string path = aiPath.data;
@@ -119,12 +124,21 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                         std::cout << "[dbg] no texture found - abs " << path << " - relative - " << file + path << std::endl;
                     }
                 }
-                printf("[dbg] vtx %d %d %d\n", (s16)mesh->mVertices[currVtx].x * scale, (s16)mesh->mVertices[currVtx].y * scale, (s16)mesh->mVertices[currVtx].z * scale);
-                vBuf[vBuffer].addVtx((s16)mesh->mVertices[currVtx].x * scale,
-                        (s16)mesh->mVertices[currVtx].y * scale,
-                        (s16)mesh->mVertices[currVtx].z * scale,
+
+                u8 rgba[4] = {0xff, 0xff, 0xff, 0xff};
+
+                if (mesh->HasVertexColors(0)) { /* Get around potential exception. */
+                    rgba[C_RED] = mesh->mColors[0][currVtx].r * 0xff;
+                    rgba[C_GRN] = mesh->mColors[0][currVtx].g * 0xff;
+                    rgba[C_BLU] = mesh->mColors[0][currVtx].b * 0xff;
+                    rgba[C_APH] = mesh->mColors[0][currVtx].a * 0xff;
+                }
+
+                printf("[dbg] vtx %d %d %d\n", pos[AXIS_X], pos[AXIS_Y], pos[AXIS_Z]);
+                vBuf[vBuffer].addVtx(pos[AXIS_X], pos[AXIS_Y], pos[AXIS_Z],
                         uv[AXIS_X], uv[AXIS_Y],
                         rgba[C_RED], rgba[C_GRN], rgba[C_BLU], rgba[C_APH], i);
+                vert2++;
             }
         }
     }
@@ -139,17 +153,33 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
  * a vertex with a different material.
  * 4.) End displaylist after all of that crap is done.
  */
-/*static void write_display_list() {
-}*/
+//static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, Material* mat, u8 microcode)
+static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, u8 microcode)
+{
+    std::fstream dlOut;
+    dlOut.open(fileOut + "/model.s", std::ofstream::out | std::ofstream::app);
 
-void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8 microcode, bool level)
+    std::cout << "glabel " << fileOut << "_dl" << std::endl
+          << "gsSPClearGeometryMode G_LIGHTING" << std::endl;
+    for (u16 i = 0; i < vBuffers; i++) {
+        std::cout << "gsSPVertex " <<  fileOut << "_vertex_" << i << " " << std::to_string(vBuf[i].bufferSize) << ", 0" << std::endl;
+        for (u8 j = 0; j < microcode; j++) {
+            if (!vBuf[i].isBufferComplete()) {
+                std::cout << "gsSP1Triangle " << (u16)vBuf[i].getVtx() << " " << (u16)vBuf[i].getVtx() << " " << (u16)vBuf[i].getVtx() << std::endl;
+            }
+        }
+    }
+    std::cout << "gsSPEndDisplayList" << std::endl;
+}
+
+void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8 microcode, bool level, bool yUp)
 {
     Assimp::Importer importer;
 
     /* We don't use ASSIMP's built in tristripping because of the vertex buffer. */
     const aiScene* scene = importer.ReadFile(file, aiProcess_ValidateDataStructure);
-    std::string path = fileOut + "/model.s";
 
+    reset_file(fileOut + "/model.s");
     count_vtx(scene->mRootNode, scene);
 
     printf("[dbg] there are %d verts\n", vert);
@@ -162,7 +192,7 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
     VertexBuffer vBuf[vBuffers];
 
     for (u16 i = 0; i < scene->mRootNode->mNumChildren; i++) {
-        setup_vtx(scene->mRootNode->mChildren[i], scene, scale, vBuf, file);
+        setup_vtx(scene->mRootNode->mChildren[i], scene, scale, vBuf, file, yUp);
     }
     std::cout << "[dbg] There are " << vBuffers << " vbuffers." << std::endl;
     std::cout << "[dbg] now beginning vtx test" << std::endl;
@@ -171,15 +201,5 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
         vBuf[k].vtxCount = 0;
     }
 
-    /* Test vertex buffer. */
-    for (u16 i = 0; i < vBuffers; i++) {
-        for (u8 j = 0; j < microcode - 1; j++) {
-            if (!vBuf[i].isBufferComplete()) {
-                std::cout << vBuf[i].vtx[j].pos[AXIS_X] << " ";
-                std::cout << vBuf[i].vtx[j].pos[AXIS_Y] << " ";
-                std::cout << vBuf[i].vtx[j].pos[AXIS_Z] << std::endl;
-                vBuf[i].vtxCount++;
-            }
-        }
-    }
+    write_display_list(fileOut, vBuf, microcode);
 }
