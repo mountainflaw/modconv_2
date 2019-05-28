@@ -29,24 +29,19 @@
 #include "modconv.hxx"
 
 u8 output = OUTPUT_F3D;
+void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8 microcode, bool level, bool yUp);
 
-void vtx_phase(const std::string &file, const std::string &fileOut, s16 scale, u8 f3d, u8 area);
-
-void error_message(const std::string &message)
+inline void error_message(const std::string &message)
 {
     std::cout << "\e[1mERROR:\e[0m " << message << std::endl;
     exit(1);
 }
 
-void warn_message(const std::string &message)
-{
-    std::cout << "\e[1mWARNING:\e[0m " << message << std::endl;
-}
+inline void warn_message(const std::string &message)
+{ std::cout << "\e[1mWARNING:\e[0m " << message << std::endl; }
 
-void info_message(const std::string &message)
-{
-    std::cout << "\e[1mINFO:\e[0m " << message << std::endl;
-}
+inline void info_message(const std::string &message)
+{ std::cout << "\e[1mINFO:\e[0m " << message << std::endl; }
 
 void print_help(const std::string &name)
 {
@@ -66,7 +61,7 @@ void print_help(const std::string &name)
     std::cout << "  - rej2      - Optimize for Fast3DLP Rej (80 vtx)" << std::endl;
     std::cout << "  - collision - Export collision mesh" << std::endl;
     std::cout << "  - goddard   - Export Mario head mesh" << std::endl;
-    std::cout << "--up    - Direction for the up axis (Defaults to Z)" << std::endl;
+    std::cout << "--yup   - Use the Y axis for up" << std::endl;
     std::cout << "  - Acceptable inputs are Y and Z." << std::endl;
     std::cout << "--help  - Bring up this menu and quit" << std::endl;
     std::cout << std::endl;
@@ -85,8 +80,9 @@ int main(int argc, char* argv[])
     std::string filePath = argv[argc - 1],
                 fileOut  = "model";
     s16 scale            = DEFAULT_SCALE;
-    u8 axis              = AXIS_Z,
-       area              = 0;
+    u8 axis              = AXIS_Z;
+    bool level           = false
+         yUp             = true;
 
     if (argc < 2) {
         print_help(argv[0]);
@@ -100,7 +96,7 @@ int main(int argc, char* argv[])
 
         if (arg.compare("--level") == 0) {
             std::cout << "DBG - Level mode enabled" << std::endl;
-            area = 1; /* TODO: Level generator idea was scrapped. Change this to a bool. */
+            level = true;
         }
 
         if (arg.compare("--dir") == 0) {
@@ -125,10 +121,8 @@ int main(int argc, char* argv[])
             else error_message("Invalid output type.");
         }
 
-        if (arg.compare("--up") == 0) {
-            if (flw.compare("y") == 0 || flw.compare("Y") == 0) axis = AXIS_Y;
-            else if (flw.compare("z") == 0 || flw.compare("Z") == 0) axis = AXIS_Z;
-            else error_message("Invalid up direction.");
+        if (arg.compare("--yup") == 0) {
+            yUp = true;
         }
 
         if (arg.compare("--help") == 0) {
@@ -149,15 +143,17 @@ int main(int argc, char* argv[])
     std::cout << "DBG - Args: " << argc << std::endl;
     info_message("Starting...");
 
-    if (output == OUTPUT_COLLISION) {
-        collision_converter_main(filePath, fileOut, scale);
-    }
+    switch (output) {
+        case OUTPUT_F3D:
+        case OUTPUT_F3DEX:
+        case OUTPUT_REJ:
+        case OUTPUT_REJ2:
+        f3d_main(filePath, fileOut, scale, output, level, yup);
+            break;
+        case OUTPUT_COLLISION:
+            break;
 
-    else {
-        f3d_init_directory(fileOut, area);
-        vtx_phase(filePath, fileOut, scale, output, area); /* Starts construction process */
     }
-
     info_message("Finished!");
     return 0;
 }

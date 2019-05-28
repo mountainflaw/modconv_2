@@ -46,7 +46,7 @@
 
 s32 vertex = 0, tri = 0, vtx = 0; /* Globals */
 
-void write_vertex(aiNode* node, const aiScene* scene, const std::string &fileOut, s16 scale)
+static void write_vertex(aiNode* node, const aiScene* scene, const std::string &fileOut, s16 scale)
 {
     std::fstream collisionOut;
     collisionOut.open(fileOut + "/collision.s", std::iostream::out | std::iostream::app);
@@ -59,7 +59,7 @@ void write_vertex(aiNode* node, const aiScene* scene, const std::string &fileOut
     }
 }
 
-void write_triangle(aiNode* node, const aiScene* scene, const std::string &fileOut)
+static void write_triangle(aiNode* node, const aiScene* scene, const std::string &fileOut)
 {
     std::fstream collisionOut;
     collisionOut.open(fileOut + "/collision.s", std::iostream::out | std::iostream::app);
@@ -84,7 +84,7 @@ void write_triangle(aiNode* node, const aiScene* scene, const std::string &fileO
     }
 }
 
-void set_tri_amount(aiNode* node, const aiScene* scene)
+static void set_tri_amount(aiNode* node, const aiScene* scene)
 {
     for (u16 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
@@ -92,7 +92,7 @@ void set_tri_amount(aiNode* node, const aiScene* scene)
     }
 }
 
-void set_vtx_amount(aiNode* node, const aiScene* scene)
+static void set_vtx_amount(aiNode* node, const aiScene* scene)
 {
     for (u16 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
