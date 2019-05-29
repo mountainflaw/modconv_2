@@ -222,15 +222,18 @@ static void write_textures(Material *mat)
  * a vertex with a different material.
  * 4.) End displaylist after all of that crap is done.
  */
-//static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, Material* mat, u8 microcode)
-static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf)
+static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, Material* mat)
 {
+    u16 currMat = -1;
     std::cout << std::endl << "glabel " << fileOut << "_dl" << std::endl
         << "gsSPClearGeometryMode G_LIGHTING" << std::endl;
     for (u16 i = 0; i < vBuffers; i++) {
         std::cout << "gsSPVertex " <<  fileOut << "_vertex_" << i
             << " " << std::to_string(vBuf[i].bufferSize) << ", 0" << std::endl;
         while (!vBuf[i].isBufferComplete()) {
+            if (vBuf[i].getVtxMat() != currMat) {
+                std::cout << mat[++currMat].getMaterial();
+            }
             std::cout << "gsSP1Triangle " << vBuf[i].getVtxIndex() << " "
                 << vBuf[i].getVtxIndex() << " "
                 << vBuf[i].getVtxIndex() << std::endl;
@@ -276,5 +279,5 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
     cycle_vbuffers(vBuf, OPTIMIZE, 0);
     write_vtx(fileOut, "", vBuf);
     cycle_vbuffers(vBuf, RESET, 0);
-    write_display_list(fileOut, vBuf);
+    write_display_list(fileOut, vBuf, mat);
 }
