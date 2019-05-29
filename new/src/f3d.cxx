@@ -223,14 +223,8 @@ static void write_textures(Material *mat)
  * 4.) End displaylist after all of that crap is done.
  */
 //static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, Material* mat, u8 microcode)
-static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, u8 microcode)
+static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf)
 {
-    std::fstream dlOut;
-    dlOut.open(fileOut + " = 0; i < vBuffers; i++) {
-        vBuf[i].bufferSize = microcode;
-    }
-/model.s", std::ofstream::out | std::ofstream::app);
-
     std::cout << std::endl << "glabel " << fileOut << "_dl" << std::endl
         << "gsSPClearGeometryMode G_LIGHTING" << std::endl;
     for (u16 i = 0; i < vBuffers; i++) {
@@ -282,5 +276,5 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
     cycle_vbuffers(vBuf, OPTIMIZE, 0);
     write_vtx(fileOut, "", vBuf);
     cycle_vbuffers(vBuf, RESET, 0);
-    write_display_list(fileOut, vBuf, microcode);
+    write_display_list(fileOut, vBuf);
 }
