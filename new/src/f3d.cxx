@@ -147,7 +147,7 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
 
 enum BufferModes {RESET, OPTIMIZE, BUFFER};
 
-/** Function for common vbuffer operations (Reset counter and run the optimizer) */
+/** Function for common vbuffer operations (reset counter, run the optimizer, etc). */
 static inline void cycle_vbuffers(VertexBuffer *vBuf, u8 mode, u8 microcode)
 {
     switch (mode) {
@@ -226,7 +226,10 @@ static void write_textures(Material *mat)
 static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, u8 microcode)
 {
     std::fstream dlOut;
-    dlOut.open(fileOut + "/model.s", std::ofstream::out | std::ofstream::app);
+    dlOut.open(fileOut + " = 0; i < vBuffers; i++) {
+        vBuf[i].bufferSize = microcode;
+    }
+/model.s", std::ofstream::out | std::ofstream::app);
 
     std::cout << std::endl << "glabel " << fileOut << "_dl" << std::endl
         << "gsSPClearGeometryMode G_LIGHTING" << std::endl;
