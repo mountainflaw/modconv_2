@@ -44,6 +44,7 @@
 #include "modconv.hxx"
 #include "f3d.hxx"
 #include "buffer.hxx"
+#include "material.hxx"
 
 u32 vert     = 0,
     vert2    = 0;
@@ -144,6 +145,67 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
     }
 }
 
+enum BufferModes {RESET, OPTIMIZE};
+
+/** Function for common vbuffer operations (Reset counter and run the optimizer) */
+static inline void cycle_vbuffers(VertexBuffer *vBuf, u8 mode)
+{
+    switch (mode) {
+        case OPTIMIZE:
+        for (u16 i = 0; i < vBuffers; i++) {
+            vBuf[i].vtxCount = 0;
+        }
+        case RESET:
+        for (u16 i = 0; i < vBuffers; i++) {
+            vBuf[i].vtxCount = 0;
+        }
+        break;
+    }
+}
+
+static void write_vtx(const std::string fileOut, const std::string &path, VertexBuffer *vBuf)
+{
+    std::fstream vtxOut;
+    vtxOut.open(path, std::ofstream::out | std::ofstream::app);
+    for (u16 i = 0; i < vBuffers; i++) {
+        std::cout << std::endl << fileOut << "_vertex_" << i << ":" << std::endl;
+        for (u16 j = 0; j < vBuf[i].bufferSize; j++) {
+            Vertex vtx = vBuf[i].getVtx();
+            std::cout << "vertex " << vtx.pos[AXIS_X] << ", "
+                << vtx.pos[AXIS_Y] << ", "
+                << vtx.pos[AXIS_Z] << ", "
+                << vtx.st[AXIS_X]  << ", "
+                << vtx.st[AXIS_Y]  << ", "
+                << (u16)vtx.col[C_RED]  << ", "
+                << (u16)vtx.col[C_GRN]  << ", "
+                << (u16)vtx.col[C_BLU]  << ", "
+                << (u16)vtx.col[C_APH]  << std::endl;
+        }
+    }
+}
+
+static void configure_materials(Material* mat, aiNode* node, const aiScene* scene)
+{
+    for (u16 i = 0; i < node->mNumMeshes; i++) {
+        aiString aiPath, aiName;
+        scene->mMaterials[i]->Get(AI_MATKEY_NAME, aiName);
+        scene->mMaterials[i]->GetTexture(aiTextureType_DIFFUSE, 0, &aiPath);
+
+        std::cout << "[dbg] name: " << aiName.data << std::endl;
+        mat[meshId].setName(aiName.data);
+        mat[meshId].setPath(aiPath.data);
+        meshId++;
+    }
+
+    for (u16 i = 0; i < node->mNumChildren; i++) {
+        configure_materials(mat, node->mChildren[i], scene);
+    }
+}
+
+static void write_textures(Material *mat)
+{
+}
+
 /** Write display list commands to file. */
 /*
  * PROCESS:
@@ -159,25 +221,27 @@ static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, u
     std::fstream dlOut;
     dlOut.open(fileOut + "/model.s", std::ofstream::out | std::ofstream::app);
 
-    std::cout << "glabel " << fileOut << "_dl" << std::endl
-          << "gsSPClearGeometryMode G_LIGHTING" << std::endl;
+    std::cout << std::endl << "glabel " << fileOut << "_dl" << std::endl
+        << "gsSPClearGeometryMode G_LIGHTING" << std::endl;
     for (u16 i = 0; i < vBuffers; i++) {
-        std::cout << "gsSPVertex " <<  fileOut << "_vertex_" << i << " " << std::to_string(vBuf[i].bufferSize) << ", 0" << std::endl;
-        for (u8 j = 0; j < microcode; j++) {
-            if (!vBuf[i].isBufferComplete()) {
-                std::cout << "gsSP1Triangle " << (u16)vBuf[i].getVtx() << " " << (u16)vBuf[i].getVtx() << " " << (u16)vBuf[i].getVtx() << std::endl;
-            }
+        std::cout << "gsSPVertex " <<  fileOut << "_vertex_" << i
+            << " " << std::to_string(vBuf[i].bufferSize) << ", 0" << std::endl;
+        while (!vBuf[i].isBufferComplete()) {
+            std::cout << "gsSP1Triangle " << vBuf[i].getVtxIndex() << " "
+                << vBuf[i].getVtxIndex() << " "
+                << vBuf[i].getVtxIndex() << std::endl;
         }
     }
     std::cout << "gsSPEndDisplayList" << std::endl;
 }
 
+/** Main function for the F3D build process. */
 void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8 microcode, bool level, bool yUp)
 {
     Assimp::Importer importer;
 
     /* We don't use ASSIMP's built in tristripping because of the vertex buffer. */
-    const aiScene* scene = importer.ReadFile(file, aiProcess_ValidateDataStructure);
+    const aiScene* scene = importer.ReadFile(file, aiProcess_ValidateDataStructure | aiProcess_Triangulate);
 
     reset_file(fileOut + "/model.s");
     count_vtx(scene->mRootNode, scene);
@@ -191,15 +255,25 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
 
     VertexBuffer vBuf[vBuffers];
 
+    for (u16 i = 0; i < vBuffers; i++) {
+        vBuf[i].bufferSize = microcode;
+    }
+
     for (u16 i = 0; i < scene->mRootNode->mNumChildren; i++) {
         setup_vtx(scene->mRootNode->mChildren[i], scene, scale, vBuf, file, yUp);
     }
+
     std::cout << "[dbg] There are " << vBuffers << " vbuffers." << std::endl;
     std::cout << "[dbg] now beginning vtx test" << std::endl;
 
-    for (u16 k = 0; k < vBuffers; k++) {
-        vBuf[k].vtxCount = 0;
-    }
+    /* Materials */
+    Material mat[meshId];
+    meshId = 0;
+    configure_materials(mat, scene->mRootNode, scene);
+    write_textures(mat);
 
+    cycle_vbuffers(vBuf, OPTIMIZE);
+    write_vtx(fileOut, "", vBuf);
+    cycle_vbuffers(vBuf, RESET);
     write_display_list(fileOut, vBuf, microcode);
 }

@@ -37,14 +37,13 @@ typedef struct
 class VertexBuffer
 {
     private:
+    Vertex vtx[77];
     bool cprVert(Vertex *a, Vertex *b)
     {
         return true;
     }
 
     public:
-    Vertex vtx[77];
-    u16 bufferIndex = 0;
     u8 vtxCount   = 0,
        bufferSize = 15;
 
@@ -77,8 +76,11 @@ class VertexBuffer
         vtxCount++;
     }
 
-    u8 getVtx()
-    {
-        return vtxCount++;
-    }
+    Vertex getVtx() { return vtx[vtxCount++]; }
+
+    u16 getVtxIndex() { return vtxCount++; }
+
+    u16 getVtxMat() { return vtx[vtxCount].flag[3]; }
+    u16 getVtxMatTri2() { return vtx[vtxCount + 3].flag[3]; }
+
 };

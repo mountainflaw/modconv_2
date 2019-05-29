@@ -58,7 +58,6 @@ void print_help(const std::string &name)
     std::cout << "  - f3d       - Use Fast3D (default)" << std::endl;
     std::cout << "  - f3dex     - Use Fast3DEX (requires f3dex to be enabled)" << std::endl;
     std::cout << "  - rej       - Optimize for Fast3DEX Rej (64 vtx)" << std::endl;
-    std::cout << "  - rej2      - Optimize for Fast3DLP Rej (80 vtx)" << std::endl;
     std::cout << "  - collision - Export collision mesh" << std::endl;
     std::cout << "  - goddard   - Export Mario head mesh" << std::endl;
     std::cout << "--yup   - Use the Y axis for up" << std::endl;
@@ -114,7 +113,6 @@ int main(int argc, char* argv[])
             if (flw.compare("f3d") == 0)              output = OUTPUT_F3D;
             else if (flw.compare("f3dex") == 0)       output = OUTPUT_F3DEX;
             else if (flw.compare("rej") == 0)         output = OUTPUT_REJ;
-            else if (flw.compare("rej2") == 0)        output = OUTPUT_REJ2;
             else if (flw.compare("goddard") == 0)     output = OUTPUT_GODDARD;
             else if (flw.compare("collision") == 0)   output = OUTPUT_COLLISION;
             else error_message("Invalid output type.");
