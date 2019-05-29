@@ -145,16 +145,23 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
     }
 }
 
-enum BufferModes {RESET, OPTIMIZE};
+enum BufferModes {RESET, OPTIMIZE, BUFFER};
 
 /** Function for common vbuffer operations (Reset counter and run the optimizer) */
-static inline void cycle_vbuffers(VertexBuffer *vBuf, u8 mode)
+static inline void cycle_vbuffers(VertexBuffer *vBuf, u8 mode, u8 microcode)
 {
     switch (mode) {
+        case BUFFER:
+        for (u16 i = 0; i < vBuffers; i++) {
+            vBuf[i].bufferSize = microcode;
+        }
+        break;
+
         case OPTIMIZE:
         for (u16 i = 0; i < vBuffers; i++) {
             vBuf[i].vtxCount = 0;
         }
+
         case RESET:
         for (u16 i = 0; i < vBuffers; i++) {
             vBuf[i].vtxCount = 0;
@@ -254,10 +261,7 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
     }
 
     VertexBuffer vBuf[vBuffers];
-
-    for (u16 i = 0; i < vBuffers; i++) {
-        vBuf[i].bufferSize = microcode;
-    }
+    cycle_vbuffers(vBuf, BUFFER, microcode);
 
     for (u16 i = 0; i < scene->mRootNode->mNumChildren; i++) {
         setup_vtx(scene->mRootNode->mChildren[i], scene, scale, vBuf, file, yUp);
@@ -272,8 +276,8 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
     configure_materials(mat, scene->mRootNode, scene);
     write_textures(mat);
 
-    cycle_vbuffers(vBuf, OPTIMIZE);
+    cycle_vbuffers(vBuf, OPTIMIZE, 0);
     write_vtx(fileOut, "", vBuf);
-    cycle_vbuffers(vBuf, RESET);
+    cycle_vbuffers(vBuf, RESET, 0);
     write_display_list(fileOut, vBuf, microcode);
 }
