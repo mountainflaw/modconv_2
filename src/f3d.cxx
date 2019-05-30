@@ -110,12 +110,14 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                         std::cout << "[dbg] file exists! - " << path << std::endl;
                         uv[AXIS_X] = mesh->mTextureCoords[0][currVtx].x * 32 * get_dimension(AXIS_X, path);
                         uv[AXIS_Y] = mesh->mTextureCoords[0][currVtx].y * 32 * get_dimension(AXIS_Y, path);
+                        printf("[dbg] uv is %d %d\n", uv[AXIS_X], uv[AXIS_Y]);
                     }
 
                     else if (file_exists(get_path(file) + path) && !(is_directory(get_path(file) + path))) { /* relative */
                         std::cout << "[dbg] file exists (relative)! - " << file + path << std::endl;
-                        uv[AXIS_X] = mesh->mTextureCoords[0][currVtx].x * 32 * get_dimension(AXIS_X, path);
-                        uv[AXIS_Y] = mesh->mTextureCoords[0][currVtx].y * 32 * get_dimension(AXIS_Y, path);
+                        uv[AXIS_X] = mesh->mTextureCoords[0][currVtx].x * 32 * get_dimension(AXIS_X, get_path(file) + path);
+                        uv[AXIS_Y] = mesh->mTextureCoords[0][currVtx].y * 32 * get_dimension(AXIS_Y, get_path(file) + path);
+                        printf("[dbg] uv is %d %d\n", uv[AXIS_X], uv[AXIS_Y]);
                     }
 
                     else { /* no texture found */
@@ -218,7 +220,14 @@ static void configure_materials(const std::string &file, Material* mat, aiNode* 
 static void write_textures(const std::string &fileOut, Material *mat, bool level)
 {
     std::fstream texOut;
-    texOut.open(fileOut + "/model.s", std::ofstream::out | std::ofstream::app);
+    if (level) {
+        reset_file(fileOut + "/texture.s");
+        texOut.open(fileOut + "/texture.s", std::ofstream::out | std::ofstream::app);
+    }
+
+    else { /* generating an actor */
+        texOut.open(fileOut + "/model.s", std::ofstream::out | std::ofstream::app);
+    }
 
     /* Phase 1 - Find redundant textures */
     for (u16 i = 0; i < meshId; i++) {
@@ -234,7 +243,13 @@ static void write_textures(const std::string &fileOut, Material *mat, bool level
         if (!mat[i].useless) {
             texOut << std::endl;
             texOut << mat[i].getFileNameNoExtension() << ":" << std::endl;
-            texOut << ".incbin " << R"(")" << mat[i].getFileNameNoExtension() << R"(")" << std::endl;
+            if (level) {
+                texOut << ".incbin " << R"(")" << "levels/" << fileOut << "/" << mat[i].getFileNameNoExtension() << R"(")" << std::endl;
+            }
+
+            else { /* generating an actor */
+                texOut << ".incbin " << R"(")" << "actors/" << fileOut << "/" << mat[i].getFileNameNoExtension() << R"(")" << std::endl;
+            }
 
             if (file_exists(mat[i].getPath())) {
                 remove_file(fileOut + "/" + get_filename(mat[i].getPath()));

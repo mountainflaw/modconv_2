@@ -20,7 +20,7 @@ class Material
 
         switch(type) {
             case RGBA32:
-            return "gsDPLoadTextureBlock " + getFileNameNoExtension() + ", G_IM_FMT_RGBA, G_IM_SIZ_32b, " + std::to_string(get_dimension(AXIS_X, path)) + ", " + std::to_string(get_dimension(AXIS_Y, path)) + ", 0, G_TX_WRAP | G_TX_NOMIRROR, G_TX_WRAP | G_TX_NOMIRROR, " + std::to_string((u16)log2(get_dimension(AXIS_X, path))) + ", " + std::to_string((s16)log2(get_dimension(AXIS_Y, path))) + ", G_TX_NOLOD, G_TX_NOLOD\n";
+            return "gsDPLoadTextureBlock " + getFileNameNoExtension() + ", G_IM_FMT_RGBA, G_IM_SIZ_32b, " + std::to_string(get_dimension(AXIS_X, path)) + ", " + std::to_string(get_dimension(AXIS_Y, path)) + ", 0, G_TX_WRAP | G_TX_NOMIRROR, G_TX_WRAP | G_TX_NOMIRROR, " + std::to_string((u16)log2(get_dimension(AXIS_X, path))) + ", " + std::to_string((s16)log2(get_dimension(AXIS_Y, path))) + ", G_TX_NOLOD, G_TX_NOLOD\ngsSPTexture -1, -1, 0, 0, 1\ngsDPTileSync\n";
             break;
 
             case CI4:
@@ -31,9 +31,9 @@ class Material
 
             case RGBA16:
             default:
-            return "gsDPLoadTextureBlock " + getFileNameNoExtension() + ", G_IM_FMT_RGBA, G_IM_SIZ_16b, " + std::to_string(get_dimension(AXIS_X, path)) + ", " + std::to_string(get_dimension(AXIS_Y, path)) + ", 0, G_TX_WRAP | G_TX_NOMIRROR, G_TX_WRAP | G_TX_NOMIRROR, " + std::to_string((u16)log2(get_dimension(AXIS_X, path))) + ", " + std::to_string((s16)log2(get_dimension(AXIS_Y, path))) + ", G_TX_NOLOD, G_TX_NOLOD\n";
+            return "gsDPLoadTextureBlock " + getFileNameNoExtension() + ", G_IM_FMT_RGBA, G_IM_SIZ_16b, " + std::to_string(get_dimension(AXIS_X, path)) + ", " + std::to_string(get_dimension(AXIS_Y, path)) + ", 0, G_TX_WRAP | G_TX_NOMIRROR, G_TX_WRAP | G_TX_NOMIRROR, " + std::to_string((u16)log2(get_dimension(AXIS_X, path))) + ", " + std::to_string((s16)log2(get_dimension(AXIS_Y, path))) + ", G_TX_NOLOD, G_TX_NOLOD\ngsSPTexture -1, -1, 0, 0, 1\ngsDPTileSync\n";
         }
-        return "";
+        return ""; /* ok cuck */
     }
 
     /** Returns combiner settings. */
