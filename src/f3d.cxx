@@ -86,17 +86,15 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                 s16 pos[3];
 
                 if (yUp) { /* y axis up */
-                    pos[AXIS_X] = (s16)mesh->mVertices[currVtx].x * scale;
-                    pos[AXIS_Y] = (s16)mesh->mVertices[currVtx].y * scale;
-                    pos[AXIS_Z] = (s16)mesh->mVertices[currVtx].z * scale;
-
-                    printf("vertex %d %d %d\n", (s16)(mesh->mVertices[currVtx].x * scale), (s16)(mesh->mVertices[currVtx].y * scale), (s16)(mesh->mVertices[currVtx].z * scale));
+                    pos[AXIS_X] = (s16)(mesh->mVertices[currVtx].x * scale);
+                    pos[AXIS_Y] = (s16)(mesh->mVertices[currVtx].y * scale);
+                    pos[AXIS_Z] = (s16)(mesh->mVertices[currVtx].z * scale);
                 }
 
                 else { /* default setting (z axis up) */
-                    pos[AXIS_X] = (s16)mesh->mVertices[currVtx].x * scale;
-                    pos[AXIS_Y] = (s16)mesh->mVertices[currVtx].z * scale;
-                    pos[AXIS_Z] = (s16)mesh->mVertices[currVtx].y * scale;
+                    pos[AXIS_X] = (s16)(mesh->mVertices[currVtx].x * scale);
+                    pos[AXIS_Y] = (s16)(mesh->mVertices[currVtx].z * scale);
+                    pos[AXIS_Z] = (s16)(mesh->mVertices[currVtx].y * scale);
                 }
 
                 s16 uv[2] = {0x00};
