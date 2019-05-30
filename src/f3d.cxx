@@ -71,7 +71,6 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
 
         /* we go by faces instead of verts so we don't accidentally add what we don't need */
         for (u32 j = 0; j < mesh->mNumFaces; j++) {
-            printf("[dbg] face %d\n", j);
             for (u8 k = 0; k <= 2; k++) {
                 u32 currVtx = mesh->mFaces[j].mIndices[k];
 
@@ -90,6 +89,8 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                     pos[AXIS_X] = (s16)mesh->mVertices[currVtx].x * scale;
                     pos[AXIS_Y] = (s16)mesh->mVertices[currVtx].y * scale;
                     pos[AXIS_Z] = (s16)mesh->mVertices[currVtx].z * scale;
+
+                    printf("vertex %d %d %d\n", (s16)(mesh->mVertices[currVtx].x * scale), (s16)(mesh->mVertices[currVtx].y * scale), (s16)(mesh->mVertices[currVtx].z * scale));
                 }
 
                 else { /* default setting (z axis up) */
@@ -107,21 +108,16 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                     std::string path = aiPath.data;
 
                     if (file_exists(path)) { /* absolute */
-                        std::cout << "[dbg] file exists! - " << path << std::endl;
                         uv[AXIS_X] = mesh->mTextureCoords[0][currVtx].x * 32 * get_dimension(AXIS_X, path);
                         uv[AXIS_Y] = mesh->mTextureCoords[0][currVtx].y * 32 * get_dimension(AXIS_Y, path);
-                        printf("[dbg] uv is %d %d\n", uv[AXIS_X], uv[AXIS_Y]);
                     }
 
                     else if (file_exists(get_path(file) + path) && !(is_directory(get_path(file) + path))) { /* relative */
-                        std::cout << "[dbg] file exists (relative)! - " << file + path << std::endl;
                         uv[AXIS_X] = mesh->mTextureCoords[0][currVtx].x * 32 * get_dimension(AXIS_X, get_path(file) + path);
                         uv[AXIS_Y] = mesh->mTextureCoords[0][currVtx].y * 32 * get_dimension(AXIS_Y, get_path(file) + path);
-                        printf("[dbg] uv is %d %d\n", uv[AXIS_X], uv[AXIS_Y]);
                     }
 
                     else { /* no texture found */
-                        std::cout << "[dbg] no texture found - abs " << path << " - relative - " << file + path << std::endl;
                     }
                 }
 
@@ -134,7 +130,6 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                     rgba[C_APH] = mesh->mColors[0][currVtx].a * 0xff;
                 }
 
-                printf("[dbg] vtx %d %d %d\n", pos[AXIS_X], pos[AXIS_Y], pos[AXIS_Z]);
                 vBuf[vBuffer].addVtx(pos[AXIS_X], pos[AXIS_Y], pos[AXIS_Z],
                         uv[AXIS_X], uv[AXIS_Y],
                         rgba[C_RED], rgba[C_GRN], rgba[C_BLU], rgba[C_APH], i);
@@ -198,13 +193,11 @@ static void configure_materials(const std::string &file, Material* mat, aiNode* 
         scene->mMaterials[i]->GetTexture(aiTextureType_DIFFUSE, 0, &aiPath);
 
         if (file_exists(aiPath.data)) { /* absolute */
-            std::cout << "[dbg] absolute: " << get_path(file) << std::endl;
             mat[meshId].setPath(aiPath.data);
             mat[meshId].textured = true;
         }
 
         else if (file_exists(get_path(file) + aiPath.data) && !(is_directory(get_path(file) + aiPath.data))) { /* relative */
-            std::cout << "[dbg] relative: " << get_path(file) + aiPath.data << std::endl;
             mat[meshId].setPath(get_path(file) + aiPath.data);
             mat[meshId].textured = true;
         }
@@ -308,7 +301,6 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
     reset_file(fileOut + "/model.s");
     count_vtx(scene->mRootNode, scene);
 
-    printf("[dbg] there are %d verts\n", vert);
     vBuffers = vert / microcode;
 
     if (vert % microcode > 0) { /* is there a trailing vbuffer? */
@@ -321,8 +313,6 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
     for (u16 i = 0; i < scene->mRootNode->mNumChildren; i++) {
         setup_vtx(scene->mRootNode->mChildren[i], scene, scale, vBuf, file, yUp);
     }
-
-    std::cout << "[dbg] There are " << vBuffers << " vbuffers." << std::endl;
 
     /* Materials */
     Material mat[meshId];

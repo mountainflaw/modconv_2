@@ -64,9 +64,7 @@ void reset_file(const std::string &fileOut)
 
 /** Deletes a directory and creates it again. */
 void reset_directory(const std::string &output)
-{   std::cout << "Creating directory " << output << std::endl;
-    std::filesystem::create_directory(output);
-}
+{    std::filesystem::create_directory(output); }
 
 /** Deletes a file. */
 void remove_file(const std::string &path)
