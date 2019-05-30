@@ -41,11 +41,11 @@ static void write_vertex(aiNode* node, const aiScene* scene, const std::string &
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
         for (u16 i = 0; i < mesh->mNumVertices; i++) {
             if (yUp) {
-                collisionOut << "colVertex" << std::to_string((s16)(mesh->mVertices[i].x * scale)) << ", " << std::to_string((s16)(mesh->mVertices[i].y * scale)) << ", " << std::to_string((s16)(mesh->mVertices[i].z * scale)) << std::endl;
+                collisionOut << "colVertex " << std::to_string((s16)(mesh->mVertices[i].x * scale)) << ", " << std::to_string((s16)(mesh->mVertices[i].y * scale)) << ", " << std::to_string((s16)(mesh->mVertices[i].z * scale)) << std::endl;
             }
 
             else { /* z up (default) */
-                collisionOut << "colVertex" << std::to_string((s16)(mesh->mVertices[i].x * scale)) << ", " << std::to_string((s16)(mesh->mVertices[i].z * scale)) << ", " << std::to_string((s16)(mesh->mVertices[i].y * scale)) << std::endl;
+                collisionOut << "colVertex " << std::to_string((s16)(mesh->mVertices[i].x * scale)) << ", " << std::to_string((s16)(mesh->mVertices[i].z * scale)) << ", " << std::to_string((s16)(mesh->mVertices[i].y * scale)) << std::endl;
             }
         }
     }
@@ -99,7 +99,8 @@ void collision_converter_main(const std::string &file, const std::string &fileOu
 
     std::fstream collisionOut;
     collisionOut.open(fileOut + "/collision.s", std::iostream::out | std::iostream::app);
-    collisionOut << "glabel " << fileOut << "_collision" << std::endl << "colInit" << std::endl;
+    collisionOut << "include " << R"(")" << "collision.inc" << R"(")" << std::endl
+        << "glabel " << fileOut << "_collision" << std::endl << "colInit" << std::endl;
 
     reset_file(fileOut + "/collision.s");
 
@@ -111,7 +112,7 @@ void collision_converter_main(const std::string &file, const std::string &fileOu
         set_vtx_amount(scene->mRootNode->mChildren[i], scene);
     }
 
-    collisionOut << std::endl << "colVertexInit" << vtx << std::endl;
+    collisionOut << std::endl << "colVertexInit " << vtx << std::endl;
     for (u16 i = 0; i < scene->mRootNode->mNumChildren; i++) {
             write_vertex(scene->mRootNode->mChildren[i], scene, fileOut, scale, yUp);
     }
