@@ -289,7 +289,12 @@ static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, M
                 << vBuf[i].getVtxIndex() << std::endl;
         }
     }
-    gfxOut << "gsSPTexture -1, -1, 0, 0, 0\ngsSPEndDisplayList" << std::endl;
+
+    gfxOut << "gsSPTexture -1, -1, 0, 0, 0\n"
+        << "gsDPPipeSync\n"
+        << "gsDPSetCombineMode1Cycle G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE\n"
+        << "gsSPSetGeometryMode G_LIGHTING\n"
+        << "gsSPEndDisplayList" << std::endl;
 }
 
 /** Main function for the F3D build process. */
