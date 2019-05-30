@@ -260,7 +260,7 @@ static void write_textures(const std::string &fileOut, Material *mat, bool level
  * a vertex with a different material.
  * 4.) End displaylist after all of that crap is done.
  */
-static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, Material* mat)
+static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, Material* mat, bool yUp)
 {
     std::fstream gfxOut;
     gfxOut.open(fileOut + "/model.s", std::ofstream::out | std::ofstream::app);
@@ -275,9 +275,24 @@ static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, M
             if (vBuf[i].getVtxMat() != currMat) {
                 gfxOut << mat[++currMat].getMaterial();
             }
-            gfxOut << "gsSP1Triangle " << vBuf[i].getVtxIndex() << " "
-                << vBuf[i].getVtxIndex() << " "
-                << vBuf[i].getVtxIndex() << std::endl;
+
+            if (false) { }
+
+            else {
+                u16 triOne[3] = {vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex()};
+
+                if (yUp) {
+                    gfxOut << "gsSP1Triangle " << triOne[0] << " "
+                    << triOne[1] << " "
+                    << triOne[2] << std::endl;
+                }
+
+                else { /* Flip normals for Z up */
+                    gfxOut << "gsSP1Triangle " << triOne[2] << " "
+                    << triOne[1] << " "
+                    << triOne[0] << std::endl;
+                }
+            }
         }
     }
 
@@ -321,5 +336,5 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
     cycle_vbuffers(vBuf, OPTIMIZE, 0);
     write_vtx(fileOut, "", vBuf);
     cycle_vbuffers(vBuf, RESET, 0);
-    write_display_list(fileOut, vBuf, mat);
+    write_display_list(fileOut, vBuf, mat, yUp);
 }
