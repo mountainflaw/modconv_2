@@ -289,7 +289,7 @@ static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, M
                 << vBuf[i].getVtxIndex() << std::endl;
         }
     }
-    gfxOut << "gsSPEndDisplayList" << std::endl;
+    gfxOut << "gsSPTexture -1, -1, 0, 0, 0\ngsSPEndDisplayList" << std::endl;
 }
 
 /** Main function for the F3D build process. */
