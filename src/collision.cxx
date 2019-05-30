@@ -99,10 +99,9 @@ void collision_converter_main(const std::string &file, const std::string &fileOu
 
     std::fstream collisionOut;
     collisionOut.open(fileOut + "/collision.s", std::iostream::out | std::iostream::app);
-    collisionOut << "include " << R"(")" << "collision.inc" << R"(")" << std::endl
-        << "glabel " << fileOut << "_collision" << std::endl << "colInit" << std::endl;
-
     reset_file(fileOut + "/collision.s");
+    collisionOut << "include " << R"(")" << "collision.inc" << R"(")" << std::endl << std::endl
+        << "glabel " << fileOut << "_collision" << std::endl << "colInit";
 
     for (u16 i = 0; i < scene->mRootNode->mNumChildren; i++) { /* I don't think this is used anywhere. */
         set_tri_amount(scene->mRootNode->mChildren[i], scene);
