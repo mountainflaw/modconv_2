@@ -30,20 +30,6 @@
 #include "modconv.hxx"
 #include "surfaces.hxx"
 
-/*
- * Collision macros
- * These will be replaced with proper macros soon
- * instead of gas directives.
- */
-
-#define COLTRI ".hword "
-#define COLTRI_END ".word 0x0041"
-
-#define COLVTX_INIT ".hword 0x0040, "
-#define COLVTX ".hword "
-
-#define COL_END ".hword 0x0042"
-
 s32 vertex = 0, tri = 0, vtx = 0; /* Globals */
 
 static void write_vertex(aiNode* node, const aiScene* scene, const std::string &fileOut, s16 scale, bool yUp)
@@ -55,11 +41,11 @@ static void write_vertex(aiNode* node, const aiScene* scene, const std::string &
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
         for (u16 i = 0; i < mesh->mNumVertices; i++) {
             if (yUp) {
-                collisionOut << COLVTX << std::to_string((s16)(mesh->mVertices[i].x * scale)) << ", " << std::to_string((s16)(mesh->mVertices[i].y * scale)) << ", " << std::to_string((s16)(mesh->mVertices[i].z * scale)) << std::endl;
+                collisionOut << "colVertex" << std::to_string((s16)(mesh->mVertices[i].x * scale)) << ", " << std::to_string((s16)(mesh->mVertices[i].y * scale)) << ", " << std::to_string((s16)(mesh->mVertices[i].z * scale)) << std::endl;
             }
 
             else { /* z up (default) */
-                collisionOut << COLVTX << std::to_string((s16)(mesh->mVertices[i].x * scale)) << ", " << std::to_string((s16)(mesh->mVertices[i].z * scale)) << ", " << std::to_string((s16)(mesh->mVertices[i].y * scale)) << std::endl;
+                collisionOut << "colVertex" << std::to_string((s16)(mesh->mVertices[i].x * scale)) << ", " << std::to_string((s16)(mesh->mVertices[i].z * scale)) << ", " << std::to_string((s16)(mesh->mVertices[i].y * scale)) << std::endl;
             }
         }
     }
@@ -80,7 +66,7 @@ static void write_triangle(aiNode* node, const aiScene* scene, const std::string
 //        }
 
         /* Triangle */
-        collisionOut << std::endl << "colTrisInit " << terrainType << " " << std::to_string(mesh->mNumFaces) << std::endl;
+        collisionOut << std::endl << "colTriInit " << terrainType << " " << std::to_string(mesh->mNumFaces) << std::endl;
 
         for (u16 i = 0; i < mesh->mNumFaces; i++) {
             collisionOut << "colTri " << vertex + mesh->mFaces[i].mIndices[0] << ", " << vertex + mesh->mFaces[i].mIndices[1] << ", " << vertex + mesh->mFaces[i].mIndices[2] << std::endl;
@@ -125,7 +111,7 @@ void collision_converter_main(const std::string &file, const std::string &fileOu
         set_vtx_amount(scene->mRootNode->mChildren[i], scene);
     }
 
-    collisionOut << std::endl << COLVTX_INIT << vtx << std::endl;
+    collisionOut << std::endl << "colVertexInit" << vtx << std::endl;
     for (u16 i = 0; i < scene->mRootNode->mNumChildren; i++) {
             write_vertex(scene->mRootNode->mChildren[i], scene, fileOut, scale, yUp);
     }
@@ -134,6 +120,6 @@ void collision_converter_main(const std::string &file, const std::string &fileOu
             write_triangle(scene->mRootNode->mChildren[i], scene, fileOut);
     }
 
-    collisionOut << std::endl << COLTRI_END << std::endl;
-    collisionOut << COL_END << std::endl;
+    collisionOut << std::endl << "colTriStop" << std::endl;
+    collisionOut << "colEnd" << std::endl;
 }
