@@ -240,7 +240,7 @@ static void write_textures(const std::string &fileOut, Material *mat, bool level
 
     /* Phase 2: Write and copy textures */
     for (u16 i = 0; i < meshId; i++) {
-        if (!mat[i].useless) {
+        if (!mat[i].useless && mat[i].textured) {
             texOut << std::endl;
             texOut << mat[i].getFileNameNoExtension() << ":" << std::endl;
             if (level) {
