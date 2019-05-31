@@ -85,7 +85,7 @@ int main(int argc, char* argv[])
 
     if (argc < 2) {
         print_help(argv[0]);
-        error_message("Too few arguments.");
+        exit(0);
     }
 
     /* Parse arguments */
