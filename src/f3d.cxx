@@ -276,21 +276,44 @@ static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, M
                 gfxOut << mat[++currMat].getMaterial();
             }
 
-            if (false) { }
+            if (vBuf[i].canTri2()) {
+                u16 triTwo[6] = {vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex(),
+                                 vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex()};
+
+                if (yUp) {
+                    gfxOut << "gsSP2Triangles " << triTwo[0] << ", "
+                    << triTwo[1] << ", "
+                    << triTwo[2] << ", 0x00, "
+                    << triTwo[3] << ", "
+                    << triTwo[4] << ", "
+                    << triTwo[5] << ", 0x00"
+                    << std::endl;
+                }
+
+                else { /* Flip normals for Z up */
+                    gfxOut << "gsSP2Triangles " << triTwo[2] << ", "
+                    << triTwo[1] << ", "
+                    << triTwo[0] << ", 0x00, "
+                    << triTwo[5] << ", "
+                    << triTwo[4] << ", "
+                    << triTwo[3] << ", 0x00"
+                    << std::endl;
+                }
+            }
 
             else {
                 u16 triOne[3] = {vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex()};
 
                 if (yUp) {
-                    gfxOut << "gsSP1Triangle " << triOne[0] << " "
-                    << triOne[1] << " "
-                    << triOne[2] << std::endl;
+                    gfxOut << "gsSP1Triangle " << triOne[0] << ", "
+                    << triOne[1] << ", "
+                    << triOne[2] << ", 0x00" << std::endl;
                 }
 
                 else { /* Flip normals for Z up */
-                    gfxOut << "gsSP1Triangle " << triOne[2] << " "
-                    << triOne[1] << " "
-                    << triOne[0] << std::endl;
+                    gfxOut << "gsSP1Triangle " << triOne[2] << ", "
+                    << triOne[1] << ", "
+                    << triOne[0] << ", 0x00" << std::endl;
                 }
             }
         }

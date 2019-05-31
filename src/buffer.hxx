@@ -39,9 +39,9 @@ class VertexBuffer
     private:
     Vertex vtx[77];
     bool cprVert(Vertex *a, Vertex *b)
-    {
-        return true;
-    }
+    { return true; }
+
+    u16 getVtxMatTri2() { return vtx[vtxCount + 3].flag[3]; }
 
     public:
     u8 vtxCount   = 0,
@@ -49,10 +49,7 @@ class VertexBuffer
 
     bool isBufferComplete() { return vtxCount == bufferSize; }
 
-    void optimizeVerts()
-    {
-
-    }
+    void optimizeVerts() {}
 
     void addVtx(s16 vtxPosX, s16 vtxPosY, s16 vtxPosZ,
             s16 vtxPosU, s16 vtxPosV,
@@ -81,6 +78,7 @@ class VertexBuffer
     u16 getVtxIndex() { return vtxCount++; }
 
     u16 getVtxMat() { return vtx[vtxCount].flag[3]; }
-    u16 getVtxMatTri2() { return vtx[vtxCount + 3].flag[3]; }
 
+    bool canTri2()
+    { return (vtxCount + 6 <= bufferSize) && (vtx[vtxCount + 3].flag[3] == vtx[vtxCount].flag[3]); }
 };
