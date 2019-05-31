@@ -6,7 +6,7 @@ class Material
     private:
     enum TexType { RGBA16, RGBA32, CI4, CI8 };
     const std::string formats[FORMATS] = { "rgba16", "rgba32", "ci4", "ci8" };
-    std::string path, name;
+    std::string path, name = "DEFAULT MATERIAL";
 
     std::string GetTextureLoad()
     {
@@ -53,6 +53,7 @@ class Material
     void setName(const std::string &n) { name = n; }
     void setPath(const std::string &p) { path = p; }
     std::string getPath() { return path; }
+    std::string getName() { return name; }
 
 
     std::string getFileNameNoExtension()

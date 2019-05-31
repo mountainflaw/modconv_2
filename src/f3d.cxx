@@ -192,11 +192,13 @@ static void configure_materials(const std::string &file, Material* mat, aiNode* 
 
         if (file_exists(aiPath.data)) { /* absolute */
             mat[meshId].setPath(aiPath.data);
+            mat[meshId].setName(aiName.data);
             mat[meshId].textured = true;
         }
 
         else if (file_exists(get_path(file) + aiPath.data) && !(is_directory(get_path(file) + aiPath.data))) { /* relative */
             mat[meshId].setPath(get_path(file) + aiPath.data);
+            mat[meshId].setName(aiName.data);
             mat[meshId].textured = true;
         }
 
@@ -260,12 +262,12 @@ static void write_textures(const std::string &fileOut, Material *mat, bool level
  * a vertex with a different material.
  * 4.) End displaylist after all of that crap is done.
  */
+
 static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, Material* mat, bool yUp)
 {
     std::fstream gfxOut;
     gfxOut.open(fileOut + "/model.s", std::ofstream::out | std::ofstream::app);
-
-    u16 currMat = -1;
+    s16 currMat = -1;
     gfxOut << std::endl << "glabel " << fileOut << "_dl" << std::endl
         << "gsSPClearGeometryMode G_LIGHTING" << std::endl;
     for (u16 i = 0; i < vBuffers; i++) {
@@ -273,7 +275,9 @@ static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, M
             << " " << std::to_string(vBuf[i].bufferSize) << ", 0" << std::endl;
         while (!vBuf[i].isBufferComplete()) {
             if (vBuf[i].getVtxMat() != currMat) {
-                gfxOut << mat[++currMat].getMaterial();
+                currMat++; /* Get around undefined */
+                gfxOut << "/* " << mat[currMat].getName() << " */" << std::endl
+                << mat[currMat].getMaterial();
             }
 
             if (vBuf[i].canTri2()) {
