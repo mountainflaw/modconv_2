@@ -237,11 +237,11 @@ static void write_textures(const std::string &fileOut, Material *mat, bool level
             texOut << std::endl;
             texOut << mat[i].getFileNameNoExtension() << ":" << std::endl;
             if (level) {
-                texOut << ".incbin " << R"(")" << "levels/" << fileOut << "/" << mat[i].getFileNameNoExtension() << R"(")" << std::endl;
+                texOut << ".incbin " << R"(")" << "levels/" << get_filename(fileOut) << "/" << mat[i].getFileNameNoExtension() << R"(")" << std::endl;
             }
 
             else { /* generating an actor */
-                texOut << ".incbin " << R"(")" << "actors/" << fileOut << "/" << mat[i].getFileNameNoExtension() << R"(")" << std::endl;
+                texOut << ".incbin " << R"(")" << "actors/" << get_filename(fileOut) << "/" << mat[i].getFileNameNoExtension() << R"(")" << std::endl;
             }
 
             if (file_exists(mat[i].getPath())) {
