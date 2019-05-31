@@ -167,7 +167,7 @@ static void write_vtx(const std::string fileOut, const std::string &path, Vertex
     std::fstream vtxOut;
     vtxOut.open(fileOut + "/model.s", std::ofstream::out | std::ofstream::app);
     for (u16 i = 0; i < vBuffers; i++) {
-        vtxOut << std::endl << fileOut << "_vertex_" << i << ":" << std::endl;
+        vtxOut << std::endl << get_filename(fileOut) << "_vertex_" << i << ":" << std::endl;
         for (u16 j = 0; j < vBuf[i].bufferSize; j++) {
             Vertex vtx = vBuf[i].getVtx();
             vtxOut << "vertex " << vtx.pos[AXIS_X] << ", "
@@ -268,10 +268,10 @@ static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, M
     std::fstream gfxOut;
     gfxOut.open(fileOut + "/model.s", std::ofstream::out | std::ofstream::app);
     s16 currMat = -1;
-    gfxOut << std::endl << "glabel " << fileOut << "_dl" << std::endl
+    gfxOut << std::endl << "glabel " << get_filename(fileOut) << "_dl" << std::endl
         << "gsSPClearGeometryMode G_LIGHTING" << std::endl;
     for (u16 i = 0; i < vBuffers; i++) {
-        gfxOut << "gsSPVertex " <<  fileOut << "_vertex_" << i
+        gfxOut << "gsSPVertex " <<  get_filename(fileOut) << "_vertex_" << i
             << " " << std::to_string(vBuf[i].bufferSize) << ", 0" << std::endl;
         while (!vBuf[i].isBufferComplete()) {
             if (vBuf[i].getVtxMat() != currMat) {
