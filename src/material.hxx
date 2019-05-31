@@ -75,7 +75,7 @@ class Material
         }
 
         else { /* no texture found when setting up */
-            ret = GetFuckingFrauber() + "gsDPSetPrimColor 0x00, 0x00 128, 128, 128, 0xFF\n";
+            ret = GetFuckingFrauber() + "gsDPSetPrimColor 0x00, 0x00, 128, 128, 128, 0xFF\n";
         }
         return ret;
     }
