@@ -88,7 +88,7 @@ u16 get_dimension(u8 mode, const std::string &path)
 
 /** Easy way to get a path leading to the directory only */
 std::string get_path(const std::string &path)
-{ return std::filesystem::path(path).remove_filename(); }
+{ return std::filesystem::path(path).remove_filename().string(); }
 
 /** Checks if a exists (including directories) */
 bool file_exists(const std::string &path)
@@ -100,7 +100,7 @@ bool is_directory(const std::string &path)
 
 /** Returns the filename only */
 std::string get_filename(const std::string &path)
-{ return std::filesystem::path(path).filename(); }
+{ return std::filesystem::path(path).filename().string(); }
 
 /** Acceptable characters */
 std::string acceptableChars = "abcdefghijklmnopqrstuvwxyz0123456789",
