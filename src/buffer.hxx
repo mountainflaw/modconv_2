@@ -30,10 +30,10 @@ enum MaterialEnum { MATERIAL, OLDPOS, NEWPOS};
 
 typedef struct
 {
-    s16  pos[3], st[2];
-    s16  flag[3]; /* optimizer flag */
-    u8   col[4];
     bool useless;
+    s16  pos[3], st[2];
+    u16  flag[3]; /* optimizer flag */
+    u8   col[4];
 } Vertex;
 
 /* Used in the F3D DL builder. */
@@ -42,6 +42,7 @@ class VertexBuffer
     private:
     Vertex vtx[78];
 
+    /** Can't use memcpr because of the flag member. */
     bool cprVert(Vertex *vtx, u8 i, u8 k)
     {
         bool cprPos = ((vtx[i].pos[AXIS_X] == vtx[k].pos[AXIS_X]) && (vtx[i].pos[AXIS_Y] == vtx[k].pos[AXIS_Y])
@@ -49,8 +50,8 @@ class VertexBuffer
 
         bool cprSt = ((vtx[i].st[AXIS_X] == vtx[k].st[AXIS_X]) && (vtx[i].st[AXIS_Y] == vtx[k].st[AXIS_Y]));
 
-        bool cprCol = ((vtx[i].col[AXIS_X] == vtx[k].col[AXIS_X]) && (vtx[i].col[AXIS_Y] == vtx[k].col[AXIS_Y])
-            && (vtx[i].col[AXIS_Y] == vtx[k].col[AXIS_Y]) && (vtx[i].col[AXIS_Y] == vtx[k].col[AXIS_Y]));
+        bool cprCol = ((vtx[i].col[C_RED] == vtx[k].col[C_RED]) && (vtx[i].col[C_GRN] == vtx[k].col[C_GRN])
+            && (vtx[i].col[C_BLU] == vtx[k].col[C_BLU]) && (vtx[i].col[C_APH] == vtx[k].col[C_APH]));
         return cprPos && cprSt && cprCol;
     }
 
@@ -58,7 +59,8 @@ class VertexBuffer
 
     public:
     u8 vtxCount   = 0,
-       bufferSize = 15;
+       bufferSize = 15,
+       loadSize = bufferSize;
 
     bool isBufferComplete() { return vtxCount == bufferSize; }
 
@@ -82,11 +84,13 @@ class VertexBuffer
         vtx[vtxCount].useless = false;
         vtx[vtxCount].flag[MATERIAL]     = mesh;
 
+        printf("vbuf xyz %d %d %d\n", vtx[vtxCount].pos[0], vtx[vtxCount].pos[1], vtx[vtxCount].pos[2]);
         vtxCount++;
     }
 
     void optimizeVerts()
     {
+        u8 newBufferSize = 0;
         /* Stage 1: Mark redundant vertices. */
         for (u8 i = 0; i < bufferSize; i++) {
             for (u8 k = 0; k < bufferSize; k++) {
@@ -101,8 +105,10 @@ class VertexBuffer
         for (u8 i = 0; i < bufferSize; i++) {
             if (!vtx[i].useless) {
                 vtx[i].flag[NEWPOS] = i;
+                newBufferSize++;
             }
         }
+        loadSize = newBufferSize;
     }
 
     Vertex getVtx() { return vtx[vtxCount++]; }
