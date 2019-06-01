@@ -40,7 +40,7 @@ typedef struct
 class VertexBuffer
 {
     private:
-    Vertex vtx[78];
+    Vertex vtx[65];
 
     /** Can't use memcpr because of the flag member. */
     bool cprVert(Vertex *vtx, u8 i, u8 k)
@@ -84,13 +84,11 @@ class VertexBuffer
         vtx[vtxCount].useless = false;
         vtx[vtxCount].flag[MATERIAL]     = mesh;
 
-        printf("vbuf xyz %d %d %d\n", vtx[vtxCount].pos[0], vtx[vtxCount].pos[1], vtx[vtxCount].pos[2]);
         vtxCount++;
     }
 
     void optimizeVerts()
     {
-        u8 newBufferSize = 0;
         /* Stage 1: Mark redundant vertices. */
         for (u8 i = 0; i < bufferSize; i++) {
             for (u8 k = 0; k < bufferSize; k++) {
@@ -105,18 +103,17 @@ class VertexBuffer
         for (u8 i = 0; i < bufferSize; i++) {
             if (!vtx[i].useless) {
                 vtx[i].flag[NEWPOS] = i;
-                newBufferSize++;
+                loadSize++;
             }
         }
-        loadSize = newBufferSize;
+    }
+
+    u16 getVtxIndex()
+    {
+        return vtxCount++;
     }
 
     Vertex getVtx() { return vtx[vtxCount++]; }
-
-    u16 getVtxIndex() { return vtxCount++; }
-
     u16 getVtxMat() { return vtx[vtxCount].flag[MATERIAL]; }
-
-    bool canTri2()
-    { return (vtxCount + 6 <= bufferSize) && (vtx[vtxCount + 3].flag[MATERIAL] == vtx[vtxCount].flag[MATERIAL]); }
+    bool canTri2() { return (vtxCount + 6 <= bufferSize) && (vtx[vtxCount + 3].flag[MATERIAL] == vtx[vtxCount].flag[MATERIAL]); }
 };

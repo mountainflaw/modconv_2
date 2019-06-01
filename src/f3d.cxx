@@ -74,13 +74,16 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
             for (u8 k = 0; k <= 2; k++) {
                 u32 currVtx = mesh->mFaces[j].mIndices[k];
 
+                if (vBuffers == 1) { /* if we only have one buffer, set it to the size of vert so we don't overflow */
+                    vBuf[i].bufferSize = vert;
+                }
+
                 if (vBuf[vBuffer].isBufferComplete()) {
                     vBuf[vBuffer].vtxCount = 0;
                     vBuffer++;
 
                     if (vBuffer == vBuffers - 1) { /* set the max amount for the final vbuffer */
                         vBuf[vBuffer].bufferSize = vert - vert2;
-                        printf("final vbuffer size is %d\n", vert - vert2);
                     }
                 }
 
@@ -168,7 +171,6 @@ static void write_vtx(const std::string fileOut, const std::string &path, Vertex
     std::fstream vtxOut;
     vtxOut.open(fileOut + "/model.s", std::ofstream::out | std::ofstream::app);
     for (u16 i = 0; i < vBuffers; i++) {
-        //vBuf[i].vtxCount = 0;
         vtxOut << std::endl << get_filename(fileOut) << "_vertex_" << i << ":" << std::endl;
         for (u16 j = 0; j < vBuf[i].bufferSize; j++) {
             Vertex vtx = vBuf[i].getVtx();
@@ -348,14 +350,13 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
     reset_file(fileOut + "/model.s");
     count_vtx(scene->mRootNode, scene);
 
-    printf("vert %d\n", vert);
     vBuffers = vert / microcode;
 
     if (vert % microcode > 0) { /* is there a trailing vbuffer? */
         vBuffers++;
     }
 
-    VertexBuffer vBuf[vBuffers + 1];
+    VertexBuffer vBuf[vBuffers];
     cycle_vbuffers(vBuf, BUFFER, microcode);
 
     for (u16 i = 0; i < scene->mRootNode->mNumChildren; i++) {
