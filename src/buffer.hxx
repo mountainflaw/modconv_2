@@ -26,30 +26,41 @@
 *   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                        *
 */
 
+enum MaterialEnum { MATERIAL, OLDPOS, NEWPOS};
+
 typedef struct
 {
-    s16  pos[3], st[2], mat;
-    u16  flag[4]; /* optimizer flag */
+    s16  pos[3], st[2];
+    s16  flag[3]; /* optimizer flag */
     u8   col[4];
+    bool useless;
 } Vertex;
 
 /* Used in the F3D DL builder. */
 class VertexBuffer
 {
     private:
-    Vertex vtx[77];
-    bool cprVert(Vertex *a, Vertex *b)
-    { return true; }
+    Vertex vtx[78];
 
-    u16 getVtxMatTri2() { return vtx[vtxCount + 3].flag[3]; }
+    bool cprVert(Vertex *vtx, u8 i, u8 k)
+    {
+        bool cprPos = ((vtx[i].pos[AXIS_X] == vtx[k].pos[AXIS_X]) && (vtx[i].pos[AXIS_Y] == vtx[k].pos[AXIS_Y])
+                && (vtx[i].pos[AXIS_Z] == vtx[k].pos[AXIS_Z]));
+
+        bool cprSt = ((vtx[i].st[AXIS_X] == vtx[k].st[AXIS_X]) && (vtx[i].st[AXIS_Y] == vtx[k].st[AXIS_Y]));
+
+        bool cprCol = ((vtx[i].col[AXIS_X] == vtx[k].col[AXIS_X]) && (vtx[i].col[AXIS_Y] == vtx[k].col[AXIS_Y])
+            && (vtx[i].col[AXIS_Y] == vtx[k].col[AXIS_Y]) && (vtx[i].col[AXIS_Y] == vtx[k].col[AXIS_Y]));
+        return cprPos && cprSt && cprCol;
+    }
+
+    u16 getVtxMatTri2() { return vtx[vtxCount + 3].flag[MATERIAL]; }
 
     public:
     u8 vtxCount   = 0,
        bufferSize = 15;
 
     bool isBufferComplete() { return vtxCount == bufferSize; }
-
-    void optimizeVerts() {}
 
     void addVtx(s16 vtxPosX, s16 vtxPosY, s16 vtxPosZ,
             s16 vtxPosU, s16 vtxPosV,
@@ -68,17 +79,38 @@ class VertexBuffer
         vtx[vtxCount].col[C_BLU]  = vtxCBlue;
         vtx[vtxCount].col[C_APH]  = vtxCAlpha;
 
-        vtx[vtxCount].flag[3]     = mesh;
+        vtx[vtxCount].useless = false;
+        vtx[vtxCount].flag[MATERIAL]     = mesh;
 
         vtxCount++;
+    }
+
+    void optimizeVerts()
+    {
+        /* Stage 1: Mark redundant vertices. */
+        for (u8 i = 0; i < bufferSize; i++) {
+            for (u8 k = 0; k < bufferSize; k++) {
+                if (cprVert(vtx, i, k) && k > i) {
+                    vtx[k].useless = true;
+                    vtx[k].flag[OLDPOS] = i;
+                }
+            }
+        }
+
+        /* Stage 2: Calculate the left behind verts' new position. */
+        for (u8 i = 0; i < bufferSize; i++) {
+            if (!vtx[i].useless) {
+                vtx[i].flag[NEWPOS] = i;
+            }
+        }
     }
 
     Vertex getVtx() { return vtx[vtxCount++]; }
 
     u16 getVtxIndex() { return vtxCount++; }
 
-    u16 getVtxMat() { return vtx[vtxCount].flag[3]; }
+    u16 getVtxMat() { return vtx[vtxCount].flag[MATERIAL]; }
 
     bool canTri2()
-    { return (vtxCount + 6 <= bufferSize) && (vtx[vtxCount + 3].flag[3] == vtx[vtxCount].flag[3]); }
+    { return (vtxCount + 6 <= bufferSize) && (vtx[vtxCount + 3].flag[MATERIAL] == vtx[vtxCount].flag[MATERIAL]); }
 };

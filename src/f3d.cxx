@@ -151,7 +151,7 @@ static inline void cycle_vbuffers(VertexBuffer *vBuf, u8 mode, u8 microcode)
 
         case OPTIMIZE:
         for (u16 i = 0; i < vBuffers; i++) {
-            vBuf[i].vtxCount = 0;
+            vBuf[i].optimizeVerts();
         }
 
         case RESET:
@@ -170,15 +170,17 @@ static void write_vtx(const std::string fileOut, const std::string &path, Vertex
         vtxOut << std::endl << get_filename(fileOut) << "_vertex_" << i << ":" << std::endl;
         for (u16 j = 0; j < vBuf[i].bufferSize; j++) {
             Vertex vtx = vBuf[i].getVtx();
-            vtxOut << "vertex " << vtx.pos[AXIS_X] << ", "
-                << vtx.pos[AXIS_Y] << ", "
-                << vtx.pos[AXIS_Z] << ", "
-                << vtx.st[AXIS_X]  << ", "
-                << vtx.st[AXIS_Y]  << ", "
-                << (u16)vtx.col[C_RED]  << ", "
-                << (u16)vtx.col[C_GRN]  << ", "
-                << (u16)vtx.col[C_BLU]  << ", "
-                << (u16)vtx.col[C_APH]  << std::endl;
+            if (!vtx.useless) {
+                vtxOut << "vertex " << vtx.pos[AXIS_X] << ", "
+                    << vtx.pos[AXIS_Y] << ", "
+                    << vtx.pos[AXIS_Z] << ", "
+                    << vtx.st[AXIS_X]  << ", "
+                    << vtx.st[AXIS_Y]  << ", "
+                    << (u16)vtx.col[C_RED]  << ", "
+                    << (u16)vtx.col[C_GRN]  << ", "
+                    << (u16)vtx.col[C_BLU]  << ", "
+                    << (u16)vtx.col[C_APH]  << std::endl;
+            }
         }
     }
 }
@@ -195,15 +197,15 @@ static void configure_materials(const std::string &file, Material* mat, aiNode* 
             mat[meshId].setName(aiName.data);
             mat[meshId].textured = true;
         }
-        
-	else if (file_exists(get_path(file) + aiPath.data) && !(is_directory(get_path(file) + aiPath.data))) { /* relative */
+
+        else if (file_exists(get_path(file) + aiPath.data) && !(is_directory(get_path(file) + aiPath.data))) { /* relative */
             mat[meshId].setPath(get_path(file) + aiPath.data);
             mat[meshId].setName(aiName.data);
             mat[meshId].textured = true;
         }
 
-	std::cout << "abs " << aiPath.data << std::endl;
-	std::cout << "rel " << get_path(file) + aiPath.data << std::endl;
+        std::cout << "abs " << aiPath.data << std::endl;
+        std::cout << "rel " << get_path(file) + aiPath.data << std::endl;
         meshId++;
     }
 
@@ -249,8 +251,8 @@ static void write_textures(const std::string &fileOut, Material *mat, bool level
             if (file_exists(mat[i].getPath())) {
                 remove_file(fileOut + "/" + get_filename(mat[i].getPath()));
             }
-	    
-	    std::cout << "file: " << mat[i].getPath() << std::endl;
+
+            std::cout << "file: " << mat[i].getPath() << std::endl;
             copy_file(mat[i].getPath(), fileOut + "/" + get_filename(mat[i].getPath()));
         }
     }
