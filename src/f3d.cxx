@@ -195,13 +195,15 @@ static void configure_materials(const std::string &file, Material* mat, aiNode* 
             mat[meshId].setName(aiName.data);
             mat[meshId].textured = true;
         }
-
-        else if (file_exists(get_path(file) + aiPath.data) && !(is_directory(get_path(file) + aiPath.data))) { /* relative */
+        
+	else if (file_exists(get_path(file) + aiPath.data) && !(is_directory(get_path(file) + aiPath.data))) { /* relative */
             mat[meshId].setPath(get_path(file) + aiPath.data);
             mat[meshId].setName(aiName.data);
             mat[meshId].textured = true;
         }
 
+	std::cout << "abs " << aiPath.data << std::endl;
+	std::cout << "rel " << get_path(file) + aiPath.data << std::endl;
         meshId++;
     }
 
@@ -247,8 +249,9 @@ static void write_textures(const std::string &fileOut, Material *mat, bool level
             if (file_exists(mat[i].getPath())) {
                 remove_file(fileOut + "/" + get_filename(mat[i].getPath()));
             }
-
-            copy_file(mat[i].getPath(), fileOut);
+	    
+	    std::cout << "file: " << mat[i].getPath() << std::endl;
+            copy_file(mat[i].getPath(), fileOut + "/" + get_filename(mat[i].getPath()));
         }
     }
 }

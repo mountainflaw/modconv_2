@@ -1,4 +1,4 @@
-# Obsidian 2.5
+# modconv 2.7
 
 This project aims to provide a usable model converter suitable for creating custom content compatible with the decompilation of Super Mario 64.
 
@@ -6,9 +6,11 @@ This project aims to provide a usable model converter suitable for creating cust
 
 ### Building
 
-To build obsidian, you must have the ASSIMP library installed in addition to a compiler which supports the C++ 17 standard. The latter requires GCC 8 minimum (``g++-8`` is the package on Ubuntu versions that ship with GCC 7), unless you want to modify the source to use the experimental support in GCC 7. Sorry in advance, I was too lazy to write my own filesystem functions.
+To build modconv, you must have the ASSIMP library installed in addition to a compiler which supports the C++ 17 standard. The latter requires GCC 8 minimum (``g++-8`` is the package on Ubuntu versions that ship with GCC 7), unless you want to modify the source to use the experimental support in GCC 7. Sorry in advance, I was too lazy to write my own filesystem functions.
 
 To build the default release version, simply run ``./build.sh``. To build the debug version to report errors, run ``./build.sh debug``.
+
+modconv is able to be built on Windows using MSYS2, though has limited support. The build instructions are the same.
 
 ### Using
 
@@ -51,3 +53,4 @@ Optional:
 * Trenavix, Robinerd, Davideesk for answering stupid F3D questions
 * Davideesk again for cleaning up the F3D macros (especially LoadTextureBlock!)
 * Kaze and stomatol for material ideas
+* Revo for testing.
