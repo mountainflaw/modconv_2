@@ -1,4 +1,4 @@
-# modconv 2.7
+# modconv 2.8
 
 This project aims to provide a usable model converter suitable for creating custom content compatible with the decompilation of Super Mario 64.
 
@@ -40,7 +40,7 @@ For texture mapping, I will be supporting every texture that is not YUV, with au
 ## Roadmap
 
 * ~~Full material class (CI support)~~
-* Optimizer
+* ~~Optimizer~~
 * ~~Collision~~
 * Mario head
 
