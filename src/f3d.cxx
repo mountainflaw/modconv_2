@@ -74,6 +74,10 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
             for (u8 k = 0; k <= 2; k++) {
                 u32 currVtx = mesh->mFaces[j].mIndices[k];
 
+                if (vBuffers == 1) { /* if we only have one buffer, set it to the size of vert so we don't overflow */
+                    vBuf[i].bufferSize = vert;
+                }
+
                 if (vBuf[vBuffer].isBufferComplete()) {
                     vBuf[vBuffer].vtxCount = 0;
                     vBuffer++;
@@ -277,7 +281,7 @@ static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, M
         << "gsSPClearGeometryMode G_LIGHTING" << std::endl;
     for (u16 i = 0; i < vBuffers; i++) {
         gfxOut << "gsSPVertex " <<  get_filename(fileOut) << "_vertex_" << i
-            << " " << std::to_string(vBuf[i].bufferSize) << ", 0" << std::endl;
+            << " " << std::to_string(vBuf[i].loadSize) << ", 0" << std::endl;
         while (!vBuf[i].isBufferComplete()) {
             if (vBuf[i].getVtxMat() != currMat) {
                 currMat++; /* Get around undefined */

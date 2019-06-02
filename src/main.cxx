@@ -32,26 +32,36 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
 void collision_converter_main(const std::string &file, const std::string &fileOut, s16 scale, bool yUp);
 
 u8 output = OUTPUT_F3D;
+
+inline std::string print_bold(const std::string &s)
+{
+#ifdef _WIN32
+    return s;
+#else
+    return "\e[1m" + s + "\e[0m";
+#endif
+}
+
 inline void error_message(const std::string &message)
 {
-    std::cout << "\e[1mERROR:\e[0m " << message << std::endl;
+    std::cout << print_bold("ERROR: ") << message << std::endl;
     exit(1);
 }
 
 inline void warn_message(const std::string &message)
-{ std::cout << "\e[1mWARNING:\e[0m " << message << std::endl; }
+{ std::cout << print_bold("WARNING: ") << message << std::endl; }
 
 inline void info_message(const std::string &message)
-{ std::cout << "\e[1mINFO:\e[0m " << message << std::endl; }
+{ std::cout << print_bold("INFO: ") << message << std::endl; }
 
 void print_help(const std::string &name)
 {
-    std::cout << "-\e[1m modconv 2 help -\e[0m" << std::endl;
+    std::cout << print_bold("- MODCONV 2.8 HELP -") << std::endl;
     std::cout << std::endl;
-    std::cout << "\e[1mSYNOPSIS:\e[0m" << std::endl;
+    std::cout << print_bold("SYNOPSIS: ") << std::endl;
     std::cout << name << " <parameters> <model>" << std::endl;
     std::cout << std::endl;
-    std::cout << "\e[1mPARAMETERS:\e[0m" << std::endl;
+    std::cout << print_bold("PARAMETERS: ") << std::endl;
     std::cout << "--level - Export as a level" << std::endl;
     std::cout << "--dir   - Output directory" << std::endl;
     std::cout << "--scale - Multiplier to scale the exported model by" << std::endl;
@@ -65,8 +75,8 @@ void print_help(const std::string &name)
     std::cout << "  - Acceptable inputs are Y and Z." << std::endl;
     std::cout << "--help  - Bring up this menu and quit" << std::endl;
     std::cout << std::endl;
-    std::cout << "\e[1mTIPS:\e[0m" << std::endl;
-    std::cout << "- If you use SketchUp, set up direction to the Y axis using --up" << std::endl;
+    std::cout << print_bold("TIPS: ") << std::endl;
+    std::cout << "- If you use obj, set up direction to the Y axis using --up" << std::endl;
     std::cout << "- If your model lags, consider using Fast3DEX (--type f3dex)" << std::endl;
     std::cout << "- If on console and or angrylion's you experience triangle warping, subdivide the problematic triangle" << std::endl;
 }
@@ -76,7 +86,7 @@ void print_help(const std::string &name)
 
 int main(int argc, char* argv[])
 {
-    puts("\e[1m- modconv 2.6 by red -\e[0m");
+    std::cout << print_bold("- MODCONV 2.8 BY RED -") << std::endl;
     std::string filePath = argv[argc - 1],
                 fileOut  = "model";
     s16 scale            = DEFAULT_SCALE;
