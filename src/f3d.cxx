@@ -112,14 +112,16 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                     if (file_exists(path)) { /* absolute */
                         uv[AXIS_X] = mesh->mTextureCoords[0][currVtx].x * 32 * get_dimension(AXIS_X, path);
                         uv[AXIS_Y] = mesh->mTextureCoords[0][currVtx].y * 32 * get_dimension(AXIS_Y, path);
+                        if(uvFlip) /*UV flip, if --uvflip and not collision*/
+                            uv[AXIS_Y] *= -1;
                     }
 
                     else if (file_exists(get_path(file) + path) && !(is_directory(get_path(file) + path))) { /* relative */
                         uv[AXIS_X] = mesh->mTextureCoords[0][currVtx].x * 32 * get_dimension(AXIS_X, get_path(file) + path);
                         uv[AXIS_Y] = mesh->mTextureCoords[0][currVtx].y * 32 * get_dimension(AXIS_Y, get_path(file) + path);
+                        if(uvFlip) /*UV flip, if --uvflip and not collision*/
+                            uv[AXIS_Y] *= -1;
                     }
-                    if(uvFlip) /*UV flip, if --uvflip and not collision*/
-                        uv[AXIS_Y] *= -1;
 
                     else { /* no texture found */
                     }
