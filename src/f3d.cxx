@@ -119,15 +119,17 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                          * the UV mask y axis upside down. Unless we flip it
                          * back here, textures will appear upside down.
                          */
-                        if(uvFlip)
+                        if(uvFlip) {
                             uv[AXIS_Y] *= -1;
+                        }
                     }
 
                     else if (file_exists(get_path(file) + path) && !(is_directory(get_path(file) + path))) { /* relative */
                         uv[AXIS_X] = mesh->mTextureCoords[0][currVtx].x * 32 * get_dimension(AXIS_X, get_path(file) + path);
                         uv[AXIS_Y] = mesh->mTextureCoords[0][currVtx].y * 32 * get_dimension(AXIS_Y, get_path(file) + path);
-                        if(uvFlip) /* see above explanation */
+                        if(uvFlip) { /* see above explanation */
                             uv[AXIS_Y] *= -1;
+                        }
                     }
 
                     else { /* no texture found */
