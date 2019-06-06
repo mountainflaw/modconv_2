@@ -29,7 +29,7 @@
 #include "modconv.hxx"
 
 void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8 microcode, bool level, bool yUp, bool uvFlip);
-void collision_converter_main(const std::string &file, const std::string &fileOut, s16 scale, bool yUp, bool uvFlip);
+void collision_converter_main(const std::string &file, const std::string &fileOut, s16 scale, bool yUp);
 
 u8 output = OUTPUT_F3D;
 
@@ -167,7 +167,7 @@ int main(int argc, char* argv[])
         break;
 
         case OUTPUT_COLLISION:
-        collision_converter_main(filePath, fileOut, scale, yUp, uvFlip);
+        collision_converter_main(filePath, fileOut, scale, yUp);
         break;
 
     }

@@ -92,7 +92,7 @@ static void set_vtx_amount(aiNode* node, const aiScene* scene)
     }
 }
 
-void collision_converter_main(const std::string &file, const std::string &fileOut, s16 scale, bool yUp, bool uvFlip)
+void collision_converter_main(const std::string &file, const std::string &fileOut, s16 scale, bool yUp)
 {
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(file, aiProcess_ValidateDataStructure | aiProcess_JoinIdenticalVertices);
