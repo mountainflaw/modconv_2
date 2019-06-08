@@ -64,7 +64,7 @@ static void count_vtx(aiNode* node, const aiScene* scene)
 
 /** Add vertices to vertex buffers. */
 static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
-        VertexBuffer* vBuf, const std::string &file, bool yUp)
+        VertexBuffer* vBuf, const std::string &file, bool yUp, bool uvFlip)
 {
     for (u16 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
@@ -112,11 +112,24 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                     if (file_exists(path)) { /* absolute */
                         uv[AXIS_X] = mesh->mTextureCoords[0][currVtx].x * 32 * get_dimension(AXIS_X, path);
                         uv[AXIS_Y] = mesh->mTextureCoords[0][currVtx].y * 32 * get_dimension(AXIS_Y, path);
+                        /* 
+                         * UV flip, if --uvflip and not collision
+                         * We need to flip the Y axis for the UV flip because
+                         * certain model formats (.fbx mainly) like to write
+                         * the UV mask y axis upside down. Unless we flip it
+                         * back here, textures will appear upside down.
+                         */
+                        if(uvFlip) {
+                            uv[AXIS_Y] *= -1;
+                        }
                     }
 
                     else if (file_exists(get_path(file) + path) && !(is_directory(get_path(file) + path))) { /* relative */
                         uv[AXIS_X] = mesh->mTextureCoords[0][currVtx].x * 32 * get_dimension(AXIS_X, get_path(file) + path);
                         uv[AXIS_Y] = mesh->mTextureCoords[0][currVtx].y * 32 * get_dimension(AXIS_Y, get_path(file) + path);
+                        if(uvFlip) { /* see above explanation */
+                            uv[AXIS_Y] *= -1;
+                        }
                     }
 
                     else { /* no texture found */
@@ -340,7 +353,7 @@ static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, M
 }
 
 /** Main function for the F3D build process. */
-void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8 microcode, bool level, bool yUp)
+void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8 microcode, bool level, bool yUp, bool uvFlip)
 {
     Assimp::Importer importer;
 
@@ -360,7 +373,7 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
     cycle_vbuffers(vBuf, BUFFER, microcode);
 
     for (u16 i = 0; i < scene->mRootNode->mNumChildren; i++) {
-        setup_vtx(scene->mRootNode->mChildren[i], scene, scale, vBuf, file, yUp);
+        setup_vtx(scene->mRootNode->mChildren[i], scene, scale, vBuf, file, yUp, uvFlip);
     }
 
     /* Materials */

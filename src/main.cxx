@@ -28,7 +28,7 @@
 
 #include "modconv.hxx"
 
-void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8 microcode, bool level, bool yUp);
+void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8 microcode, bool level, bool yUp, bool uvFlip);
 void collision_converter_main(const std::string &file, const std::string &fileOut, s16 scale, bool yUp);
 
 u8 output = OUTPUT_F3D;
@@ -71,9 +71,10 @@ void print_help(const std::string &name)
     std::cout << "  - rej       - Optimize for Fast3DEX Rej (64 vtx)" << std::endl;
     std::cout << "  - collision - Export collision mesh" << std::endl;
     std::cout << "  - goddard   - Export Mario head mesh" << std::endl;
-    std::cout << "--yup   - Use the Y axis for up" << std::endl;
+    std::cout << "--yup    - Use the Y axis for up" << std::endl;
     std::cout << "  - Acceptable inputs are Y and Z." << std::endl;
-    std::cout << "--help  - Bring up this menu and quit" << std::endl;
+    std::cout << "--uvflip - Flip the UV mask Y axis." << std::endl;
+    std::cout << "--help   - Bring up this menu and quit" << std::endl;
     std::cout << std::endl;
     std::cout << print_bold("TIPS: ") << std::endl;
     std::cout << "- If you use obj, set up direction to the Y axis using --up" << std::endl;
@@ -91,7 +92,8 @@ int main(int argc, char* argv[])
                 fileOut  = "model";
     s16 scale            = DEFAULT_SCALE;
     bool level           = false,
-         yUp             = false;
+         yUp             = false,
+         uvFlip          = false;
 
     if (argc < 2) {
         print_help(argv[0]);
@@ -133,6 +135,10 @@ int main(int argc, char* argv[])
             yUp = true;
         }
 
+        if (arg.compare("--uvflip") == 0) {
+            uvFlip = true;
+        }
+
         if (arg.compare("--help") == 0) {
             print_help(argv[0]);
             exit(0);
@@ -157,7 +163,7 @@ int main(int argc, char* argv[])
         case OUTPUT_F3DEX:
         case OUTPUT_REJ:
         case OUTPUT_REJ2:
-        f3d_main(filePath, fileOut, scale, output, level, yUp);
+        f3d_main(filePath, fileOut, scale, output, level, yUp, uvFlip);
         break;
 
         case OUTPUT_COLLISION:
