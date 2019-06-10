@@ -98,7 +98,7 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                 else { /* default setting (z axis up) */
                     pos[AXIS_X] = (s16)(mesh->mVertices[currVtx].x * scale);
                     pos[AXIS_Y] = (s16)(mesh->mVertices[currVtx].z * scale);
-                    pos[AXIS_Z] = (s16)(mesh->mVertices[currVtx].y * scale);
+                    pos[AXIS_Z] = (s16)(mesh->mVertices[currVtx].y * scale * -1);
                 }
 
                 s16 uv[2] = {0x00};
@@ -112,7 +112,7 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                     if (file_exists(path)) { /* absolute */
                         uv[AXIS_X] = mesh->mTextureCoords[0][currVtx].x * 32 * get_dimension(AXIS_X, path);
                         uv[AXIS_Y] = mesh->mTextureCoords[0][currVtx].y * 32 * get_dimension(AXIS_Y, path);
-                        /* 
+                        /*
                          * UV flip, if --uvflip and not collision
                          * We need to flip the Y axis for the UV flip because
                          * certain model formats (.fbx mainly) like to write
@@ -306,41 +306,21 @@ static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, M
                 u16 triTwo[6] = {vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex(),
                                  vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex()};
 
-                if (yUp) {
-                    gfxOut << "gsSP2Triangles " << triTwo[0] << ", "
-                    << triTwo[1] << ", "
-                    << triTwo[2] << ", 0x00, "
-                    << triTwo[3] << ", "
-                    << triTwo[4] << ", "
-                    << triTwo[5] << ", 0x00"
-                    << std::endl;
-                }
-
-                else { /* Flip normals for Z up */
-                    gfxOut << "gsSP2Triangles " << triTwo[2] << ", "
-                    << triTwo[1] << ", "
-                    << triTwo[0] << ", 0x00, "
-                    << triTwo[5] << ", "
-                    << triTwo[4] << ", "
-                    << triTwo[3] << ", 0x00"
-                    << std::endl;
-                }
+                gfxOut << "gsSP2Triangles " << triTwo[0] << ", "
+                << triTwo[1] << ", "
+                << triTwo[2] << ", 0x00, "
+                << triTwo[3] << ", "
+                << triTwo[4] << ", "
+                << triTwo[5] << ", 0x00"
+                << std::endl;
             }
 
             else {
                 u16 triOne[3] = {vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex()};
 
-                if (yUp) {
-                    gfxOut << "gsSP1Triangle " << triOne[0] << ", "
-                    << triOne[1] << ", "
-                    << triOne[2] << ", 0x00" << std::endl;
-                }
-
-                else { /* Flip normals for Z up */
-                    gfxOut << "gsSP1Triangle " << triOne[2] << ", "
-                    << triOne[1] << ", "
-                    << triOne[0] << ", 0x00" << std::endl;
-                }
+                gfxOut << "gsSP1Triangle " << triOne[0] << ", "
+                << triOne[1] << ", "
+                << triOne[2] << ", 0x00" << std::endl;
             }
         }
     }
