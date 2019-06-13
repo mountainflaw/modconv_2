@@ -45,7 +45,7 @@ static void write_vertex(aiNode* node, const aiScene* scene, const std::string &
             }
 
             else { /* z up (default) */
-                collisionOut << "colVertex " << std::to_string((s16)(mesh->mVertices[i].x * scale)) << ", " << std::to_string((s16)(mesh->mVertices[i].z * scale)) << ", " << std::to_string((s16)(mesh->mVertices[i].y * scale)) << std::endl;
+                collisionOut << "colVertex " << std::to_string((s16)(mesh->mVertices[i].x * scale)) << ", " << std::to_string((s16)(mesh->mVertices[i].z * scale)) << ", " << std::to_string((s16)(mesh->mVertices[i].y * scale * -1)) << std::endl;
             }
         }
     }
@@ -95,13 +95,12 @@ static void set_vtx_amount(aiNode* node, const aiScene* scene)
 void collision_converter_main(const std::string &file, const std::string &fileOut, s16 scale, bool yUp)
 {
     Assimp::Importer importer;
-    const aiScene* scene = importer.ReadFile(file, aiProcess_ValidateDataStructure | aiProcess_JoinIdenticalVertices);
+    const aiScene* scene = importer.ReadFile(file, aiProcess_ValidateDataStructure | aiProcess_JoinIdenticalVertices | aiProcess_Triangulate);
 
     std::fstream collisionOut;
     collisionOut.open(fileOut + "/collision.s", std::iostream::out | std::iostream::app);
     reset_file(fileOut + "/collision.s");
-    collisionOut << "include " << R"(")" << "collision.inc" << R"(")" << std::endl << std::endl
-        << "glabel " << get_filename(fileOut) << "_collision" << std::endl << "colInit";
+    collisionOut << "glabel " << get_filename(fileOut) << "_collision" << std::endl << "colInit";
 
     for (u16 i = 0; i < scene->mRootNode->mNumChildren; i++) { /* I don't think this is used anywhere. */
         set_tri_amount(scene->mRootNode->mChildren[i], scene);

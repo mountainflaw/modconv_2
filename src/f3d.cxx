@@ -145,12 +145,35 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                     rgba[C_APH] = mesh->mColors[0][currVtx].a * 0xff;
                 }
 
+                aiString aiName;
+                scene->mMaterials[i]->Get(AI_MATKEY_NAME, aiName);
+                std::string nameStr = aiName.data;
+
+                /*
+                 * Add normals based lighting (#SHADE)
+                 * or vertex color based off of normals (#NORMCOLOR)
+                 */
+
+                if (mesh->HasNormals() && (nameStr.find("#SHADE") != std::string::npos
+                            || nameStr.find("#NORMCOLOR") != std::string::npos)) {
+                    float d = 127 / sqrt((mesh->mNormals[currVtx].x) * (mesh->mNormals[currVtx].x)
+                            + (mesh->mNormals[currVtx].y) * (mesh->mNormals[currVtx].y)
+                            + (mesh->mNormals[currVtx].z) * (mesh->mNormals[currVtx].z));
+
+                    rgba[C_RED] = (u8)(mesh->mNormals[currVtx].x * d * 255);
+                    rgba[C_GRN] = (u8)(mesh->mNormals[currVtx].y * d * 255);
+                    rgba[C_BLU] = (u8)(mesh->mNormals[currVtx].z * d * 255);
+
+                    std::cout << "normalized " << currVtx << (u16)rgba[C_RED] << " " << (u16)rgba[C_GRN] << " " << (u16)rgba[C_BLU] << std::endl;
+                }
+
                 vBuf[vBuffer].addVtx(pos[AXIS_X], pos[AXIS_Y], pos[AXIS_Z],
                         uv[AXIS_X], uv[AXIS_Y],
-                        rgba[C_RED], rgba[C_GRN], rgba[C_BLU], rgba[C_APH], i);
+                        rgba[C_RED], rgba[C_GRN], rgba[C_BLU], rgba[C_APH], meshId);
                 vert2++;
             }
         }
+        meshId++;
     }
 }
 
@@ -352,6 +375,7 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
     VertexBuffer vBuf[vBuffers];
     cycle_vbuffers(vBuf, BUFFER, microcode);
 
+    meshId = 0;
     for (u16 i = 0; i < scene->mRootNode->mNumChildren; i++) {
         setup_vtx(scene->mRootNode->mChildren[i], scene, scale, vBuf, file, yUp, uvFlip);
     }
