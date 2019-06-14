@@ -2,8 +2,8 @@
 
 typedef struct {
     std::string path;
-    u8 size;
-    u8 sizeLog2;
+    u8 size[2];
+    u8 sizeLog2[2];
 } Texture;
 
 /** Fast3D material class */
@@ -11,40 +11,47 @@ class Material
 {
     private:
     Texture tex;
-    enum TexType { RGBA16, RGBA32, CI4, CI8 };
-    enum TexGenType { G_IM_FMT_RGBA, G_IM_FMT_YUV, G_IM_FMT_CI, G_IM_FMT_IA, G_IM_FMT_I };
-    enum TexLoadSize { G_IM_SIZ_4b, G_IM_SIZ_8b, G_IM_SIZ_16b, G_IM_SIZ_32b };
+    enum TexType { RGBA16, RGBA32, CI4, CI8, I4 I8, IA4, IA8 };
     const std::string format[] = { "rgba16", "rgba32", "ci4", "ci8" };
     std::string name = "DEFAULT MATERIAL";
 
+    /** Returns texture load string. */
     std::string GetTextureLoad()
     {
         const std::string loadFormat[] = { "G_IM_FMT_RGBA", "G_IM_FMT_YUV", "G_IM_FMT_CI", "G_IM_FMT_IA", "G_IM_FMT_I" };
-        const std::string loadFormatsSize[] = { "G_IM_SIZ_4b", "G_IM_SIZ_8b", "G_IM_SIZ_16b", "G_IM_SIZ_32b" };
-        //std::string ret;
-        //u8 type = 0; /* RGBA16 just in case */
-        //for (u8 i = 0; i < FORMATS; i++) {
-        //    if (tex.path.find(formats[i]) != std::string::npos) {
-        //        type = i;
-        //    }
-        //}
+        const std::string loadFormatsSize[] = { "G_IM_SIZ_4b ", "G_IM_SIZ_8b ", "G_IM_SIZ_16b ", "G_IM_SIZ_32b " };
+        std::string ret, texLoadType, texLoadSize;
+        u8 type = 0; /* RGBA16 just in case */
+        for (u8 i = 0; i < FORMATS; i++) {
+            if (tex.path.find(formats[i]) != std::string::npos) {
+                type = i;
+            }
+        }
 
-        /*switch(type) {
+        switch(type) {
             case RGBA32:
-            return "gsDPLoadTextureBlock " + getFileNameNoExtension() + ", G_IM_FMT_RGBA, G_IM_SIZ_32b, " + std::to_string(get_dimension(AXIS_X, path)) + ", " + std::to_string(get_dimension(AXIS_Y, path)) + ", 0, G_TX_WRAP | G_TX_NOMIRROR, G_TX_WRAP | G_TX_NOMIRROR, " + std::to_string((u16)log2(get_dimension(AXIS_X, path))) + ", " + std::to_string((s16)log2(get_dimension(AXIS_Y, path))) + ", G_TX_NOLOD, G_TX_NOLOD\ngsSPTexture -1, -1, 0, 0, 1\ngsDPTileSync\n";
+            texLoadType = "G_IM_FMT_RGBA, ";
+            texLoadSize = "G_IM_SIZ_32b, ";
             break;
 
             case CI4:
+            texLoadType = "G_IM_FMT_CI, ";
+            texLoadSize = "G_IM_SIZ_4b, ";
             break;
 
             case CI8:
+            texLoadType = "G_IM_FMT_CI, ";
+            texLoadSize = "G_IM_SIZ_8b, ";
             break;
 
             case RGBA16:
             default:
-            return "gsDPLoadTextureBlock " + getFileNameNoExtension() + ", G_IM_FMT_RGBA, G_IM_SIZ_16b, " + std::to_string(get_dimension(AXIS_X, path)) + ", " + std::to_string(get_dimension(AXIS_Y, path)) + ", 0, G_TX_WRAP | G_TX_NOMIRROR, G_TX_WRAP | G_TX_NOMIRROR, " + std::to_string((u16)log2(get_dimension(AXIS_X, path))) + ", " + std::to_string((s16)log2(get_dimension(AXIS_Y, path))) + ", G_TX_NOLOD, G_TX_NOLOD\ngsSPTexture -1, -1, 0, 0, 1\ngsDPTileSync\n";
-        }*/
-        return ""; /* ok cuck */
+            texLoadType = "G_IM_FMT_RGBA, ";
+            texLoadSize = "G_IM_SIZ_16b, ";
+
+        }
+        ret = "gsDPLoadTextureBlock " + getFileNameNoExtension() + ", " + texLoadType + texLoadTypeSize + std::to_string(tex.size[AXIS_X]) + ", " + std::to_string(tex.size[AXIS_Y]) + ", 0, G_TX_WRAP | G_TX_NOMIRROR, G_TX_WRAP | G_TX_NOMIRROR, " + std::to_string(tex.sizeLog2[AXIS_X]) + ", " + std::to_string(tex.sizeLog2[AXIS_Y]) + ", G_TX_NOLOD, G_TX_NOLOD\ngsSPTexture -1, -1, 0, 0, 1\ngsDPTileSync\n";
+        return ret;
     }
 
     /** Returns combiner settings. */
