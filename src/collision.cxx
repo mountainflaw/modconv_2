@@ -58,18 +58,26 @@ static void write_triangle(aiNode* node, const aiScene* scene, const std::string
 
     for (u16 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        std::string terrainType = "SURF_ENV_DEFAULT";
 
-//        if (scene->hasMaterials())
-//        {
-            /* Search for collision name shit here */
-//        }
+        std::string terrainType = "SURF_ENV_DEFAULT";
+        aiString aiName;
+        scene->mMaterials[i]->Get(AI_MATKEY_NAME, aiName);
+        std::string nameStr = aiName.data;
+
+        if (scene->HasMaterials()) {
+            std::cout << "material: " << nameStr << std::endl;
+            for (u16 j = 0; j < SURFACES; j++) {
+                if (nameStr.find(surfaces[j]) != std::string::npos) {
+                    terrainType = surfaces[j].substr(1, surfaces[j].length());
+                }
+            }
+        }
 
         /* Triangle */
         collisionOut << std::endl << "colTriInit " << terrainType << " " << std::to_string(mesh->mNumFaces) << std::endl;
 
-        for (u16 i = 0; i < mesh->mNumFaces; i++) {
-            collisionOut << "colTri " << vertex + mesh->mFaces[i].mIndices[0] << ", " << vertex + mesh->mFaces[i].mIndices[1] << ", " << vertex + mesh->mFaces[i].mIndices[2] << std::endl;
+        for (u16 j = 0; j < mesh->mNumFaces; j++) {
+            collisionOut << "colTri " << vertex + mesh->mFaces[j].mIndices[0] << ", " << vertex + mesh->mFaces[j].mIndices[1] << ", " << vertex + mesh->mFaces[j].mIndices[2] << std::endl;
         }
 
         vertex += mesh->mNumVertices;

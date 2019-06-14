@@ -28,6 +28,8 @@
 
 #include "modconv.hxx"
 
+#define SURFACES 57
+
 std::string surfaces[] =
 {
     "!SURF_ENV_DEFAULT",        "!SURF_BURNING",        "!SURF_04",

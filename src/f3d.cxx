@@ -136,7 +136,7 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                     }
                 }
 
-                u8 rgba[4] = {0xff, 0xff, 0xff, 0xff};
+                s16 rgba[4] = {0xff, 0xff, 0xff, 0xff};
 
                 if (mesh->HasVertexColors(0)) { /* Get around potential exception. */
                     rgba[C_RED] = mesh->mColors[0][currVtx].r * 0xff;
@@ -156,15 +156,17 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
 
                 if (mesh->HasNormals() && (nameStr.find("#SHADE") != std::string::npos
                             || nameStr.find("#NORMCOLOR") != std::string::npos)) {
-                    float d = 127 / sqrt((mesh->mNormals[currVtx].x) * (mesh->mNormals[currVtx].x)
-                            + (mesh->mNormals[currVtx].y) * (mesh->mNormals[currVtx].y)
-                            + (mesh->mNormals[currVtx].z) * (mesh->mNormals[currVtx].z));
+                    f32 w = sqrt((mesh->mNormals[currVtx].x * 127) * (mesh->mNormals[currVtx].x * 127)
+                            + (mesh->mNormals[currVtx].y * 127) * (mesh->mNormals[currVtx].y * 127)
+                            + (mesh->mNormals[currVtx].z * 127) * (mesh->mNormals[currVtx].z * 127));
 
-                    rgba[C_RED] = (u8)(mesh->mNormals[currVtx].x * d * 255);
-                    rgba[C_GRN] = (u8)(mesh->mNormals[currVtx].y * d * 255);
-                    rgba[C_BLU] = (u8)(mesh->mNormals[currVtx].z * d * 255);
 
-                    std::cout << "normalized " << currVtx << (u16)rgba[C_RED] << " " << (u16)rgba[C_GRN] << " " << (u16)rgba[C_BLU] << std::endl;
+                    rgba[C_RED] = (s8)(mesh->mNormals[currVtx].x * w * 127);
+                    rgba[C_GRN] = (s8)(mesh->mNormals[currVtx].y * w * 127);
+                    rgba[C_BLU] = (s8)(mesh->mNormals[currVtx].z * w * 127);
+
+                    std::cout << "normalized xyz " << rgba[C_RED] << " " << rgba[C_GRN] << " " << rgba[C_BLU];
+                    std::cout << " original xyz " << mesh->mNormals[currVtx].x * 127 << " " << mesh->mNormals[currVtx].y * 127 << " " << mesh->mNormals[currVtx].z * 127 << std::endl;
                 }
 
                 vBuf[vBuffer].addVtx(pos[AXIS_X], pos[AXIS_Y], pos[AXIS_Z],
@@ -216,10 +218,10 @@ static void write_vtx(const std::string fileOut, const std::string &path, Vertex
                     << vtx.pos[AXIS_Z] << ", "
                     << vtx.st[AXIS_X]  << ", "
                     << vtx.st[AXIS_Y]  << ", "
-                    << (u16)vtx.col[C_RED]  << ", "
-                    << (u16)vtx.col[C_GRN]  << ", "
-                    << (u16)vtx.col[C_BLU]  << ", "
-                    << (u16)vtx.col[C_APH]  << std::endl;
+                    << (u16)((u8)vtx.col[C_RED])  << ", "
+                    << (u16)((u8)vtx.col[C_GRN])  << ", "
+                    << (u16)((u8)vtx.col[C_BLU])  << ", "
+                    << (u16)((u8)vtx.col[C_APH])  << std::endl;
             }
         }
     }
@@ -296,6 +298,7 @@ static void write_textures(const std::string &fileOut, Material *mat, bool level
             copy_file(mat[i].getPath(), fileOut + "/" + get_filename(mat[i].getPath()));
         }
     }
+
 }
 
 /** Write display list commands to file. */

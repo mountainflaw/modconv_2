@@ -33,7 +33,7 @@ typedef struct
     bool useless;
     s16  pos[3], st[2];
     u16  flag[3]; /* optimizer flag */
-    u8   col[4];
+    s16   col[4];
 } Vertex;
 
 /* Used in the F3D DL builder. */
@@ -66,7 +66,7 @@ class VertexBuffer
 
     void addVtx(s16 vtxPosX, s16 vtxPosY, s16 vtxPosZ,
             s16 vtxPosU, s16 vtxPosV,
-            u8 vtxCRed, u8 vtxCGreen, u8 vtxCBlue, u8 vtxCAlpha,
+            s16 vtxCRed, s16 vtxCGreen, s16 vtxCBlue, s16 vtxCAlpha,
             u16 mesh)
     {
         vtx[vtxCount].pos[AXIS_X] = vtxPosX;
