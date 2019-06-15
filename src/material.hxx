@@ -70,11 +70,15 @@ class Material
         }
 
         if (type == CI4) {
-            ret += "gsDPLoadTLUT_pal16 0, " + getFileNameNoExtension() + ".pal\n";
+            ret += "gsDPSetTextureLUT G_TT_RGBA16\ngsDPLoadTLUT_pal16 0, " + getFileNameNoExtension() + ".pal\n";
         }
 
         else if (type == CI8) {
-            ret += "gsDPLoadTLUT_pal256 " + getFileNameNoExtension() + ".pal\n";
+            ret += "gsDPSetTextureLUT G_TT_RGBA16\ngsDPLoadTLUT_pal256 0, " + getFileNameNoExtension() + ".pal\n";
+        }
+
+        else {
+            ret += "gsDPSetTextureLUT G_TT_NONE\n"
         }
 
         ret += "gsDPLoadTextureBlock " + getFileNameNoExtension() + ", " + texLoadType + texLoadSize + std::to_string(tex.size[AXIS_X]) + ", " + std::to_string(tex.size[AXIS_Y]) + ", 0, G_TX_WRAP | G_TX_NOMIRROR, G_TX_WRAP | G_TX_NOMIRROR, " + std::to_string(tex.sizeLog2[AXIS_X]) + ", " + std::to_string(tex.sizeLog2[AXIS_Y]) + ", G_TX_NOLOD, G_TX_NOLOD\ngsSPTexture -1, -1, 0, 0, 1\ngsDPTileSync\n";
