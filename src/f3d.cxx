@@ -231,8 +231,8 @@ static void configure_materials(const std::string &file, Material* mat, aiNode* 
 {
     for (u16 i = 0; i < node->mNumMeshes; i++) {
         aiString aiPath, aiName;
-        scene->mMaterials[i]->Get(AI_MATKEY_NAME, aiName);
-        scene->mMaterials[i]->GetTexture(aiTextureType_DIFFUSE, 0, &aiPath);
+        scene->mMaterials[meshId]->Get(AI_MATKEY_NAME, aiName);
+        scene->mMaterials[meshId]->GetTexture(aiTextureType_DIFFUSE, 0, &aiPath);
 
         if (file_exists(aiPath.data)) { /* absolute */
             mat[meshId].setPath(aiPath.data);
@@ -283,10 +283,19 @@ static void write_textures(const std::string &fileOut, Material *mat, bool level
             texOut << std::endl;
             texOut << mat[i].getFileNameNoExtension() << ":" << std::endl;
             if (level) {
+                if (mat[i].getFileNameNoExtension().find("ci4") != std::string::npos
+                        || mat[i].getFileNameNoExtension().find("ci8") != std::string::npos) {
+                    texOut << ".incbin " << R"(")" << "levels/" << get_filename(fileOut) << "/" << mat[i].getFileNameNoExtension() << R"(.pal")" << std::endl;
+                }
                 texOut << ".incbin " << R"(")" << "levels/" << get_filename(fileOut) << "/" << mat[i].getFileNameNoExtension() << R"(")" << std::endl;
             }
 
             else { /* generating an actor */
+                texOut << ".incbin " << R"(")" << "actors/" << get_filename(fileOut) << "/" << mat[i].getFileNameNoExtension() << R"(")" << std::endl;
+                if (mat[i].getFileNameNoExtension().find("ci4") != std::string::npos
+                        || mat[i].getFileNameNoExtension().find("ci8") != std::string::npos) {
+                    texOut << ".incbin " << R"(")" << "actors/" << get_filename(fileOut) << "/" << mat[i].getFileNameNoExtension() << R"(.pal")" << std::endl;
+                }
                 texOut << ".incbin " << R"(")" << "actors/" << get_filename(fileOut) << "/" << mat[i].getFileNameNoExtension() << R"(")" << std::endl;
             }
 
