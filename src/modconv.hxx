@@ -81,7 +81,7 @@ typedef double f64;
  * DEFINES                                                                      *
  ********************************************************************************/
 
-#define DEFAULT_SCALE 350
+#define DEFAULT_SCALE 3
 /* Main GFX outputs */
 
 /* 
