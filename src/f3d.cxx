@@ -65,9 +65,9 @@ static void count_vtx(aiNode* node, const aiScene* scene)
 /** Shoutouts to nim. */
 static inline void mtx_mul(s16 mtx[4][4], s16 vtx[3])
 {
-    s16 newX = mtx[0][0] * vtx[AXIS_X] + mtx[0][1] * vtx[AXIS_Y] + mtx[0][2] * vtx[AXIS_Z] + mtx[0][3];
-    s16 newY = mtx[1][0] * vtx[AXIS_X] + mtx[1][1] * vtx[AXIS_Y] + mtx[1][2] * vtx[AXIS_Z] + mtx[1][3];
-    s16 newZ = mtx[2][0] * vtx[AXIS_X] + mtx[2][1] * vtx[AXIS_Y] + mtx[2][2] * vtx[AXIS_Z] + mtx[2][3];
+    f32 newX = mtx[0][0] * vtx[AXIS_X] + mtx[0][1] * vtx[AXIS_Y] + mtx[0][2] * vtx[AXIS_Z] + mtx[0][3];
+    f32 newY = mtx[1][0] * vtx[AXIS_X] + mtx[1][1] * vtx[AXIS_Y] + mtx[1][2] * vtx[AXIS_Z] + mtx[1][3];
+    f32 newZ = mtx[2][0] * vtx[AXIS_X] + mtx[2][1] * vtx[AXIS_Y] + mtx[2][2] * vtx[AXIS_Z] + mtx[2][3];
 
     vtx[0] = newX;
     vtx[1] = newY;
@@ -113,19 +113,6 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                 s16 pos[3];
                 s16 tMtx[4][4] = {0};
 
-                //if (yUp) { /* y axis up */
-                //    pos[AXIS_X] = (s16)(mesh->mVertices[currVtx].x * scale);
-                //    pos[AXIS_Y] = (s16)(mesh->mVertices[currVtx].y * scale);
-                //    pos[AXIS_Z] = (s16)(mesh->mVertices[currVtx].z * scale);
-                //}
-
-                //else { /* default setting (z axis up) */
-                //    pos[AXIS_X] = (s16)(mesh->mVertices[currVtx].x * scale);
-                //    pos[AXIS_Y] = (s16)(mesh->mVertices[currVtx].z * scale);
-                //    pos[AXIS_Z] = (s16)(mesh->mVertices[currVtx].y * scale * -1);
-                //}
-
-
                 pos[AXIS_X] = (s16)(mesh->mVertices[currVtx].x * scale);
                 pos[AXIS_Y] = (s16)(mesh->mVertices[currVtx].y * scale);
                 pos[AXIS_Z] = (s16)(mesh->mVertices[currVtx].z * scale);
@@ -151,10 +138,7 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                 tMtx[3][1] = node->mTransformation.d2;
                 tMtx[3][2] = node->mTransformation.d3;
                 tMtx[3][3] = node->mTransformation.d4;
-                std::cout << "mtx " << tMtx[0][0] << " " << tMtx[0][1] << " " << " " << tMtx[0][2] << " " << " " << tMtx[0][3] << std::endl;
-                std::cout << tMtx[1][0] << " " << tMtx[1][1] << " " << " " << tMtx[1][2] << " " << " " << tMtx[1][3] << std::endl;
-                std::cout << tMtx[2][0] << " " << tMtx[2][1] << " " << " " << tMtx[2][2] << " " << " " << tMtx[2][3] << std::endl;
-                std::cout << tMtx[3][0] << " " << tMtx[3][1] << " " << " " << tMtx[3][2] << " " << " " << tMtx[3][3] << std::endl;
+
                 mtx_mul(tMtx, pos);
                 std::cout << "pos xyz transformed " << pos[0] << " " << pos[1] << " " << pos[2] << std::endl;
 
