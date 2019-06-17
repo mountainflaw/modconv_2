@@ -23,6 +23,7 @@ class Material
         for (u8 i = 0; i < FORMATS; i++) {
             if (tex.path.find(format[i]) != std::string::npos) {
                 type = i;
+                break;
             }
         }
 
@@ -70,11 +71,11 @@ class Material
         }
 
         if (type == CI4) {
-            ret += "gsDPSetTextureLUT G_TT_RGBA16\ngsDPLoadTLUT_pal16 0, " + getFileNameNoExtension() + ".pal\n";
+            ret += "gsDPSetTextureLUT G_TT_RGBA16\ngsDPLoadTLUT_pal16 0, " + getFileNameNoExtension() + "_pal\n";
         }
 
         else if (type == CI8) {
-            ret += "gsDPSetTextureLUT G_TT_RGBA16\ngsDPLoadTLUT_pal256 0, " + getFileNameNoExtension() + ".pal\n";
+            ret += "gsDPSetTextureLUT G_TT_RGBA16\ngsDPLoadTLUT_pal256 0, " + getFileNameNoExtension() + "_pal\n";
         }
 
         else {

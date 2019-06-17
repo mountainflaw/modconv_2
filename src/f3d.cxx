@@ -406,6 +406,7 @@ static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, M
         << "gsDPPipeSync\n"
         << "gsDPSetCombineMode1Cycle G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE\n"
         << "gsSPSetGeometryMode G_LIGHTING\n"
+        << "gsDPSetTextureLUT G_TT_NONE\n";
         << "gsSPEndDisplayList" << std::endl;
 }
 
