@@ -65,25 +65,15 @@ static void count_vtx(aiNode* node, const aiScene* scene)
 /** Shoutouts to nim. */
 static inline void mtx_mul(s16 mtx[4][4], s16 vtx[3])
 {
-    f32 newX = mtx[0][0] * vtx[AXIS_X] + mtx[0][1] * vtx[AXIS_Y] + mtx[0][2] * vtx[AXIS_Z] + mtx[0][3];
-    f32 newY = mtx[1][0] * vtx[AXIS_X] + mtx[1][1] * vtx[AXIS_Y] + mtx[1][2] * vtx[AXIS_Z] + mtx[1][3];
-    f32 newZ = mtx[2][0] * vtx[AXIS_X] + mtx[2][1] * vtx[AXIS_Y] + mtx[2][2] * vtx[AXIS_Z] + mtx[2][3];
+    /* Multiply by 0.1 since the matrix multiplies by 100 */
+    f32 newX = (mtx[0][0] * vtx[AXIS_X] + mtx[0][1] * vtx[AXIS_Y] + mtx[0][2] * vtx[AXIS_Z] + mtx[0][3]) * 0.01;
+    f32 newY = (mtx[1][0] * vtx[AXIS_X] + mtx[1][1] * vtx[AXIS_Y] + mtx[1][2] * vtx[AXIS_Z] + mtx[1][3]) * 0.01;
+    f32 newZ = (mtx[2][0] * vtx[AXIS_X] + mtx[2][1] * vtx[AXIS_Y] + mtx[2][2] * vtx[AXIS_Z] + mtx[2][3]) * 0.01;
 
     vtx[0] = newX;
     vtx[1] = newY;
     vtx[2] = newZ;
 }
-
-/** Shoutouts to nim, I was too stupid. */
-/*template <typename T> void mtx_mul (aiMatrix4x4t<T> *mtx, s16 vtx[3])
-{
-    s16 newX = mtx->a1*vtx[0] + mtx->a2*vtx[1] + mtx->a3*vtx[2] + mtx->a4;
-    s16 newY = mtx->b1*vtx[0] + mtx->b2*vtx[1] + mtx->b3*vtx[2] + mtx->b4;
-    s16 newZ = mtx->c1*vtx[0] + mtx->c2*vtx[1] + mtx->c3*vtx[2] + mtx->c4;
-    vtx[0] = newX;
-    vtx[1] = newY;
-    vtx[2] = newZ;
-}*/
 
 /** Add vertices to vertex buffers. */
 static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
@@ -218,6 +208,9 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
         }
         meshId++;
     }
+    for (u16 i = 0; i < node->mNumChildren; i++) {
+        setup_vtx(node->mChildren[i], scene, scale, vBuf, file, yUp, uvFlip);
+    }
 }
 
 enum BufferModes {RESET, OPTIMIZE, BUFFER};
@@ -349,7 +342,6 @@ static void write_textures(const std::string &fileOut, Material *mat, bool level
             copy_file(mat[i].getPath(), fileOut + "/" + get_filename(mat[i].getPath()));
         }
     }
-
 }
 
 /** Write display list commands to file. */
@@ -431,9 +423,7 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
     cycle_vbuffers(vBuf, BUFFER, microcode);
 
     meshId = 0;
-    for (u16 i = 0; i < scene->mRootNode->mNumChildren; i++) {
-        setup_vtx(scene->mRootNode->mChildren[i], scene, scale, vBuf, file, yUp, uvFlip);
-    }
+    setup_vtx(scene->mRootNode, scene, scale, vBuf, file, yUp, uvFlip);
 
     /* Materials */
     Material mat[meshId];
