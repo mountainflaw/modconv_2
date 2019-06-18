@@ -75,6 +75,8 @@ static inline void mtx_mul(s16 mtx[4][4], s16 vtx[3])
     vtx[2] = newZ;
 }
 
+int face = 0;
+
 /** Add vertices to vertex buffers. */
 static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
         VertexBuffer* vBuf, const std::string &file, bool yUp, bool uvFlip)
@@ -85,6 +87,7 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
         /* we go by faces instead of verts so we don't accidentally add what we don't need */
         for (u32 j = 0; j < mesh->mNumFaces; j++) {
             for (u8 k = 0; k <= 2; k++) {
+                std::cout << "face " << face++ << std::endl;
                 u32 currVtx = mesh->mFaces[j].mIndices[k];
 
                 if (vBuffers == 1) { /* if we only have one buffer, set it to the size of vert so we don't overflow */
@@ -107,8 +110,6 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                 pos[AXIS_Y] = (s16)(mesh->mVertices[currVtx].y * scale);
                 pos[AXIS_Z] = (s16)(mesh->mVertices[currVtx].z * scale);
 
-                std::cout << "pos xyz            " << pos[0] << " " << pos[1] << " " << pos[2] << std::endl;
-
                 tMtx[0][0] = node->mTransformation.a1;
                 tMtx[0][1] = node->mTransformation.a2;
                 tMtx[0][2] = node->mTransformation.a3;
@@ -130,14 +131,13 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                 tMtx[3][3] = node->mTransformation.d4;
 
                 mtx_mul(tMtx, pos);
-                std::cout << "pos xyz transformed " << pos[0] << " " << pos[1] << " " << pos[2] << std::endl;
 
                 s16 uv[2] = {0x00};
 
                 /* We have to look at material data so we can multiply the UV data. */
                 if (scene->HasMaterials()) { /* ditto */
                     aiString aiPath;
-                    scene->mMaterials[i]->GetTexture(aiTextureType_DIFFUSE, 0, &aiPath);
+                    scene->mMaterials[mesh->mMaterialIndex]->GetTexture(aiTextureType_DIFFUSE, 0, &aiPath);
                     std::string path = aiPath.data;
 
                     if (file_exists(path)) { /* absolute */
@@ -156,8 +156,8 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                     }
 
                     else if (file_exists(get_path(file) + path) && !(is_directory(get_path(file) + path))) { /* relative */
-                        uv[AXIS_X] = mesh->mTextureCoords[0][currVtx].x * 32 * get_dimension(AXIS_X, get_path(file) + path);
-                        uv[AXIS_Y] = mesh->mTextureCoords[0][currVtx].y * 32 * get_dimension(AXIS_Y, get_path(file) + path);
+                        //uv[AXIS_X] = mesh->mTextureCoords[0][currVtx].x * 32 * get_dimension(AXIS_X, get_path(file) + path);
+                        //uv[AXIS_Y] = mesh->mTextureCoords[0][currVtx].y * 32 * get_dimension(AXIS_Y, get_path(file) + path);
                         if(uvFlip) { /* see above explanation */
                             uv[AXIS_Y] *= -1;
                         }
@@ -177,7 +177,7 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                 }
 
                 aiString aiName;
-                scene->mMaterials[i]->Get(AI_MATKEY_NAME, aiName);
+                scene->mMaterials[mesh->mMaterialIndex]->Get(AI_MATKEY_NAME, aiName);
                 std::string nameStr = aiName.data;
 
                 /*
@@ -202,7 +202,7 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
 
                 vBuf[vBuffer].addVtx(pos[AXIS_X], pos[AXIS_Y], pos[AXIS_Z],
                         uv[AXIS_X], uv[AXIS_Y],
-                        rgba[C_RED], rgba[C_GRN], rgba[C_BLU], rgba[C_APH], meshId);
+                        rgba[C_RED], rgba[C_GRN], rgba[C_BLU], rgba[C_APH], mesh->mMaterialIndex);
                 vert2++;
             }
         }
@@ -261,32 +261,27 @@ static void write_vtx(const std::string fileOut, const std::string &path, Vertex
     }
 }
 
-static void configure_materials(const std::string &file, Material* mat, aiNode* node, const aiScene* scene)
+static void configure_materials(const std::string &file, Material* mat, const aiScene* scene)
 {
-    for (u16 i = 0; i < node->mNumMeshes; i++) {
+    for (u16 i = 0; i < scene->mNumMaterials; i++) {
         aiString aiPath, aiName;
-        scene->mMaterials[meshId]->Get(AI_MATKEY_NAME, aiName);
-        scene->mMaterials[meshId]->GetTexture(aiTextureType_DIFFUSE, 0, &aiPath);
+        scene->mMaterials[i]->Get(AI_MATKEY_NAME, aiName);
+        scene->mMaterials[i]->GetTexture(aiTextureType_DIFFUSE, 0, &aiPath);
 
         if (file_exists(aiPath.data)) { /* absolute */
-            mat[meshId].setPath(aiPath.data);
-            mat[meshId].setName(aiName.data);
-            mat[meshId].textured = true;
+            mat[i].setPath(aiPath.data);
+            mat[i].setName(aiName.data);
+            mat[i].textured = true;
         }
 
         else if (file_exists(get_path(file) + aiPath.data) && !(is_directory(get_path(file) + aiPath.data))) { /* relative */
-            mat[meshId].setPath(get_path(file) + aiPath.data);
-            mat[meshId].setName(aiName.data);
-            mat[meshId].textured = true;
+            mat[i].setPath(get_path(file) + aiPath.data);
+            mat[i].setName(aiName.data);
+            mat[i].textured = true;
         }
 
         std::cout << "abs " << aiPath.data << std::endl;
         std::cout << "rel " << get_path(file) + aiPath.data << std::endl;
-        meshId++;
-    }
-
-    for (u16 i = 0; i < node->mNumChildren; i++) {
-        configure_materials(file, mat, node->mChildren[i], scene);
     }
 }
 
@@ -426,9 +421,9 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
     setup_vtx(scene->mRootNode, scene, scale, vBuf, file, yUp, uvFlip);
 
     /* Materials */
-    Material mat[meshId];
+    Material mat[scene->mNumMaterials];
     meshId = 0;
-    configure_materials(file, mat, scene->mRootNode, scene);
+    configure_materials(file, mat, scene);
     write_textures(fileOut, mat, level);
 
     cycle_vbuffers(vBuf, OPTIMIZE, 0);
