@@ -114,5 +114,6 @@ enum axis { AXIS_X, AXIS_Y, AXIS_Z };
 void error_message(const std::string &message);
 void warn_message(const std::string &message);
 void info_message(const std::string &message);
+std::string labelize(const std::string &label);
 
 void collision_converter_main(const std::string &file, const std::string &fileOut, s16 scale);

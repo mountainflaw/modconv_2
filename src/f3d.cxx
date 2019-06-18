@@ -236,7 +236,7 @@ static void write_vtx(const std::string fileOut, const std::string &path, Vertex
     std::fstream vtxOut;
     vtxOut.open(fileOut + "/model.s", std::ofstream::out | std::ofstream::app);
     for (u16 i = 0; i < vBuffers; i++) {
-        vtxOut << std::endl << get_filename(fileOut) << "_vertex_" << i << ":" << std::endl;
+        vtxOut << std::endl << labelize(get_filename(fileOut) + "_vertex_" + std::to_string(i)) << std::endl;
         for (u16 j = 0; j < vBuf[i].bufferSize; j++) {
             Vertex vtx = vBuf[i].getVtx();
             if (!vtx.useless) {
@@ -278,7 +278,7 @@ static void configure_materials(const std::string &file, Material* mat, const ai
     }
 }
 
-static void write_textures(const std::string &fileOut, Material *mat, bool level)
+static void write_textures(const std::string &fileOut, Material *mat, const aiScene* scene, bool level)
 {
     std::fstream texOut;
     if (level) {
@@ -291,7 +291,7 @@ static void write_textures(const std::string &fileOut, Material *mat, bool level
     }
 
     /* Phase 1 - Find redundant textures */
-    for (u16 i = 0; i < meshId; i++) {
+    for (u16 i = 0; i < scene->mNumMaterials; i++) {
         for (u16 j = 0; j < meshId; j++) {
             if (mat[i].getPath().compare(mat[j].getPath()) == 0 && j > i) {
                 mat[j].useless = true;
@@ -300,10 +300,10 @@ static void write_textures(const std::string &fileOut, Material *mat, bool level
     }
 
     /* Phase 2: Write and copy textures */
-    for (u16 i = 0; i < meshId; i++) {
+    for (u16 i = 0; i < scene->mNumMaterials; i++) {
         if (!mat[i].useless && mat[i].textured) {
             texOut << std::endl;
-            texOut << mat[i].getFileNameNoExtension() << ":" << std::endl;
+            texOut << labelize(mat[i].getFileNameNoExtension()) << std::endl;
             if (level) {
                 texOut << ".incbin " << R"(")" << "levels/" << get_filename(fileOut) << "/" << mat[i].getFileNameNoExtension() << R"(")" << std::endl;
                 if (mat[i].getFileNameNoExtension().find("ci4") != std::string::npos
@@ -417,7 +417,7 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
     Material mat[scene->mNumMaterials];
     meshId = 0;
     configure_materials(file, mat, scene);
-    write_textures(fileOut, mat, level);
+    write_textures(fileOut, mat, scene, level);
 
     cycle_vbuffers(vBuf, OPTIMIZE, 0);
     write_vtx(fileOut, "", vBuf);

@@ -1,32 +1,36 @@
 /*
-*   Copyright (c) 2019, Red                                                             *
-*   All rights reserved.                                                                *
-*                                                                                       *
-*   Redistribution and use in source and binary forms, with or without                  *
-*   modification, are permitted provided that the following conditions are met:         *  
-*                                                                                       *
-*       * Redistributions of source code must retain the above copyright                *
-*         notice, this list of conditions and the following disclaimer.                 *
-*       * Redistributions in binary form must reproduce the above copyright             *
-*         notice, this list of conditions and the following disclaimer in the           *
-*         documentation and/or other materials provided with the distribution.          *
-*       * Neither the name of the Obsidian developers nor the                           *
-*         names of its contributors may be used to endorse or promote products          *
-*         derived from this software without specific prior written permission.         *
-*                                                                                       *
-*   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND     *
-*   ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED       *
-*   WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE              *
-*   DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY                *
-*   DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES          *
-*   (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;        *
-*   LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND         *
-*   ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          *
-*   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS       *
-*   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                        *
-*/
+ *   Copyright (c) 2019, Red                                                             *
+ *   All rights reserved.                                                                *
+ *                                                                                       *
+ *   Redistribution and use in source and binary forms, with or without                  *
+ *   modification, are permitted provided that the following conditions are met:         *  
+ *                                                                                       *
+ *       * Redistributions of source code must retain the above copyright                *
+ *         notice, this list of conditions and the following disclaimer.                 *
+ *       * Redistributions in binary form must reproduce the above copyright             *
+ *         notice, this list of conditions and the following disclaimer in the           *
+ *         documentation and/or other materials provided with the distribution.          *
+ *       * Neither the name of the Obsidian developers nor the                           *
+ *         names of its contributors may be used to endorse or promote products          *
+ *         derived from this software without specific prior written permission.         *
+ *                                                                                       *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND     *
+ *   ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED       *
+ *   WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE              *
+ *   DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY                *
+ *   DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES          *
+ *   (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;        *
+ *   LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND         *
+ *   ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          *
+ *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS       *
+ *   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                        *
+ */
 
 #include "modconv.hxx"
+
+/* glabel mode */
+bool glabel = false;
+/* std::string glabelData; */
 
 void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8 microcode, bool level, bool yUp, bool uvFlip);
 void collision_converter_main(const std::string &file, const std::string &fileOut, s16 scale, bool yUp);
@@ -74,6 +78,8 @@ void print_help(const std::string &name)
     std::cout << "--yup    - Use the Y axis for up" << std::endl;
     std::cout << "  - Acceptable inputs are Y and Z." << std::endl;
     std::cout << "--uvflip - Flip the UV mask Y axis." << std::endl;
+    std::cout << "--glabel - Use global labels instead of local labels." << std::endl;
+    std::cout << "  - Allows for editing data in C." << std::endl;
     std::cout << "--help   - Bring up this menu and quit" << std::endl;
     std::cout << std::endl;
     std::cout << print_bold("TIPS: ") << std::endl;
@@ -84,6 +90,18 @@ void print_help(const std::string &name)
 
 /* GCC seems to think that the level bool is unused... */
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+
+/** Used to generate assembler labels so we can easily use glabel mode. */
+std::string labelize(const std::string &label)
+{
+    if (glabel) {
+        return "glabel " + label;
+    }
+
+    else { /* Regular labels (default behavior) */
+        return label + ":";
+    }
+}
 
 int main(int argc, char* argv[])
 {
@@ -139,6 +157,10 @@ int main(int argc, char* argv[])
             uvFlip = true;
         }
 
+        if (arg.compare("--glabel") == 0) {
+            glabel = true;
+        }
+
         if (arg.compare("--help") == 0) {
             print_help(argv[0]);
             exit(0);
@@ -171,6 +193,11 @@ int main(int argc, char* argv[])
         break;
 
     }
+
+    if (glabel) {
+        info_message("Exporting C header...");
+    }
+
     info_message("Finished!");
     return 0;
 }
