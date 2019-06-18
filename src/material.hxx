@@ -99,8 +99,14 @@ class Material
 
 #define GROUP_TAGS 6
     std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#ZBUFFER", "#SHADE", "#BACKFACE" };
-    std::string GetGeometryMode(bool geo[])
-    { return ""; }
+    void SetGeometryMode(bool geo[6])
+    {
+        for (u8 i = 0; i < GROUP_TAGS; i++) {
+            if (name.find(groupTags[i]) != std::string::npos) {
+                geo[i] = true;
+            }
+        }
+    }
 
     public:
     bool useless = false, textured = false;

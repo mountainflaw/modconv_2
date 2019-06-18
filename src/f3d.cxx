@@ -1,30 +1,30 @@
 /*
-*   Copyright (c) 2019, Red                                                             *
-*   All rights reserved.                                                                *
-*                                                                                       *
-*   Redistribution and use in source and binary forms, with or without                  *
-*   modification, are permitted provided that the following conditions are met:         *
-*                                                                                       *
-*       * Redistributions of source code must retain the above copyright                *
-*         notice, this list of conditions and the following disclaimer.                 *
-*       * Redistributions in binary form must reproduce the above copyright             *
-*         notice, this list of conditions and the following disclaimer in the           *
-*         documentation and/or other materials provided with the distribution.          *
-*       * Neither the name of the modconv 2 developers nor the                          *
-*         names of its contributors may be used to endorse or promote products          *
-*         derived from this software without specific prior written permission.         *
-*                                                                                       *
-*   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND     *
-*   ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED       *
-*   WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE              *
-*   DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY                *
-*   DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES          *
-*   (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;        *
-*   LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND         *
-*   ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          *
-*   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS       *
-*   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                        *
-*/
+ *   Copyright (c) 2019, Red                                                             *
+ *   All rights reserved.                                                                *
+ *                                                                                       *
+ *   Redistribution and use in source and binary forms, with or without                  *
+ *   modification, are permitted provided that the following conditions are met:         *
+ *                                                                                       *
+ *       * Redistributions of source code must retain the above copyright                *
+ *         notice, this list of conditions and the following disclaimer.                 *
+ *       * Redistributions in binary form must reproduce the above copyright             *
+ *         notice, this list of conditions and the following disclaimer in the           *
+ *         documentation and/or other materials provided with the distribution.          *
+ *       * Neither the name of the modconv 2 developers nor the                          *
+ *         names of its contributors may be used to endorse or promote products          *
+ *         derived from this software without specific prior written permission.         *
+ *                                                                                       *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND     *
+ *   ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED       *
+ *   WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE              *
+ *   DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY                *
+ *   DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES          *
+ *   (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;        *
+ *   LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND         *
+ *   ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          *
+ *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS       *
+ *   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                        *
+ */
 
 /*
  * New F3D builder.
@@ -63,12 +63,12 @@ static void count_vtx(aiNode* node, const aiScene* scene)
 }
 
 /** Shoutouts to nim. */
-static inline void mtx_mul(s16 mtx[4][4], s16 vtx[3])
+static inline void mtx_mul(s16 mtx[4][4], s16 vtx[3], s16 scale)
 {
     /* Multiply by 0.1 since the matrix multiplies by 100 */
-    f32 newX = (mtx[0][0] * vtx[AXIS_X] + mtx[0][1] * vtx[AXIS_Y] + mtx[0][2] * vtx[AXIS_Z] + mtx[0][3]) * 0.01;
-    f32 newY = (mtx[1][0] * vtx[AXIS_X] + mtx[1][1] * vtx[AXIS_Y] + mtx[1][2] * vtx[AXIS_Z] + mtx[1][3]) * 0.01;
-    f32 newZ = (mtx[2][0] * vtx[AXIS_X] + mtx[2][1] * vtx[AXIS_Y] + mtx[2][2] * vtx[AXIS_Z] + mtx[2][3]) * 0.01;
+    f32 newX = (mtx[0][0] * vtx[AXIS_X] + mtx[0][1] * vtx[AXIS_Y] + mtx[0][2] * vtx[AXIS_Z] + mtx[0][3]) * (0.01 * scale);
+    f32 newY = (mtx[1][0] * vtx[AXIS_X] + mtx[1][1] * vtx[AXIS_Y] + mtx[1][2] * vtx[AXIS_Z] + mtx[1][3]) * (0.01 * scale);
+    f32 newZ = (mtx[2][0] * vtx[AXIS_X] + mtx[2][1] * vtx[AXIS_Y] + mtx[2][2] * vtx[AXIS_Z] + mtx[2][3]) * (0.01 * scale);
 
     vtx[0] = newX;
     vtx[1] = newY;
@@ -106,9 +106,9 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                 s16 pos[3];
                 s16 tMtx[4][4] = {0};
 
-                pos[AXIS_X] = (s16)(mesh->mVertices[currVtx].x * scale);
-                pos[AXIS_Y] = (s16)(mesh->mVertices[currVtx].y * scale);
-                pos[AXIS_Z] = (s16)(mesh->mVertices[currVtx].z * scale);
+                pos[AXIS_X] = (s16)(mesh->mVertices[currVtx].x);
+                pos[AXIS_Y] = (s16)(mesh->mVertices[currVtx].y);
+                pos[AXIS_Z] = (s16)(mesh->mVertices[currVtx].z);
 
                 tMtx[0][0] = node->mTransformation.a1;
                 tMtx[0][1] = node->mTransformation.a2;
@@ -130,8 +130,9 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                 tMtx[3][2] = node->mTransformation.d3;
                 tMtx[3][3] = node->mTransformation.d4;
 
+
+                mtx_mul(tMtx, pos, scale);
                 std::cout << "xyz " << pos[0] << " " << pos[1] << " " << pos[2] << std::endl;
-                mtx_mul(tMtx, pos);
 
                 s16 uv[2] = {0x00};
 
