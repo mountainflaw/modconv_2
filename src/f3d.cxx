@@ -54,7 +54,7 @@ static void count_vtx(aiNode* node, const aiScene* scene)
     for (u16 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
         vert += mesh->mNumFaces * 3;
-        meshId++;
+        std::cout << "faces " << vert / 3 << std::endl;
     }
 
     for (u16 i = 0; i < node->mNumChildren; i++) {
@@ -87,7 +87,7 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
         /* we go by faces instead of verts so we don't accidentally add what we don't need */
         for (u32 j = 0; j < mesh->mNumFaces; j++) {
             for (u8 k = 0; k <= 2; k++) {
-                std::cout << "face " << face++ << std::endl;
+                //std::cout << "face " << face++ << std::endl;
                 u32 currVtx = mesh->mFaces[j].mIndices[k];
 
                 if (vBuffers == 1) { /* if we only have one buffer, set it to the size of vert so we don't overflow */
@@ -130,12 +130,13 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                 tMtx[3][2] = node->mTransformation.d3;
                 tMtx[3][3] = node->mTransformation.d4;
 
+                std::cout << "xyz " << pos[0] << " " << pos[1] << " " << pos[2] << std::endl;
                 mtx_mul(tMtx, pos);
 
                 s16 uv[2] = {0x00};
 
                 /* We have to look at material data so we can multiply the UV data. */
-                if (scene->HasMaterials()) { /* ditto */
+                if (scene->HasMaterials() && mesh->HasTextureCoords(0)) { /* ditto */
                     aiString aiPath;
                     scene->mMaterials[mesh->mMaterialIndex]->GetTexture(aiTextureType_DIFFUSE, 0, &aiPath);
                     std::string path = aiPath.data;
@@ -353,7 +354,7 @@ static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, M
             << " " << std::to_string(vBuf[i].loadSize) << ", 0" << std::endl;
         while (!vBuf[i].isBufferComplete()) {
             if (vBuf[i].getVtxMat() != currMat) {
-                currMat++; /* Get around undefined */
+                currMat = vBuf[i].getVtxMat();
                 gfxOut << "/* " << mat[currMat].getName() << " */" << std::endl
                 << mat[currMat].getMaterial();
             }

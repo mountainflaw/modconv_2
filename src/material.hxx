@@ -67,7 +67,6 @@ class Material
             default:
             texLoadType = "G_IM_FMT_RGBA, ";
             texLoadSize = "G_IM_SIZ_16b, ";
-
         }
 
         if (type == CI4) {
@@ -97,6 +96,11 @@ class Material
             return "gsDPSetCombineMode1Cycle G_CCMUX_PRIMITIVE, G_CCMUX_0, G_CCMUX_SHADE, G_CCMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE\n";
         }
     }
+
+#define GROUP_TAGS 6
+    std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#ZBUFFER", "#SHADE", "#BACKFACE" };
+    std::string GetGeometryMode(bool geo[])
+    { return ""; }
 
     public:
     bool useless = false, textured = false;
