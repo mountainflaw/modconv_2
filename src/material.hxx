@@ -15,6 +15,12 @@ class Material
     const std::string format[FORMATS] = { "rgba16", "rgba32", "ci4", "ci8", "ia4", "ia8", "i4", "i8" };
     std::string name = "DEFAULT MATERIAL";
 
+    inline std::string newline_if_true(bool a)
+    {
+        if (a) { return "\n"; }
+        else { return ""; }
+    }
+
     /** Returns texture load string. */
     std::string GetTextureLoad()
     {
@@ -176,7 +182,7 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
             }
         }
 
-        return setRet + clearRet + "\n";
+        return setRet + newline_if_true(setOring) + clearRet + newline_if_true(clearOring);
     }
 
     public:
