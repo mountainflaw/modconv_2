@@ -262,15 +262,15 @@ static void configure_materials(const std::string &file, Material* mat, const ai
         scene->mMaterials[i]->Get(AI_MATKEY_NAME, aiName);
         scene->mMaterials[i]->GetTexture(aiTextureType_DIFFUSE, 0, &aiPath);
 
+        mat[i].setName(aiName.data);
+
         if (file_exists(aiPath.data)) { /* absolute */
             mat[i].setPath(aiPath.data);
-            mat[i].setName(aiName.data);
             mat[i].textured = true;
         }
 
         else if (file_exists(get_path(file) + aiPath.data) && !(is_directory(get_path(file) + aiPath.data))) { /* relative */
             mat[i].setPath(get_path(file) + aiPath.data);
-            mat[i].setName(aiName.data);
             mat[i].textured = true;
         }
 
@@ -345,6 +345,7 @@ static void write_textures(const std::string &fileOut, Material *mat, const aiSc
 
 static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, Material* mat, bool yUp)
 {
+    bool oldGeo[5] = {0x00};
     std::fstream gfxOut;
     gfxOut.open(fileOut + "/model.s", std::ofstream::out | std::ofstream::app);
     s16 currMat = -1;
@@ -357,7 +358,7 @@ static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, M
             if (vBuf[i].getVtxMat() != currMat) {
                 currMat = vBuf[i].getVtxMat();
                 gfxOut << "/* " << mat[currMat].getName() << " */" << std::endl
-                << mat[currMat].getMaterial();
+                << mat[currMat].getMaterial(oldGeo);
             }
 
             if (vBuf[i].canTri2()) {
