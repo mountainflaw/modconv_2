@@ -126,13 +126,6 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
         for (u8 i = 0; i < GROUP_TAGS; i++) {
             if (name.find(groupTags[i]) != std::string::npos) {
                 ourGeo[i] = true;
-                std::cout << "enabling geo mode " << i << std::endl;
-                std::cout << name << std::endl;
-            }
-
-            else {
-                std::cout << "not enabling geo mode " << i << std::endl;
-                std::cout << name << std::endl;
             }
         }
 

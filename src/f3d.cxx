@@ -54,7 +54,6 @@ static void count_vtx(aiNode* node, const aiScene* scene)
     for (u16 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
         vert += mesh->mNumFaces * 3;
-        std::cout << "faces " << vert / 3 << std::endl;
     }
 
     for (u16 i = 0; i < node->mNumChildren; i++) {
@@ -66,9 +65,9 @@ static void count_vtx(aiNode* node, const aiScene* scene)
 static inline void mtx_mul(s16 mtx[4][4], s16 vtx[3], s16 scale)
 {
     /* Multiply by 0.1 since the matrix multiplies by 100 */
-    f32 newX = (mtx[0][0] * vtx[AXIS_X] + mtx[0][1] * vtx[AXIS_Y] + mtx[0][2] * vtx[AXIS_Z] + mtx[0][3]) * (0.01 * scale);
-    f32 newY = (mtx[1][0] * vtx[AXIS_X] + mtx[1][1] * vtx[AXIS_Y] + mtx[1][2] * vtx[AXIS_Z] + mtx[1][3]) * (0.01 * scale);
-    f32 newZ = (mtx[2][0] * vtx[AXIS_X] + mtx[2][1] * vtx[AXIS_Y] + mtx[2][2] * vtx[AXIS_Z] + mtx[2][3]) * (0.01 * scale);
+    f32 newX = ((mtx[0][0] * vtx[AXIS_X] + mtx[0][1] * vtx[AXIS_Y] + mtx[0][2] * vtx[AXIS_Z] + mtx[0][3]) * scale) * 0.01f;
+    f32 newY = ((mtx[1][0] * vtx[AXIS_X] + mtx[1][1] * vtx[AXIS_Y] + mtx[1][2] * vtx[AXIS_Z] + mtx[1][3]) * scale) * 0.01f;
+    f32 newZ = ((mtx[2][0] * vtx[AXIS_X] + mtx[2][1] * vtx[AXIS_Y] + mtx[2][2] * vtx[AXIS_Z] + mtx[2][3]) * scale) * 0.01f;
 
     vtx[0] = newX;
     vtx[1] = newY;
@@ -130,9 +129,7 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                 tMtx[3][2] = node->mTransformation.d3;
                 tMtx[3][3] = node->mTransformation.d4;
 
-
                 mtx_mul(tMtx, pos, scale);
-                std::cout << "xyz " << pos[0] << " " << pos[1] << " " << pos[2] << std::endl;
 
                 s16 uv[2] = {0x00};
 
@@ -274,8 +271,8 @@ static void configure_materials(const std::string &file, Material* mat, const ai
             mat[i].textured = true;
         }
 
-        std::cout << "abs " << aiPath.data << std::endl;
-        std::cout << "rel " << get_path(file) + aiPath.data << std::endl;
+        std::cout << "Texture (absolute) " << aiPath.data << std::endl;
+        std::cout << "Texture (relative) " << get_path(file) + aiPath.data << std::endl;
     }
 }
 
@@ -327,7 +324,6 @@ static void write_textures(const std::string &fileOut, Material *mat, const aiSc
                 remove_file(fileOut + "/" + get_filename(mat[i].getPath()));
             }
 
-            std::cout << "file: " << mat[i].getPath() << std::endl;
             copy_file(mat[i].getPath(), fileOut + "/" + get_filename(mat[i].getPath()));
         }
     }
@@ -408,6 +404,9 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
     if (vert % microcode > 0) { /* is there a trailing vbuffer? */
         vBuffers++;
     }
+
+    std::cout << "Vertices " << vert << std::endl;
+    std::cout << "Faces " << vert / 3 << std::endl;
 
     VertexBuffer vBuf[vBuffers];
     cycle_vbuffers(vBuf, BUFFER, microcode);
