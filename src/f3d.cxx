@@ -44,8 +44,7 @@ enum RgbaColors { C_RED, C_GRN, C_BLU, C_APH };
 
 u32 vert     = 0,
     vert2    = 0;
-u16 meshId   = 0,
-    vBuffers = 0,
+u16 vBuffers = 0,
     vBuffer  = 0;
 
 static void count_vtx(aiNode* node, const aiScene* scene)
@@ -135,13 +134,10 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
 
                 if (mesh->HasNormals() && (nameStr.find("#LIGHTING") != std::string::npos
                             || nameStr.find("#NORMCOLOR") != std::string::npos)) {
-                    f32 w = sqrt((mesh->mNormals[currVtx].x * 127) * (mesh->mNormals[currVtx].x * 127)
-                            + (mesh->mNormals[currVtx].y * 127) * (mesh->mNormals[currVtx].y * 127)
-                            + (mesh->mNormals[currVtx].z * 127) * (mesh->mNormals[currVtx].z * 127));
 
-                    rgba[C_RED] = (s8)(mesh->mNormals[currVtx].x * w * 127);
-                    rgba[C_GRN] = (s8)(mesh->mNormals[currVtx].y * w * 127);
-                    rgba[C_BLU] = (s8)(mesh->mNormals[currVtx].z * w * 127);
+                    rgba[C_RED] = (s8)(mesh->mNormals[currVtx].x * 0xff);
+                    rgba[C_GRN] = (s8)(mesh->mNormals[currVtx].y * 0xff);
+                    rgba[C_BLU] = (s8)(mesh->mNormals[currVtx].z * 0xff);
 
                     std::cout << "normalized xyz " << rgba[C_RED] << " " << rgba[C_GRN] << " " << rgba[C_BLU];
                     std::cout << " original xyz " << mesh->mNormals[currVtx].x * 127 << " " << mesh->mNormals[currVtx].y * 127 << " " << mesh->mNormals[currVtx].z * 127 << std::endl;
@@ -157,7 +153,6 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                 vert2++;
             }
         }
-        meshId++;
     }
     for (u16 i = 0; i < node->mNumChildren; i++) {
         setup_vtx(node->mChildren[i], scene, scale, vBuf, file, uvFlip);
@@ -247,13 +242,13 @@ static void write_textures(const std::string &fileOut, Material *mat, const aiSc
 
     /* Phase 1: Copy lights */
     texOut << std::endl << get_filename(fileOut) << "_ambient_light:" << std::endl
-           << "0x66, 0x66, 0x66, 0x00, 0x66, 0x66, 0x66, 0x00" << std::endl
+           << ".byte 0x66, 0x66, 0x66, 0x00, 0x66, 0x66, 0x66, 0x00" << std::endl
            << get_filename(fileOut) << "_diffuse_light:" << std::endl
-           << "0xFF, 0xFF, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x00" << std::endl
-           << "0x28, 0x28, 0x28, 0x00, 0x00, 0x00, 0x00, 0x00" << std::endl;
+           << ".byte 0xFF, 0xFF, 0xFF, 0x00, 0xFF, 0xFF, 0xFF, 0x00" << std::endl
+           << ".byte 0x28, 0x28, 0x28, 0x00, 0x00, 0x00, 0x00, 0x00" << std::endl;
     /* Phase 2 - Find redundant textures */
     for (u16 i = 0; i < scene->mNumMaterials; i++) {
-        for (u16 j = 0; j < meshId; j++) {
+        for (u16 j = 0; j < scene->mNumMaterials; j++) {
             if (mat[i].getPath().compare(mat[j].getPath()) == 0 && j > i) {
                 mat[j].useless = true;
             }
@@ -307,7 +302,9 @@ static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, M
     gfxOut.open(fileOut + "/model.s", std::ofstream::out | std::ofstream::app);
     s16 currMat = -1;
     gfxOut << std::endl << "glabel " << get_filename(fileOut) << "_dl" << std::endl
-        << "gsSPClearGeometryMode G_LIGHTING" << std::endl;
+           << "gsSPLight " << get_filename(fileOut) << "_diffuse_light, 1" << std::endl
+           << "gsSPLight " << get_filename(fileOut) << "_ambient_light, 2" << std::endl
+           << "gsSPClearGeometryMode G_LIGHTING" << std::endl;
     for (u16 i = 0; i < vBuffers; i++) {
         gfxOut << "gsSPVertex " <<  get_filename(fileOut) << "_vertex_" << i
             << " " << std::to_string(vBuf[i].loadSize) << ", 0" << std::endl;
@@ -371,12 +368,10 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
     VertexBuffer vBuf[vBuffers];
     cycle_vbuffers(vBuf, BUFFER, microcode);
 
-    meshId = 0;
     setup_vtx(scene->mRootNode, scene, scale, vBuf, file, uvFlip);
 
     /* Materials */
     Material mat[scene->mNumMaterials];
-    meshId = 0;
     configure_materials(file, mat, scene);
     write_textures(fileOut, mat, scene, level);
 
