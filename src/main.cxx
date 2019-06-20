@@ -32,9 +32,6 @@
 bool glabel = false;
 /* std::string glabelData; */
 
-void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8 microcode, bool level, bool yUp, bool uvFlip);
-void collision_converter_main(const std::string &file, const std::string &fileOut, s16 scale);
-
 u8 output = OUTPUT_F3D;
 
 inline std::string print_bold(const std::string &s)
@@ -60,32 +57,29 @@ inline void info_message(const std::string &message)
 
 void print_help(const std::string &name)
 {
-    std::cout << print_bold("- MODCONV 2.8 HELP -") << std::endl;
-    std::cout << std::endl;
-    std::cout << print_bold("SYNOPSIS: ") << std::endl;
-    std::cout << name << " <parameters> <model>" << std::endl;
-    std::cout << std::endl;
-    std::cout << print_bold("PARAMETERS: ") << std::endl;
-    std::cout << "--level - Export as a level" << std::endl;
-    std::cout << "--dir   - Output directory" << std::endl;
-    std::cout << "--scale - Multiplier to scale the exported model by" << std::endl;
-    std::cout << "--type  - What to export" << std::endl;
-    std::cout << "  - f3d       - Use Fast3D (default)" << std::endl;
-    std::cout << "  - f3dex     - Use Fast3DEX (requires f3dex to be enabled)" << std::endl;
-    std::cout << "  - rej       - Optimize for Fast3DEX Rej (64 vtx)" << std::endl;
-    std::cout << "  - collision - Export collision mesh" << std::endl;
-    std::cout << "  - goddard   - Export Mario head mesh" << std::endl;
-    std::cout << "--yup    - Use the Y axis for up" << std::endl;
-    std::cout << "  - Acceptable inputs are Y and Z." << std::endl;
-    std::cout << "--uvflip - Flip the UV mask Y axis." << std::endl;
-    std::cout << "--glabel - Use global labels instead of local labels." << std::endl;
-    std::cout << "  - Allows for editing data in C." << std::endl;
-    std::cout << "--help   - Bring up this menu and quit" << std::endl;
-    std::cout << std::endl;
-    std::cout << print_bold("TIPS: ") << std::endl;
-    std::cout << "- If you use obj, set up direction to the Y axis using --up" << std::endl;
-    std::cout << "- If your model lags, consider using Fast3DEX (--type f3dex)" << std::endl;
-    std::cout << "- If on console and or angrylion's you experience triangle warping, subdivide the problematic triangle" << std::endl;
+    std::cout << print_bold("- MODCONV 2.8 HELP -") << std::endl
+              << std::endl
+              << print_bold("SYNOPSIS: ") << std::endl
+              << name << " <parameters> <model>" << std::endl
+              << std::endl
+              << print_bold("PARAMETERS: ") << std::endl
+              << "--level - Export as a level" << std::endl
+              << "--dir   - Output directory" << std::endl
+              << "--scale - Multiplier to scale the exported model by" << std::endl
+              << "--type  - What to export" << std::endl
+              << "  - f3d       - Use Fast3D (default)" << std::endl
+              << "  - f3dex     - Use Fast3DEX (requires f3dex to be enabled)" << std::endl
+              << "  - rej       - Optimize for Fast3DEX Rej (64 vtx)" << std::endl
+              << "  - collision - Export collision mesh" << std::endl
+              << "  - goddard   - Export Mario head mesh" << std::endl
+              << "--uvflip - Flip the UV mask Y axis." << std::endl
+              << "--glabel - Use global labels instead of local labels." << std::endl
+              << "  - Allows for editing data in C." << std::endl
+              << "--help   - Bring up this menu and quit" << std::endl
+              << std::endl
+              << print_bold("TIPS: ") << std::endl
+              << "- If your model lags, consider using Fast3DEX (--type f3dex)" << std::endl
+              << "- If on console and or angrylion's you experience triangle warping, subdivide the problematic triangle" << std::endl;
 }
 
 /* GCC seems to think that the level bool is unused... */
@@ -110,7 +104,6 @@ int main(int argc, char* argv[])
                 fileOut  = "model";
     s16 scale            = DEFAULT_SCALE;
     bool level           = false,
-         yUp             = false,
          uvFlip          = false;
 
     if (argc < 2) {
@@ -149,10 +142,6 @@ int main(int argc, char* argv[])
             else error_message("Invalid output type.");
         }
 
-        if (arg.compare("--yup") == 0) {
-            yUp = true;
-        }
-
         if (arg.compare("--uvflip") == 0) {
             uvFlip = true;
         }
@@ -185,7 +174,7 @@ int main(int argc, char* argv[])
         case OUTPUT_F3DEX:
         case OUTPUT_REJ:
         case OUTPUT_REJ2:
-        f3d_main(filePath, fileOut, scale, output, level, yUp, uvFlip);
+        f3d_main(filePath, fileOut, scale, output, level, uvFlip);
         break;
 
         case OUTPUT_COLLISION:

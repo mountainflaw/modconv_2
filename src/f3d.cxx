@@ -63,7 +63,7 @@ static void count_vtx(aiNode* node, const aiScene* scene)
 
 /** Add vertices to vertex buffers. */
 static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
-        VertexBuffer* vBuf, const std::string &file, bool yUp, bool uvFlip)
+        VertexBuffer* vBuf, const std::string &file, bool uvFlip)
 {
     for (u16 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
@@ -161,7 +161,7 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
         meshId++;
     }
     for (u16 i = 0; i < node->mNumChildren; i++) {
-        setup_vtx(node->mChildren[i], scene, scale, vBuf, file, yUp, uvFlip);
+        setup_vtx(node->mChildren[i], scene, scale, vBuf, file, uvFlip);
     }
 }
 
@@ -300,7 +300,7 @@ static void write_textures(const std::string &fileOut, Material *mat, const aiSc
  * 4.) End displaylist after all of that crap is done.
  */
 
-static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, Material* mat, bool yUp)
+static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, Material* mat)
 {
     bool oldGeo[5] = {0x00};
     std::fstream gfxOut;
@@ -350,7 +350,7 @@ static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, M
 }
 
 /** Main function for the F3D build process. */
-void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8 microcode, bool level, bool yUp, bool uvFlip)
+void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8 microcode, bool level, bool uvFlip)
 {
     Assimp::Importer importer;
 
@@ -373,7 +373,7 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
     cycle_vbuffers(vBuf, BUFFER, microcode);
 
     meshId = 0;
-    setup_vtx(scene->mRootNode, scene, scale, vBuf, file, yUp, uvFlip);
+    setup_vtx(scene->mRootNode, scene, scale, vBuf, file, uvFlip);
 
     /* Materials */
     Material mat[scene->mNumMaterials];
@@ -384,5 +384,5 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
     cycle_vbuffers(vBuf, OPTIMIZE, 0);
     write_vtx(fileOut, "", vBuf);
     cycle_vbuffers(vBuf, RESET, 0);
-    write_display_list(fileOut, vBuf, mat, yUp);
+    write_display_list(fileOut, vBuf, mat);
 }

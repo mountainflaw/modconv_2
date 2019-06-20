@@ -116,4 +116,5 @@ void warn_message(const std::string &message);
 void info_message(const std::string &message);
 std::string labelize(const std::string &label);
 
+void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8 microcode, bool level, bool uvFlip);
 void collision_converter_main(const std::string &file, const std::string &fileOut, s16 scale);
