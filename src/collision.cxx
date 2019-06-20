@@ -1,30 +1,30 @@
 /*
-*   Copyright (c) 2019, Red                                                             *
-*   All rights reserved.                                                                *
-*                                                                                       *
-*   Redistribution and use in source and binary forms, with or without                  *
-*   modification, are permitted provided that the following conditions are met:         *
-*                                                                                       *
-*       * Redistributions of source code must retain the above copyright                *
-*         notice, this list of conditions and the following disclaimer.                 *
-*       * Redistributions in binary form must reproduce the above copyright             *
-*         notice, this list of conditions and the following disclaimer in the           *
-*         documentation and/or other materials provided with the distribution.          *
-*       * Neither the name of the Obsidian developers nor the                           *
-*         names of its contributors may be used to endorse or promote products          *
-*         derived from this software without specific prior written permission.         *
-*                                                                                       *
-*   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND     *
-*   ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED       *
-*   WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE              *
-*   DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY                *
-*   DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES          *
-*   (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;        *
-*   LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND         *
-*   ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          *
-*   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS       *
-*   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                        *
-*/
+ *   Copyright (c) 2019, Red                                                             *
+ *   All rights reserved.                                                                *
+ *                                                                                       *
+ *   Redistribution and use in source and binary forms, with or without                  *
+ *   modification, are permitted provided that the following conditions are met:         *
+ *                                                                                       *
+ *       * Redistributions of source code must retain the above copyright                *
+ *         notice, this list of conditions and the following disclaimer.                 *
+ *       * Redistributions in binary form must reproduce the above copyright             *
+ *         notice, this list of conditions and the following disclaimer in the           *
+ *         documentation and/or other materials provided with the distribution.          *
+ *       * Neither the name of the Obsidian developers nor the                           *
+ *         names of its contributors may be used to endorse or promote products          *
+ *         derived from this software without specific prior written permission.         *
+ *                                                                                       *
+ *   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND     *
+ *   ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED       *
+ *   WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE              *
+ *   DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY                *
+ *   DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES          *
+ *   (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;        *
+ *   LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND         *
+ *   ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          *
+ *   (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS       *
+ *   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.                        *
+ */
 
 /* This file handles creating collision data out of a model imported with ASSIMP. */
 #include "modconv.hxx"
@@ -40,13 +40,7 @@ static void write_vertex(aiNode* node, const aiScene* scene, const std::string &
     for (u16 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
         for (u16 i = 0; i < mesh->mNumVertices; i++) {
-            if (yUp) {
-                collisionOut << "colVertex " << std::to_string((s16)(mesh->mVertices[i].x * scale)) << ", " << std::to_string((s16)(mesh->mVertices[i].y * scale)) << ", " << std::to_string((s16)(mesh->mVertices[i].z * scale)) << std::endl;
-            }
-
-            else { /* z up (default) */
-                collisionOut << "colVertex " << std::to_string((s16)(mesh->mVertices[i].x * scale)) << ", " << std::to_string((s16)(mesh->mVertices[i].z * scale)) << ", " << std::to_string((s16)(mesh->mVertices[i].y * scale * -1)) << std::endl;
-            }
+            collisionOut << "colVertex " << std::to_string((s16)(mesh->mVertices[i].x * scale)) << ", " << std::to_string((s16)(mesh->mVertices[i].y * scale)) << ", " << std::to_string((s16)(mesh->mVertices[i].z * scale)) << std::endl;
         }
     }
 }
@@ -82,50 +76,37 @@ static void write_triangle(aiNode* node, const aiScene* scene, const std::string
 
         vertex += mesh->mNumVertices;
     }
-}
 
-static void set_tri_amount(aiNode* node, const aiScene* scene)
-{
-    for (u16 i = 0; i < node->mNumMeshes; i++) {
-        aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        tri += mesh->mNumFaces;
+    for (u16 i = 0; i < node->mNumChildren; i++) {
+        write_triangle(node->mChildren[i], scene, fileOut);
     }
 }
 
 static void set_vtx_amount(aiNode* node, const aiScene* scene)
 {
-    for (u16 i = 0; i < node->mNumMeshes; i++) {
-        aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        vtx += mesh->mNumVertices;
+    aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+    vtx += mesh->mNumVertices;
+
+    for (u16 i = 0; i < node->mNumChildren; i++) {
+        set_vtx_amount(node->mChildren[i], scene);
     }
 }
 
 void collision_converter_main(const std::string &file, const std::string &fileOut, s16 scale, bool yUp)
 {
     Assimp::Importer importer;
-    const aiScene* scene = importer.ReadFile(file, aiProcess_ValidateDataStructure | aiProcess_JoinIdenticalVertices | aiProcess_Triangulate);
+    const aiScene* scene = importer.ReadFile(file, aiProcess_ValidateDataStructure | aiProcess_JoinIdenticalVertices | aiProcess_Triangulate | aiProcess_PreTransformVertices);
 
     std::fstream collisionOut;
     collisionOut.open(fileOut + "/collision.s", std::iostream::out | std::iostream::app);
     reset_file(fileOut + "/collision.s");
     collisionOut << "glabel " << get_filename(fileOut) << "_collision" << std::endl << "colInit";
 
-    for (u16 i = 0; i < scene->mRootNode->mNumChildren; i++) { /* I don't think this is used anywhere. */
-        set_tri_amount(scene->mRootNode->mChildren[i], scene);
-    }
-
-    for (u16 i = 0; i < scene->mRootNode->mNumChildren; i++) {
-        set_vtx_amount(scene->mRootNode->mChildren[i], scene);
-    }
+    set_vtx_amount(scene->mRootNode->mChildren[i], scene);
 
     collisionOut << std::endl << "colVertexInit " << vtx << std::endl;
-    for (u16 i = 0; i < scene->mRootNode->mNumChildren; i++) {
-            write_vertex(scene->mRootNode->mChildren[i], scene, fileOut, scale, yUp);
-    }
-
-    for (u16 i = 0; i < scene->mRootNode->mNumChildren; i++) {
-            write_triangle(scene->mRootNode->mChildren[i], scene, fileOut);
-    }
+    write_vertex(scene->mRootNode->mChildren[i], scene, fileOut, scale, yUp);
+    write_triangle(scene->mRootNode->mChildren[i], scene, fileOut);
 
     collisionOut << std::endl << "colTriStop" << std::endl;
     collisionOut << "colEnd" << std::endl;
