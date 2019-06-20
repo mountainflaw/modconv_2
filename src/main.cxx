@@ -90,9 +90,7 @@ std::string labelize(const std::string &label)
 {
     if (glabel) {
         return "glabel " + label;
-    }
-
-    else { /* Regular labels (default behavior) */
+    } else { /* Regular labels (default behavior) */
         return label + ":";
     }
 }
@@ -144,12 +142,12 @@ int main(int argc, char* argv[])
         if (arg.compare("--type") == 0) {
             std::cout << "DBG - Type: " << flw << std::endl;
 
-            if (flw.compare("f3d") == 0)              output = OUTPUT_F3D;
-            else if (flw.compare("f3dex") == 0)       output = OUTPUT_F3DEX;
-            else if (flw.compare("rej") == 0)         output = OUTPUT_REJ;
-            else if (flw.compare("goddard") == 0)     output = OUTPUT_GODDARD;
-            else if (flw.compare("collision") == 0)   output = OUTPUT_COLLISION;
-            else error_message("Invalid output type.");
+            if (flw.compare("f3d") == 0) {            output = OUTPUT_F3D; }
+            else if (flw.compare("f3dex") == 0) {     output = OUTPUT_F3DEX; }
+            else if (flw.compare("rej") == 0) {       output = OUTPUT_REJ; }
+            else if (flw.compare("goddard") == 0) {   output = OUTPUT_GODDARD; }
+            else if (flw.compare("collision") == 0) { output = OUTPUT_COLLISION; }
+            else { error_message("Invalid output type."); }
         }
 
         if (arg.compare("--uvflip") == 0) {

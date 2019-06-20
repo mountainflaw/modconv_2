@@ -60,6 +60,8 @@ static void count_vtx(aiNode* node, const aiScene* scene)
     }
 }
 
+u8 splitCount = 0;
+
 /** Add vertices to vertex buffers. */
 static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
         VertexBuffer* vBuf, const std::string &file, bool uvFlip)
@@ -102,9 +104,7 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                     if (file_exists(path)) { /* absolute */
                         uv[AXIS_X] = mesh->mTextureCoords[0][currVtx].x * 32 * get_dimension(AXIS_X, path);
                         uv[AXIS_Y] = mesh->mTextureCoords[0][currVtx].y * 32 * get_dimension(AXIS_Y, path);
-                    }
-
-                    else if (file_exists(get_path(file) + path) && !(is_directory(get_path(file) + path))) { /* relative */
+                    } else if (file_exists(get_path(file) + path) && !(is_directory(get_path(file) + path))) { /* relative */
                         uv[AXIS_X] = mesh->mTextureCoords[0][currVtx].x * 32 * get_dimension(AXIS_X, get_path(file) + path);
                         uv[AXIS_Y] = mesh->mTextureCoords[0][currVtx].y * 32 * get_dimension(AXIS_Y, get_path(file) + path);
                     }
@@ -112,9 +112,6 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                     /* Some formats use flipped UVs. Flip them here if the option was passed. */
                     if (uvFlip) {
                         uv[AXIS_Y] *= -1;
-                    }
-
-                    else { /* no texture found */
                     }
                 }
 
@@ -136,12 +133,11 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                  * or vertex color based off of normals (#NORMCOLOR)
                  */
 
-                if (mesh->HasNormals() && (nameStr.find("#SHADE") != std::string::npos
+                if (mesh->HasNormals() && (nameStr.find("#LIGHTING") != std::string::npos
                             || nameStr.find("#NORMCOLOR") != std::string::npos)) {
                     f32 w = sqrt((mesh->mNormals[currVtx].x * 127) * (mesh->mNormals[currVtx].x * 127)
                             + (mesh->mNormals[currVtx].y * 127) * (mesh->mNormals[currVtx].y * 127)
                             + (mesh->mNormals[currVtx].z * 127) * (mesh->mNormals[currVtx].z * 127));
-
 
                     rgba[C_RED] = (s8)(mesh->mNormals[currVtx].x * w * 127);
                     rgba[C_GRN] = (s8)(mesh->mNormals[currVtx].y * w * 127);
@@ -149,6 +145,10 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
 
                     std::cout << "normalized xyz " << rgba[C_RED] << " " << rgba[C_GRN] << " " << rgba[C_BLU];
                     std::cout << " original xyz " << mesh->mNormals[currVtx].x * 127 << " " << mesh->mNormals[currVtx].y * 127 << " " << mesh->mNormals[currVtx].z * 127 << std::endl;
+                    if (splitCount++ == 2) {
+                        std::cout << std::endl;
+                        splitCount = 0;
+                    }
                 }
 
                 vBuf[vBuffer].addVtx(pos[AXIS_X], pos[AXIS_Y], pos[AXIS_Z],
@@ -199,14 +199,14 @@ static void write_vtx(const std::string fileOut, const std::string &path, Vertex
             Vertex vtx = vBuf[i].getVtx();
             if (!vtx.useless) {
                 vtxOut << "vertex " << vtx.pos[AXIS_X] << ", "
-                    << vtx.pos[AXIS_Y] << ", "
-                    << vtx.pos[AXIS_Z] << ", "
-                    << vtx.st[AXIS_X]  << ", "
-                    << vtx.st[AXIS_Y]  << ", "
-                    << (u16)((u8)vtx.col[C_RED])  << ", "
-                    << (u16)((u8)vtx.col[C_GRN])  << ", "
-                    << (u16)((u8)vtx.col[C_BLU])  << ", "
-                    << (u16)((u8)vtx.col[C_APH])  << std::endl;
+                                    << vtx.pos[AXIS_Y] << ", "
+                                    << vtx.pos[AXIS_Z] << ", "
+                                    << vtx.st[AXIS_X]  << ", "
+                                    << vtx.st[AXIS_Y]  << ", "
+                                    << (u16)((u8)vtx.col[C_RED])  << ", "
+                                    << (u16)((u8)vtx.col[C_GRN])  << ", "
+                                    << (u16)((u8)vtx.col[C_BLU])  << ", "
+                                    << (u16)((u8)vtx.col[C_APH])  << std::endl;
             }
         }
     }
@@ -224,9 +224,7 @@ static void configure_materials(const std::string &file, Material* mat, const ai
         if (file_exists(aiPath.data)) { /* absolute */
             mat[i].setPath(aiPath.data);
             mat[i].textured = true;
-        }
-
-        else if (file_exists(get_path(file) + aiPath.data) && !(is_directory(get_path(file) + aiPath.data))) { /* relative */
+        } else if (file_exists(get_path(file) + aiPath.data) && !(is_directory(get_path(file) + aiPath.data))) { /* relative */
             mat[i].setPath(get_path(file) + aiPath.data);
             mat[i].textured = true;
         }
@@ -242,13 +240,18 @@ static void write_textures(const std::string &fileOut, Material *mat, const aiSc
     if (level) {
         reset_file(fileOut + "/texture.s");
         texOut.open(fileOut + "/texture.s", std::ofstream::out | std::ofstream::app);
-    }
-
-    else { /* generating an actor */
+    } else { /* generating an actor */
         texOut.open(fileOut + "/model.s", std::ofstream::out | std::ofstream::app);
     }
 
-    /* Phase 1 - Find redundant textures */
+
+    /* Phase 1: Copy lights */
+    texOut << std::endl << get_filename(fileOut) << "_ambient_light:" << std::endl
+           << "0x66, 0x66, 0x66, 0x00, 0x66, 0x66, 0x66, 0x00" << std::endl
+           << get_filename(fileOut) << "_diffuse_light:" << std::endl
+           << "0xFF, 0xFF, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x00" << std::endl
+           << "0x28, 0x28, 0x28, 0x00, 0x00, 0x00, 0x00, 0x00" << std::endl;
+    /* Phase 2 - Find redundant textures */
     for (u16 i = 0; i < scene->mNumMaterials; i++) {
         for (u16 j = 0; j < meshId; j++) {
             if (mat[i].getPath().compare(mat[j].getPath()) == 0 && j > i) {
@@ -257,7 +260,7 @@ static void write_textures(const std::string &fileOut, Material *mat, const aiSc
         }
     }
 
-    /* Phase 2: Write and copy textures */
+    /* Phase 3: Write and copy textures */
     for (u16 i = 0; i < scene->mNumMaterials; i++) {
         if (!mat[i].useless && mat[i].textured) {
             texOut << std::endl;
@@ -269,9 +272,7 @@ static void write_textures(const std::string &fileOut, Material *mat, const aiSc
                     texOut << std::endl << mat[i].getFileNameNoExtension() << "_pal:" << std::endl;
                     texOut << ".incbin " << R"(")" << "levels/" << get_filename(fileOut) << "/" << mat[i].getFileNameNoExtension() << R"(.pal")" << std::endl;
                 }
-            }
-
-            else { /* generating an actor */
+            } else { /* generating an actor */
                 texOut << ".incbin " << R"(")" << "actors/" << get_filename(fileOut) << "/" << mat[i].getFileNameNoExtension() << R"(")" << std::endl;
                 if (mat[i].getFileNameNoExtension().find("ci4") != std::string::npos
                         || mat[i].getFileNameNoExtension().find("ci8") != std::string::npos) { /* CI palette */
@@ -315,7 +316,7 @@ static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, M
             if (vBuf[i].getVtxMat() != currMat) {
                 currMat = vBuf[i].getVtxMat();
                 gfxOut << "/* " << mat[currMat].getName() << " */" << std::endl
-                << mat[currMat].getMaterial(oldGeo);
+                                << mat[currMat].getMaterial(oldGeo);
             }
 
             if (vBuf[i].canTri2()) {
@@ -323,30 +324,28 @@ static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, M
                                  vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex()};
 
                 gfxOut << "gsSP2Triangles " << triTwo[0] << ", "
-                << triTwo[1] << ", "
-                << triTwo[2] << ", 0x00, "
-                << triTwo[3] << ", "
-                << triTwo[4] << ", "
-                << triTwo[5] << ", 0x00"
-                << std::endl;
-            }
-
-            else {
+                       << triTwo[1] << ", "
+                       << triTwo[2] << ", 0x00, "
+                       << triTwo[3] << ", "
+                       << triTwo[4] << ", "
+                       << triTwo[5] << ", 0x00"
+                       << std::endl;
+            } else {
                 u16 triOne[3] = {vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex()};
 
                 gfxOut << "gsSP1Triangle " << triOne[0] << ", "
-                << triOne[1] << ", "
-                << triOne[2] << ", 0x00" << std::endl;
+                       << triOne[1] << ", "
+                       << triOne[2] << ", 0x00" << std::endl;
             }
         }
     }
 
     gfxOut << "gsSPTexture -1, -1, 0, 0, 0\n"
-        << "gsDPPipeSync\n"
-        << "gsDPSetCombineMode1Cycle G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE\n"
-        << "gsSPSetGeometryMode G_LIGHTING\n"
-        << "gsDPSetTextureLUT G_TT_NONE\n"
-        << "gsSPEndDisplayList" << std::endl;
+           << "gsDPPipeSync\n"
+           << "gsDPSetCombineMode1Cycle G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE\n"
+           << "gsSPSetGeometryMode G_LIGHTING\n"
+           << "gsDPSetTextureLUT G_TT_NONE\n"
+           << "gsSPEndDisplayList" << std::endl;
 }
 
 /** Main function for the F3D build process. */
