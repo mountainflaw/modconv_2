@@ -362,8 +362,8 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
         vBuffers++;
     }
 
-    std::cout << "Vertices " << vert << std::endl;
-    std::cout << "Faces " << vert / 3 << std::endl;
+    info_message("Vertices " + std::to_string(vert));
+    info_message("Triangles " + std::to_string(vert / 3));
 
     VertexBuffer vBuf[vBuffers];
     cycle_vbuffers(vBuf, BUFFER, microcode);
