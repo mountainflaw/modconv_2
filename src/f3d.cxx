@@ -39,7 +39,6 @@
 enum RgbaColors { C_RED, C_GRN, C_BLU, C_APH };
 
 #include "modconv.hxx"
-#include "f3d.hxx"
 #include "buffer.hxx"
 #include "material.hxx"
 
