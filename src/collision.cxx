@@ -32,7 +32,7 @@
 
 s32 vertex = 0, tri = 0, vtx = 0; /* Globals */
 
-static void write_vertex(aiNode* node, const aiScene* scene, const std::string &fileOut, s16 scale, bool yUp)
+static void write_vertex(aiNode* node, const aiScene* scene, const std::string &fileOut, s16 scale)
 {
     std::fstream collisionOut;
     collisionOut.open(fileOut + "/collision.s", std::iostream::out | std::iostream::app);
@@ -84,15 +84,17 @@ static void write_triangle(aiNode* node, const aiScene* scene, const std::string
 
 static void set_vtx_amount(aiNode* node, const aiScene* scene)
 {
-    aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-    vtx += mesh->mNumVertices;
+    for (u16 i = 0; i < node->mNumMeshes; i++) {
+        aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+        vtx += mesh->mNumVertices;
+    }
 
     for (u16 i = 0; i < node->mNumChildren; i++) {
         set_vtx_amount(node->mChildren[i], scene);
     }
 }
 
-void collision_converter_main(const std::string &file, const std::string &fileOut, s16 scale, bool yUp)
+void collision_converter_main(const std::string &file, const std::string &fileOut, s16 scale)
 {
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(file, aiProcess_ValidateDataStructure | aiProcess_JoinIdenticalVertices | aiProcess_Triangulate | aiProcess_PreTransformVertices);
@@ -102,11 +104,11 @@ void collision_converter_main(const std::string &file, const std::string &fileOu
     reset_file(fileOut + "/collision.s");
     collisionOut << "glabel " << get_filename(fileOut) << "_collision" << std::endl << "colInit";
 
-    set_vtx_amount(scene->mRootNode->mChildren[i], scene);
+    set_vtx_amount(scene->mRootNode, scene);
 
     collisionOut << std::endl << "colVertexInit " << vtx << std::endl;
-    write_vertex(scene->mRootNode->mChildren[i], scene, fileOut, scale, yUp);
-    write_triangle(scene->mRootNode->mChildren[i], scene, fileOut);
+    write_vertex(scene->mRootNode, scene, fileOut, scale);
+    write_triangle(scene->mRootNode, scene, fileOut);
 
     collisionOut << std::endl << "colTriStop" << std::endl;
     collisionOut << "colEnd" << std::endl;
