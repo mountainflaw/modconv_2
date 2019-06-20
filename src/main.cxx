@@ -97,6 +97,16 @@ std::string labelize(const std::string &label)
     }
 }
 
+void extern_data(const std::string &fileOut, const std::string &a)
+{
+    if (glabel) {
+        std::fstream header;
+        header.open(fileOut + "/" + fileOut + ".h", std::iostream::out | std::iostream::app);
+        header << a << std::endl;
+        header.close();
+    }
+}
+
 int main(int argc, char* argv[])
 {
     std::cout << print_bold("- MODCONV 2.8 BY RED -") << std::endl;
@@ -169,6 +179,16 @@ int main(int argc, char* argv[])
     info_message("Starting...");
 
     reset_directory(fileOut);
+
+    if (glabel) {
+        info_message("C header will be exported as " + print_bold(fileOut + "/" + fileOut + ".h") + ".");
+        reset_file(fileOut + "/" + fileOut + ".h");
+        std::fstream header;
+        header.open(fileOut + "/" + fileOut + ".h", std::iostream::out | std::iostream::app);
+        header << std::endl;
+        header.close();
+    }
+
     switch (output) {
         case OUTPUT_F3D:
         case OUTPUT_F3DEX:
@@ -181,10 +201,6 @@ int main(int argc, char* argv[])
         collision_converter_main(filePath, fileOut, scale);
         break;
 
-    }
-
-    if (glabel) {
-        info_message("Exporting C header...");
     }
 
     info_message("Finished!");

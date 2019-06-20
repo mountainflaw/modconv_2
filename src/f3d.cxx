@@ -310,6 +310,7 @@ static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, M
     for (u16 i = 0; i < vBuffers; i++) {
         gfxOut << "gsSPVertex " <<  get_filename(fileOut) << "_vertex_" << i
             << " " << std::to_string(vBuf[i].loadSize) << ", 0" << std::endl;
+        extern_data(fileOut, "extern Vertex *" + get_filename(fileOut) + "_vertex_" + std::to_string(i) + "[" + std::to_string(vBuf[i].loadSize) + "];");
         while (!vBuf[i].isBufferComplete()) {
             if (vBuf[i].getVtxMat() != currMat) {
                 currMat = vBuf[i].getVtxMat();
