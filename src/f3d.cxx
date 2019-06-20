@@ -61,21 +61,6 @@ static void count_vtx(aiNode* node, const aiScene* scene)
     }
 }
 
-/** Shoutouts to nim. */
-static inline void mtx_mul(s16 mtx[4][4], s16 vtx[3], s16 scale)
-{
-    /* Multiply by 0.1 since the matrix multiplies by 100 */
-    f32 newX = ((mtx[0][0] * vtx[AXIS_X] + mtx[0][1] * vtx[AXIS_Y] + mtx[0][2] * vtx[AXIS_Z] + mtx[0][3]) * scale) * 0.01f;
-    f32 newY = ((mtx[1][0] * vtx[AXIS_X] + mtx[1][1] * vtx[AXIS_Y] + mtx[1][2] * vtx[AXIS_Z] + mtx[1][3]) * scale) * 0.01f;
-    f32 newZ = ((mtx[2][0] * vtx[AXIS_X] + mtx[2][1] * vtx[AXIS_Y] + mtx[2][2] * vtx[AXIS_Z] + mtx[2][3]) * scale) * 0.01f;
-
-    vtx[0] = newX;
-    vtx[1] = newY;
-    vtx[2] = newZ;
-}
-
-int face = 0;
-
 /** Add vertices to vertex buffers. */
 static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
         VertexBuffer* vBuf, const std::string &file, bool yUp, bool uvFlip)
@@ -86,7 +71,6 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
         /* we go by faces instead of verts so we don't accidentally add what we don't need */
         for (u32 j = 0; j < mesh->mNumFaces; j++) {
             for (u8 k = 0; k <= 2; k++) {
-                //std::cout << "face " << face++ << std::endl;
                 u32 currVtx = mesh->mFaces[j].mIndices[k];
 
                 if (vBuffers == 1) { /* if we only have one buffer, set it to the size of vert so we don't overflow */
@@ -103,33 +87,10 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                 }
 
                 s16 pos[3];
-                s16 tMtx[4][4] = {0};
 
-                pos[AXIS_X] = (s16)(mesh->mVertices[currVtx].x);
-                pos[AXIS_Y] = (s16)(mesh->mVertices[currVtx].y);
-                pos[AXIS_Z] = (s16)(mesh->mVertices[currVtx].z);
-
-                tMtx[0][0] = node->mTransformation.a1;
-                tMtx[0][1] = node->mTransformation.a2;
-                tMtx[0][2] = node->mTransformation.a3;
-                tMtx[0][3] = node->mTransformation.a4;
-
-                tMtx[1][0] = node->mTransformation.b1;
-                tMtx[1][1] = node->mTransformation.b2;
-                tMtx[1][2] = node->mTransformation.b3;
-                tMtx[1][3] = node->mTransformation.b4;
-
-                tMtx[2][0] = node->mTransformation.c1;
-                tMtx[2][1] = node->mTransformation.c2;
-                tMtx[2][2] = node->mTransformation.c3;
-                tMtx[2][3] = node->mTransformation.c4;
-
-                tMtx[3][0] = node->mTransformation.d1;
-                tMtx[3][1] = node->mTransformation.d2;
-                tMtx[3][2] = node->mTransformation.d3;
-                tMtx[3][3] = node->mTransformation.d4;
-
-                mtx_mul(tMtx, pos, scale);
+                pos[AXIS_X] = (s16)(((mesh->mVertices[currVtx].x) * scale) * 0.01);
+                pos[AXIS_Y] = (s16)(((mesh->mVertices[currVtx].y) * scale) * 0.01);
+                pos[AXIS_Z] = (s16)(((mesh->mVertices[currVtx].z) * scale) * 0.01);
 
                 s16 uv[2] = {0x00};
 
@@ -394,7 +355,7 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
     Assimp::Importer importer;
 
     /* We don't use ASSIMP's built in tristripping because of the vertex buffer. */
-    const aiScene* scene = importer.ReadFile(file, aiProcess_ValidateDataStructure | aiProcess_Triangulate);
+    const aiScene* scene = importer.ReadFile(file, aiProcess_ValidateDataStructure | aiProcess_Triangulate | aiProcess_PreTransformVertices);
 
     reset_file(fileOut + "/model.s");
     count_vtx(scene->mRootNode, scene);
