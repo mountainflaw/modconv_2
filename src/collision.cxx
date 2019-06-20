@@ -40,7 +40,10 @@ static void write_vertex(aiNode* node, const aiScene* scene, const std::string &
     for (u16 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
         for (u16 i = 0; i < mesh->mNumVertices; i++) {
-            collisionOut << "colVertex " << std::to_string((s16)(mesh->mVertices[i].x * scale)) << ", " << std::to_string((s16)(mesh->mVertices[i].y * scale)) << ", " << std::to_string((s16)(mesh->mVertices[i].z * scale)) << std::endl;
+            collisionOut << "colVertex "
+                << std::to_string((s16)((mesh->mVertices[i].x * scale) * 0.01)) << ", "
+                << std::to_string((s16)((mesh->mVertices[i].y * scale) * 0.01)) << ", "
+                << std::to_string((s16)((mesh->mVertices[i].z * scale) * 0.01)) << std::endl;
         }
     }
 }
