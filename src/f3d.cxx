@@ -59,8 +59,6 @@ static void count_vtx(aiNode* node, const aiScene* scene)
     }
 }
 
-u8 splitCount = 0;
-
 /** Add vertices to vertex buffers. */
 static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
         VertexBuffer* vBuf, const std::string &file, bool uvFlip)
@@ -135,16 +133,9 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                 if (mesh->HasNormals() && (nameStr.find("#LIGHTING") != std::string::npos
                             || nameStr.find("#NORMCOLOR") != std::string::npos)) {
 
-                    rgba[C_RED] = (s8)(mesh->mNormals[currVtx].x * 127);
-                    rgba[C_GRN] = (s8)(mesh->mNormals[currVtx].z * 127);
-                    rgba[C_BLU] = (s8)(mesh->mNormals[currVtx].y * 127);
-
-                    std::cout << "normalized xyz " << rgba[C_RED] << " " << rgba[C_GRN] << " " << rgba[C_BLU];
-                    std::cout << " original xyz " << mesh->mNormals[currVtx].x * 127 << " " << mesh->mNormals[currVtx].y * 127 << " " << mesh->mNormals[currVtx].z * 127 << std::endl;
-                    if (splitCount++ == 2) {
-                        std::cout << std::endl;
-                        splitCount = 0;
-                    }
+                    rgba[C_RED] = mesh->mNormals[currVtx].x * -127;
+                    rgba[C_GRN] = mesh->mNormals[currVtx].y * -127;
+                    rgba[C_BLU] = mesh->mNormals[currVtx].z * -127;
                 }
 
                 vBuf[vBuffer].addVtx(pos[AXIS_X], pos[AXIS_Y], pos[AXIS_Z],
@@ -207,7 +198,7 @@ static void write_vtx(const std::string fileOut, const std::string &path, Vertex
     }
 }
 
-static void configure_materials(const std::string &file, Material* mat, const aiScene* scene)
+static void configure_materials(const std::string &file, const std::string &fileOut, Material* mat, const aiScene* scene)
 {
     for (u16 i = 0; i < scene->mNumMaterials; i++) {
         aiString aiPath, aiName;
@@ -215,6 +206,7 @@ static void configure_materials(const std::string &file, Material* mat, const ai
         scene->mMaterials[i]->GetTexture(aiTextureType_DIFFUSE, 0, &aiPath);
 
         mat[i].setName(aiName.data);
+        mat[i].setFile(fileOut);
 
         if (file_exists(aiPath.data)) { /* absolute */
             mat[i].setPath(aiPath.data);
@@ -302,12 +294,10 @@ static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, M
     gfxOut.open(fileOut + "/model.s", std::ofstream::out | std::ofstream::app);
     s16 currMat = -1;
     gfxOut << std::endl << "glabel " << get_filename(fileOut) << "_dl" << std::endl
-           << "gsSPLight " << get_filename(fileOut) << "_diffuse_light, 1" << std::endl
-           << "gsSPLight " << get_filename(fileOut) << "_ambient_light, 2" << std::endl
            << "gsSPClearGeometryMode G_LIGHTING" << std::endl;
     for (u16 i = 0; i < vBuffers; i++) {
         gfxOut << "gsSPVertex " <<  get_filename(fileOut) << "_vertex_" << i
-            << " " << std::to_string(vBuf[i].loadSize) << ", 0" << std::endl;
+               << " " << std::to_string(vBuf[i].loadSize) << ", 0" << std::endl;
         extern_data(fileOut, "extern Vertex *" + get_filename(fileOut) + "_vertex_" + std::to_string(i) + "[" + std::to_string(vBuf[i].loadSize) + "];");
         while (!vBuf[i].isBufferComplete()) {
             if (vBuf[i].getVtxMat() != currMat) {
@@ -347,13 +337,15 @@ static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, M
            << "gsSPEndDisplayList" << std::endl;
 }
 
+
+#define AI_CONFIG_PP_PTV_NORMALIZE   "PP_PTV_NORMALIZE"
 /** Main function for the F3D build process. */
 void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8 microcode, bool level, bool uvFlip)
 {
     Assimp::Importer importer;
 
     /* We don't use ASSIMP's built in tristripping because of the vertex buffer. */
-    const aiScene* scene = importer.ReadFile(file, aiProcess_ValidateDataStructure | aiProcess_Triangulate | aiProcess_PreTransformVertices);
+    const aiScene* scene = importer.ReadFile(file, aiProcess_ValidateDataStructure | aiProcess_Triangulate | aiProcess_PreTransformVertices | aiProcess_GenUVCoords | aiProcess_FixInfacingNormals);
 
     reset_file(fileOut + "/model.s");
     count_vtx(scene->mRootNode, scene);
@@ -374,7 +366,7 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
 
     /* Materials */
     Material mat[scene->mNumMaterials];
-    configure_materials(file, mat, scene);
+    configure_materials(file, fileOut, mat, scene);
     write_textures(fileOut, mat, scene, level);
 
     cycle_vbuffers(vBuf, OPTIMIZE, 0);

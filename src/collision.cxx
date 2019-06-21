@@ -105,7 +105,7 @@ static void set_vtx_amount(aiNode* node, const aiScene* scene)
 void collision_converter_main(const std::string &file, const std::string &fileOut, s16 scale)
 {
     Assimp::Importer importer;
-    const aiScene* scene = importer.ReadFile(file, aiProcess_ValidateDataStructure | aiProcess_JoinIdenticalVertices | aiProcess_Triangulate | aiProcess_PreTransformVertices);
+    const aiScene* scene = importer.ReadFile(file, aiProcess_ValidateDataStructure | aiProcess_JoinIdenticalVertices | aiProcess_Triangulate | aiProcess_PreTransformVertices | aiProcess_FixInfacingNormals | aiProcess_FlipWindingOrder);
 
     std::fstream collisionOut;
     collisionOut.open(fileOut + "/collision.s", std::iostream::out | std::iostream::app);

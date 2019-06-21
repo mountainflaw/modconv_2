@@ -42,6 +42,7 @@ class Material
     enum TexType { RGBA16, RGBA32, CI4, CI8, IA4, IA8, I4, I8 };
     const std::string format[FORMATS] = { "rgba16", "rgba32", "ci4", "ci8", "ia4", "ia8", "i4", "i8" };
     std::string name = "DEFAULT MATERIAL";
+    std::string fileOut = "";
 
     inline std::string newline_if_true(bool a)
     {
@@ -203,12 +204,21 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
             }
         }
 
-        return setRet + newline_if_true(setOring) + clearRet + newline_if_true(clearOring);
+        std::string lights = "";
+
+        if (ourGeo[LIGHTING]) {
+
+            lights = "gsSPNumLights NUMLIGHTS_1\n";
+            lights += "gsSPLight " + get_filename(fileOut) + "_diffuse_light, 1\n";
+            lights += "gsSPLight " + get_filename(fileOut) + "_ambient_light, 2\n";
+        }
+        return setRet + newline_if_true(setOring) + clearRet + newline_if_true(clearOring) + lights;
     }
 
     public:
     bool useless = false, textured = false;
     void setName(const std::string &n) { name = n; }
+    void setFile(const std::string &f) { fileOut = f; }
     void setPath(const std::string &p)
     {
         tex.path = p;
