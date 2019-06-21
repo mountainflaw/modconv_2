@@ -63,7 +63,7 @@ static void write_triangle(aiNode* node, const aiScene* scene, const std::string
         /* TODO: Add smarter parsing here. */
         std::string terrainType = "SURF_ENV_DEFAULT";
         aiString aiName;
-        scene->mMaterials[i]->Get(AI_MATKEY_NAME, aiName);
+        scene->mMaterials[mesh->mMaterialIndex]->Get(AI_MATKEY_NAME, aiName);
         std::string nameStr = aiName.data;
 
         if (scene->HasMaterials()) {
