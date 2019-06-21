@@ -133,9 +133,9 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                 if (mesh->HasNormals() && (nameStr.find("#LIGHTING") != std::string::npos
                             || nameStr.find("#NORMCOLOR") != std::string::npos)) {
 
-                    rgba[C_RED] = mesh->mNormals[currVtx].x * -127;
-                    rgba[C_GRN] = mesh->mNormals[currVtx].y * -127;
-                    rgba[C_BLU] = mesh->mNormals[currVtx].z * -127;
+                    rgba[C_RED] = mesh->mNormals[currVtx].x * 127;
+                    rgba[C_GRN] = mesh->mNormals[currVtx].y * 127;
+                    rgba[C_BLU] = mesh->mNormals[currVtx].z * 127;
                 }
 
                 vBuf[vBuffer].addVtx(pos[AXIS_X], pos[AXIS_Y], pos[AXIS_Z],
@@ -338,7 +338,7 @@ static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, M
 }
 
 
-#define AI_CONFIG_PP_PTV_NORMALIZE   "PP_PTV_NORMALIZE"
+//#define AI_CONFIG_PP_PTV_NORMALIZE   "PP_PTV_NORMALIZE"
 /** Main function for the F3D build process. */
 void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8 microcode, bool level, bool uvFlip)
 {
