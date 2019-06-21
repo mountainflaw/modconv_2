@@ -135,9 +135,9 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                 if (mesh->HasNormals() && (nameStr.find("#LIGHTING") != std::string::npos
                             || nameStr.find("#NORMCOLOR") != std::string::npos)) {
 
-                    rgba[C_RED] = (s8)(mesh->mNormals[currVtx].x * 0xff);
-                    rgba[C_GRN] = (s8)(mesh->mNormals[currVtx].y * 0xff);
-                    rgba[C_BLU] = (s8)(mesh->mNormals[currVtx].z * 0xff);
+                    rgba[C_RED] = (s8)(mesh->mNormals[currVtx].x * 127);
+                    rgba[C_GRN] = (s8)(mesh->mNormals[currVtx].z * 127);
+                    rgba[C_BLU] = (s8)(mesh->mNormals[currVtx].y * 127);
 
                     std::cout << "normalized xyz " << rgba[C_RED] << " " << rgba[C_GRN] << " " << rgba[C_BLU];
                     std::cout << " original xyz " << mesh->mNormals[currVtx].x * 127 << " " << mesh->mNormals[currVtx].y * 127 << " " << mesh->mNormals[currVtx].z * 127 << std::endl;
@@ -317,10 +317,11 @@ static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, M
             }
 
             if (vBuf[i].canTri2()) {
-                u16 triTwo[6] = {vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex(),
-                                 vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex()};
+                u16 triTwo[6] = { vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex(),
+                                  vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex() };
 
-                gfxOut << "gsSP2Triangles " << triTwo[0] << ", "
+                gfxOut << "gsSP2Triangles "
+                       << triTwo[0] << ", "
                        << triTwo[1] << ", "
                        << triTwo[2] << ", 0x00, "
                        << triTwo[3] << ", "
@@ -328,9 +329,10 @@ static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, M
                        << triTwo[5] << ", 0x00"
                        << std::endl;
             } else {
-                u16 triOne[3] = {vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex()};
+                u16 triOne[3] = { vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex() };
 
-                gfxOut << "gsSP1Triangle " << triOne[0] << ", "
+                gfxOut << "gsSP1Triangle "
+                       << triOne[0] << ", "
                        << triOne[1] << ", "
                        << triOne[2] << ", 0x00" << std::endl;
             }

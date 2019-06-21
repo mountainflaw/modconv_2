@@ -46,6 +46,10 @@ static void write_vertex(aiNode* node, const aiScene* scene, const std::string &
                 << std::to_string((s16)((mesh->mVertices[i].z * scale) * 0.01)) << std::endl;
         }
     }
+
+    for (u16 i = 0; i < node->mNumChildren; i++) {
+        write_vertex(node->mChildren[i], scene, fileOut, scale);
+    }
 }
 
 static void write_triangle(aiNode* node, const aiScene* scene, const std::string &fileOut)
