@@ -370,7 +370,7 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
     Assimp::Importer importer;
 
     /* We don't use ASSIMP's built in tristripping because of the vertex buffer. */
-    const aiScene* scene = importer.ReadFile(file, aiProcess_ValidateDataStructure | aiProcess_Triangulate | aiProcess_PreTransformVertices | aiProcess_GenUVCoords | aiProcess_FixInfacingNormals);
+    const aiScene* scene = importer.ReadFile(file, aiProcess_ValidateDataStructure | aiProcess_Triangulate | aiProcess_PreTransformVertices | aiProcess_GenUVCoords);
 
     reset_file(fileOut + "/model.s");
     count_vtx(scene->mRootNode, scene);
