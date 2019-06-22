@@ -41,11 +41,14 @@ enum RgbaColors { C_RED, C_GRN, C_BLU, C_APH };
 #include "modconv.hxx"
 #include "buffer.hxx"
 #include "material.hxx"
+/* global variabes */
 
 u32 vert     = 0,
     vert2    = 0;
 u16 vBuffers = 0,
     vBuffer  = 0;
+
+u8 diffuse[6] = {0xFF, 0xFF, 0xFF, 0x28, 0x28, 0x28}, ambient[3] = {0x66, 0x66, 0x66};
 
 static void count_vtx(aiNode* node, const aiScene* scene)
 {
@@ -198,6 +201,13 @@ static void write_vtx(const std::string fileOut, const std::string &path, Vertex
     }
 }
 
+static inline std::string hex_string(const u8 hex)
+{
+    std::stringstream s;
+    s << std::hex << (u16)hex;
+    return "0x" + s.str();
+}
+
 static void configure_materials(const std::string &file, const std::string &fileOut, Material* mat, const aiScene* scene)
 {
     for (u16 i = 0; i < scene->mNumMaterials; i++) {
@@ -232,12 +242,15 @@ static void write_textures(const std::string &fileOut, Material *mat, const aiSc
     }
 
 
-    /* Phase 1: Copy lights */
+    /*
+     * Phase 1: Copy lights
+     * These should be changable soon.
+     */
     texOut << std::endl << get_filename(fileOut) << "_ambient_light:" << std::endl
-           << ".byte 0x66, 0x66, 0x66, 0x00, 0x66, 0x66, 0x66, 0x00" << std::endl
+           << ".byte " + hex_string(ambient[0]) + ", " + hex_string(ambient[1]) + ", " + hex_string(ambient[2]) + ", 0x00, " + hex_string(ambient[0]) + ", " + hex_string(ambient[1]) + ", " + hex_string(ambient[2]) + ", 0x00" << std::endl
            << get_filename(fileOut) << "_diffuse_light:" << std::endl
-           << ".byte 0xFF, 0xFF, 0xFF, 0x00, 0xFF, 0xFF, 0xFF, 0x00" << std::endl
-           << ".byte 0x28, 0x28, 0x28, 0x00, 0x00, 0x00, 0x00, 0x00" << std::endl;
+           << ".byte " + hex_string(diffuse[0]) + ", " + hex_string(diffuse[1]) + ", " + hex_string(diffuse[2]) + ", 0x00, " + hex_string(diffuse[0]) + ", " + hex_string(diffuse[1]) + ", " + hex_string(diffuse[2]) + ", 0x00" << std::endl
+           << ".byte " + hex_string(diffuse[3]) + ", " + hex_string(diffuse[4]) + ", " + hex_string(diffuse[5]) + ", 0x00, 0x00, 0x00, 0x00, 0x00" << std::endl;
     /* Phase 2 - Find redundant textures */
     for (u16 i = 0; i < scene->mNumMaterials; i++) {
         for (u16 j = 0; j < scene->mNumMaterials; j++) {
@@ -296,6 +309,12 @@ static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, M
     gfxOut << std::endl << "glabel " << get_filename(fileOut) << "_dl" << std::endl
            << "gsSPClearGeometryMode G_LIGHTING" << std::endl;
     for (u16 i = 0; i < vBuffers; i++) {
+        if (vBuf[i].getVtxMat() != currMat) {
+            currMat = vBuf[i].getVtxMat();
+            gfxOut << "/* " << mat[currMat].getName() << " */" << std::endl
+                            << mat[currMat].getMaterial(oldGeo);
+        }
+
         gfxOut << "gsSPVertex " <<  get_filename(fileOut) << "_vertex_" << i
                << " " << std::to_string(vBuf[i].loadSize) << ", 0" << std::endl;
         extern_data(fileOut, "extern Vertex *" + get_filename(fileOut) + "_vertex_" + std::to_string(i) + "[" + std::to_string(vBuf[i].loadSize) + "];");

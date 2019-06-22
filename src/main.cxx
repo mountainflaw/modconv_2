@@ -72,9 +72,20 @@ void print_help(const std::string &name)
               << "  - rej       - Optimize for Fast3DEX Rej (64 vtx)" << std::endl
               << "  - collision - Export collision mesh" << std::endl
               << "  - goddard   - Export Mario head mesh" << std::endl
-              << "--uvflip - Flip the UV mask Y axis." << std::endl
-              << "--glabel - Use global labels instead of local labels." << std::endl
-              << "  - Allows for editing data in C." << std::endl
+              << "--uvflip - Flip the UV mask Y axis" << std::endl
+              << "--glabel - Use global labels instead of local labels" << std::endl
+              << "  - Allows for editing data in C" << std::endl
+              << "--dif    - Changes the diffuse lighting color" << std::endl
+              << "  - r         - Amount of red" << std::endl
+              << "  - g         - Amount of green" << std::endl
+              << "  - b         - Amount of blue" << std::endl
+              << "  - x         - X lighting direction" << std::endl
+              << "  - y         - Y lighting direction" << std::endl
+              << "  - z         - Z lighting direction" << std::endl
+              << "--amb    - Changes the ambient lighting color" << std::endl
+              << "  - r         - Amount of red" << std::endl
+              << "  - g         - Amount of green" << std::endl
+              << "  - b         - Amount of blue" << std::endl
               << "--help   - Bring up this menu and quit" << std::endl
               << std::endl
               << print_bold("TIPS: ") << std::endl
@@ -156,6 +167,29 @@ int main(int argc, char* argv[])
 
         if (arg.compare("--glabel") == 0) {
             glabel = true;
+        }
+
+        if (arg.compare("--dif") == 0) {
+            if (i + 5 >= argc) {
+                error_message("--dif requires five arguments.");
+            }
+
+            diffuse[3] = std::stoi(argv[i + 1]);
+            diffuse[4] = std::stoi(argv[i + 2]);
+            diffuse[5] = std::stoi(argv[i + 3]);
+            diffuse[0] = std::stoi(argv[i + 4]);
+            diffuse[1] = std::stoi(argv[i + 5]);
+            diffuse[2] = std::stoi(argv[i + 6]);
+        }
+
+        if (arg.compare("--amb") == 0) {
+            if (i + 3 >= argc) {
+                error_message("--amb requires three arguments.");
+            }
+
+            ambient[0] = std::stoi(argv[i + 1]);
+            ambient[1] = std::stoi(argv[i + 2]);
+            ambient[2] = std::stoi(argv[i + 3]);
         }
 
         if (arg.compare("--help") == 0) {
