@@ -139,6 +139,7 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                     rgba[C_RED] = mesh->mNormals[currVtx].x * 127;
                     rgba[C_GRN] = mesh->mNormals[currVtx].y * 127;
                     rgba[C_BLU] = mesh->mNormals[currVtx].z * 127;
+                    rgba[C_APH] = mesh->mColors[0][currVtx].a * 0xff; /* stomatol wanted this */
                 }
 
                 vBuf[vBuffer].addVtx(pos[AXIS_X], pos[AXIS_Y], pos[AXIS_Z],
