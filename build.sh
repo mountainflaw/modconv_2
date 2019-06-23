@@ -4,7 +4,7 @@
 ###############################################################################################################
 # default build configuration: release
 
-deps="deps/lodepng.cpp deps/exoquant.c"
+deps="deps/lodepng.cpp"
 libs="-lassimp -lstdc++fs"
 flags="-O3"
 forceflags="-Wall -Werror -std=c++17"

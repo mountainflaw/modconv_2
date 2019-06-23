@@ -117,7 +117,7 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
 
                 s16 rgba[4] = {0xff, 0xff, 0xff, 0xff};
 
-                if (mesh->HasVertexColors(0)) { /* Get around potential exception. */
+                if (mesh->HasVertexColors(0)) { /* Get around segfault. */
                     rgba[C_RED] = mesh->mColors[0][currVtx].r * 0xff;
                     rgba[C_GRN] = mesh->mColors[0][currVtx].g * 0xff;
                     rgba[C_BLU] = mesh->mColors[0][currVtx].b * 0xff;
@@ -140,10 +140,12 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                     rgba[C_GRN] = mesh->mNormals[currVtx].y * 127;
                     rgba[C_BLU] = mesh->mNormals[currVtx].z * 127;
 
-                    if (nameStr.find("#REDALPHA") != std::string::npos) {
-                        rgba[C_APH] = mesh->mColors[0][currVtx].r * 0xff; /* stomatol wanted this to bake lights */
-                    } else {
-                        rgba[C_APH] = mesh->mColors[0][currVtx].a * 0xff;
+                    if (mesh->HasVertexColors(0)) { /* Get around potential segfault. */
+                        if (nameStr.find("#REDALPHA") != std::string::npos) {
+                            rgba[C_APH] = mesh->mColors[0][currVtx].r * 0xff; /* stomatol wanted this to bake lights */
+                        } else {
+                            rgba[C_APH] = mesh->mColors[0][currVtx].a * 0xff;
+                        }
                     }
                 }
 
