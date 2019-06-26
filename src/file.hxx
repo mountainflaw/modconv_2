@@ -29,7 +29,6 @@
 #pragma once
 
 #include "../deps/lodepng.h"
-#include "../deps/exoquant.h"
 
 /* These includes aren't needed anymore due to the shift to C++17. */
 /*

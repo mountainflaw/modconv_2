@@ -37,10 +37,13 @@
  */
 
 enum RgbaColors { C_RED, C_GRN, C_BLU, C_APH };
+enum Layers { LAYER_0, LAYER_1, LAYER_2, LAYER_3, LAYER_4, LAYER_5, LAYER_6, LAYER_7 };
 
 #include "modconv.hxx"
 #include "buffer.hxx"
 #include "material.hxx"
+#include "displaylist.hxx"
+
 /* global variabes */
 
 u32 vert     = 0,
@@ -133,7 +136,7 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                  * or vertex color based off of normals (#NORMCOLOR)
                  */
 
-                if (mesh->HasNormals() && (nameStr.find("#LIGHTING") != std::string::npos
+                if (scene->HasMaterials() && mesh->HasNormals() && (nameStr.find("#LIGHTING") != std::string::npos
                             || nameStr.find("#NORMCOLOR") != std::string::npos)) {
 
                     rgba[C_RED] = mesh->mNormals[currVtx].x * 127;
@@ -149,9 +152,23 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                     }
                 }
 
+                /* Figure out what layer vtx belongs to */
+                u8 layer = 1;
+
+                if (scene->HasMaterials()) {
+                    std::string layerTags[8] = { "#LAYER_0", "#LAYER_1", "#LAYER_2", "#LAYER_3", "#LAYER_4", "#LAYER_5", "#LAYER_6", "#LAYER_7" };
+
+                    for (u8 i = 0; i < 8; i++) {
+                        if (nameStr.find(layerTags[i]) != std::string::npos) {
+                            layer = i;
+                            break;
+                        }
+                    }
+                }
+
                 vBuf[vBuffer].addVtx(pos[AXIS_X], pos[AXIS_Y], pos[AXIS_Z],
                         uv[AXIS_X], uv[AXIS_Y],
-                        rgba[C_RED], rgba[C_GRN], rgba[C_BLU], rgba[C_APH], mesh->mMaterialIndex);
+                        rgba[C_RED], rgba[C_GRN], rgba[C_BLU], rgba[C_APH], mesh->mMaterialIndex, layer);
                 vert2++;
             }
         }

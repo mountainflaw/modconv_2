@@ -34,6 +34,7 @@ typedef struct
     s16  pos[3], st[2];
     u16  flag[3]; /* optimizer flag */
     s16   col[4];
+    u8 layer;
 } Vertex;
 
 /* Used in the F3D DL builder. */
@@ -67,7 +68,7 @@ class VertexBuffer
     void addVtx(s16 vtxPosX, s16 vtxPosY, s16 vtxPosZ,
             s16 vtxPosU, s16 vtxPosV,
             s16 vtxCRed, s16 vtxCGreen, s16 vtxCBlue, s16 vtxCAlpha,
-            u16 mesh)
+            u16 mesh, u8 layer)
     {
         vtx[vtxCount].pos[AXIS_X] = vtxPosX;
         vtx[vtxCount].pos[AXIS_Y] = vtxPosY;
@@ -119,6 +120,18 @@ class VertexBuffer
 
         else { /* redundant vertex */
             return vtx[vtxCount++].flag[NEWPOS];
+        }
+    }
+
+    /* displaylist.hxx */
+    bool hasLayer(u8 layer)
+    {
+        for (u8 i = 0; i < bufferSize; i++) {
+            if (vtx[i].layer == layer) {
+                return true;
+            } else {
+                return false;
+            }
         }
     }
 

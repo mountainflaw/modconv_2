@@ -53,7 +53,7 @@ class Material
     /** Returns texture load string. */
     std::string GetTextureLoad()
     {
-        std::string ret = " ", texLoadType, texLoadSize;
+        std::string ret = "", texLoadType, texLoadSize;
         u8 type = 0; /* RGBA16 just in case */
         for (u8 i = 0; i < FORMATS; i++) {
             if (tex.path.find(format[i]) != std::string::npos) {
@@ -116,17 +116,20 @@ class Material
             ret += "gsDPSetTextureLUT G_TT_NONE\n";
         }
 
-        std::string texFlag = "G_TX_NOMIRROR",
-        wrapTags[2] = { "#MIRROR", "#CLAMP" },
-        texFlags[2] = { "G_TX_MIRROR", "G_TX_CLAMP" };
+        std::string texFlagU = "G_TX_NOMIRROR", texFlagV = "G_TX_NOMIRROR",
+        wrapTags[4] = { "#MIRRORU", "#CLAMPU", "#MIRRORV", "#CLAMPV" },
+        texFlags[4] = { "G_TX_MIRROR", "G_TX_CLAMP", "G_TX_MIRROR", "G_TX_CLAMP" };
 
-        for (u16 i = 0; i < 2; i ++) {
+        for (u16 i = 0; i < 4; i++) {
             if (name.find(wrapTags[i]) != std::string::npos) {
-                texFlag = texFlags[i];
-                break;
+                if (i < 2) {
+                    texFlagU = texFlags[i];
+                } else { /* last two tags are for the v axis */
+                    texFlagV = texFlags[i];
+                }
             }
         }
-        ret += "gsDPLoadTextureBlock " + getFileNameNoExtension() + ", " + texLoadType + texLoadSize + std::to_string(tex.size[AXIS_X]) + ", " + std::to_string(tex.size[AXIS_Y]) + ", 0, G_TX_WRAP | " + texFlag + ",  G_TX_WRAP | " + texFlag + ", " + std::to_string(tex.sizeLog2[AXIS_X]) + ", " + std::to_string(tex.sizeLog2[AXIS_Y]) + ", G_TX_NOLOD, G_TX_NOLOD\ngsSPTexture -1, -1, 0, 0, 1\ngsDPTileSync\n";
+        ret += "gsDPLoadTextureBlock " + getFileNameNoExtension() + ", " + texLoadType + texLoadSize + std::to_string(tex.size[AXIS_X]) + ", " + std::to_string(tex.size[AXIS_Y]) + ", 0, G_TX_WRAP | " + texFlagU + ",  G_TX_WRAP | " + texFlagV + ", " + std::to_string(tex.sizeLog2[AXIS_X]) + ", " + std::to_string(tex.sizeLog2[AXIS_Y]) + ", G_TX_NOLOD, G_TX_NOLOD\ngsSPTexture -1, -1, 0, 0, 1\ngsDPTileSync\n";
         return ret;
     }
 
