@@ -25,12 +25,14 @@ class DisplayList
         s16 currMat = -1; /* force update at start*/
 
         gfxOut.open(fileOut + "/model.s", std::ofstream::out | std::ofstream::app);
+
         for (u16 i = 0; i < vBuffers; i++) {
             if (vBuf[i].hasLayer(layer)) { /* don't load what we don't need */
                 if (vBuf[i].getVtxMat() != currMat) { /* load before vtx load if possible */
                     gfxOut << "/* " << mat[currMat].getName() << " */" << std::endl
                                     << mat[currMat].getMaterial(oldGeo);
                 }
+                gfxOut << "gsSPVertex " << get_filename(fileOut) << "_vertex_" << i << " " << std::to_string(vBuf[i].loadSize) << ", 0" << std::endl;
 
                 while (!vBuf[i].isBufferComplete()) {
                     if (vBuf[i].getVtxMat() != currMat) {
@@ -38,9 +40,9 @@ class DisplayList
                                         << mat[currMat].getMaterial(oldGeo);
                     }
 
-                    if (vBuf[i].canTri2()) {
-                        u16 triTwo[6] = { vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex(),
-                                          vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex() };
+                    if (vBuf[i].canLayeredTri2(layer)) {
+                        u16 triTwo[6] = { vBuf[i].getLayeredVtxIndex(layer), vBuf[i].getLayeredVtxIndex(layer), vBuf[i].getLayeredVtxIndex(layer),
+                                          vBuf[i].getLayeredVtxIndex(layer), vBuf[i].getLayeredVtxIndex(layer), vBuf[i].getLayeredVtxIndex(layer) };
 
                         gfxOut << "gsSP2Triangles "
                                << triTwo[0] << ", "
@@ -51,7 +53,7 @@ class DisplayList
                                << triTwo[5] << ", 0x00"
                                << std::endl;
                     } else {
-                        u16 triOne[3] = { vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex() };
+                        u16 triOne[3] = { vBuf[i].getLayeredVtxIndex(layer), vBuf[i].getLayeredVtxIndex(layer), vBuf[i].getLayeredVtxIndex(layer) };
 
                         gfxOut << "gsSP1Triangle "
                                << triOne[0] << ", "

@@ -121,6 +121,13 @@ class VertexBuffer
         }
     }
 
+    Vertex getVtx() { return vtx[vtxCount++]; }
+    u16 getVtxMat() { return vtx[vtxCount].flag[MATERIAL]; }
+
+    bool canTri2() { return (vtxCount + 6 <= bufferSize) && (vtx[vtxCount + 3].flag[MATERIAL] == vtx[vtxCount].flag[MATERIAL]); }
+
+
+    /* Layering methods */
     u16 getLayeredVtxIndex(u8 layer)
     {
         if (vtx[vtxCount].layer == layer) {
@@ -135,19 +142,28 @@ class VertexBuffer
         }
     }
 
-    /* displaylist.hxx */
+    u16 getLayeredVtxMat(u8 layer)
+    {
+        if (vtx[vtxCount].layer == layer) {
+            return vtx[vtxCount].flag[MATERIAL];
+        } else {
+            vtxCount++;
+            getLayeredVtxMat(layer);
+        }
+    }
+
+    bool canLayeredTri2(u8 layer)
+    {
+        return (vtxCount + 6 <= bufferSize) && (vtx[vtxCount + 3].flag[MATERIAL] == vtx[vtxCount].flag[MATERIAL]) && (vtx[vtxCount + 3].layer == layer);
+    }
+
     bool hasLayer(u8 layer)
     {
         for (u8 i = 0; i < bufferSize; i++) {
             if (vtx[i].layer == layer) {
                 return true;
-            } else {
-                return false;
             }
         }
+        return false;
     }
-
-    Vertex getVtx() { return vtx[vtxCount++]; }
-    u16 getVtxMat() { return vtx[vtxCount].flag[MATERIAL]; }
-    bool canTri2() { return (vtxCount + 6 <= bufferSize) && (vtx[vtxCount + 3].flag[MATERIAL] == vtx[vtxCount].flag[MATERIAL]); }
 };
