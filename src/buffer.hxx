@@ -116,10 +116,22 @@ class VertexBuffer
     {
         if (vtx[vtxCount].useless) { /* original vertex */
             return vtx[vtx[vtxCount++].flag[OLDPOS]].flag[NEWPOS];
-        }
-
-        else { /* redundant vertex */
+        } else { /* redundant vertex */
             return vtx[vtxCount++].flag[NEWPOS];
+        }
+    }
+
+    u16 getLayeredVtxIndex(u8 layer)
+    {
+        if (vtx[vtxCount].layer == layer) {
+            if (vtx[vtxCount].useless) { /* original vertex */
+                return vtx[vtx[vtxCount++].flag[OLDPOS]].flag[NEWPOS];
+            } else { /* redundant vertex */
+                return vtx[vtxCount++].flag[NEWPOS];
+            }
+        } else {
+            vtxCount++;
+            getLayeredVtxIndex(layer);
         }
     }
 
