@@ -67,6 +67,15 @@ static void inspect_vtx(aiNode* node, const aiScene* scene)
     }
 }
 
+static inline f32 scaling_hack(const std::string &file)
+{
+    if (file.substr(file.length() - 4, file.length()).compare(".fbx") == 0) {
+        return 0.01f;
+    } else {
+        return 1.0f;
+    }
+}
+
 /** Add vertices to vertex buffers. */
 static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
         VertexBuffer* vBuf, const std::string &file, bool uvFlip)
@@ -94,9 +103,9 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
 
                 s16 pos[3];
 
-                pos[AXIS_X] = (s16)(((mesh->mVertices[currVtx].x) * scale) * 0.01);
-                pos[AXIS_Y] = (s16)(((mesh->mVertices[currVtx].y) * scale) * 0.01);
-                pos[AXIS_Z] = (s16)(((mesh->mVertices[currVtx].z) * scale) * 0.01);
+                pos[AXIS_X] = (s16)(((mesh->mVertices[currVtx].x) * scale) * scaling_hack(file));
+                pos[AXIS_Y] = (s16)(((mesh->mVertices[currVtx].y) * scale) * scaling_hack(file));
+                pos[AXIS_Z] = (s16)(((mesh->mVertices[currVtx].z) * scale) * scaling_hack(file));
 
                 s16 uv[2] = {0x00};
 
