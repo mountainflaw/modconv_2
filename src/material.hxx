@@ -252,7 +252,7 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
     std::string getMaterial(bool oldGeo[GROUP_TAGS])
     {
         std::string ret;
-        ret += GetGeometryMode(oldGeo);
+        //ret += GetGeometryMode(oldGeo);
         if (textured) {
             ret += GetFuckingFrauber() + GetTextureLoad();
         }

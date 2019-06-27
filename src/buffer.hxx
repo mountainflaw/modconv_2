@@ -86,6 +86,8 @@ class VertexBuffer
         vtx[vtxCount].flag[MATERIAL]     = mesh;
         vtx[vtxCount].flag[OLDPOS] = vtxCount;
 
+        vtx[vtxCount].layer = layer;
+
         vtxCount++;
     }
 
@@ -141,17 +143,20 @@ class VertexBuffer
             getLayeredVtxIndex(layer);
         }
 
-        return 0;
+        return 0; /* Fallback */
     }
 
     u16 getLayeredVtxMat(u8 layer)
     {
+        std::cout << "mat" << std::endl;
         if (vtx[vtxCount].layer == layer) {
+            std::cout << "mat " << vtx[vtxCount].flag[MATERIAL] << std::endl;
             return vtx[vtxCount].flag[MATERIAL];
         } else {
             vtxCount++;
             getLayeredVtxMat(layer);
         }
+        return 0; /* Fallback */
     }
 
     bool canLayeredTri2(u8 layer)
@@ -162,6 +167,7 @@ class VertexBuffer
     bool hasLayer(u8 layer)
     {
         for (u8 i = 0; i < bufferSize; i++) {
+            std::cout << (u16)vtx[i].layer << std::endl;
             if (vtx[i].layer == layer) {
                 return true;
             }

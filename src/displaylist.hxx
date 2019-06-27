@@ -7,28 +7,26 @@
 class DisplayList
 {
     private:
-    std::string dlTypes[8] = {"_layer_0", "_layer_1", "_layer_2", "_layer_3", "_layer_4", "_layer_5", "_layer_6", "_layer_7"}, fileOut = "";
+    std::string dlTypes[8] = {"_layer_0", "_layer_1", "_layer_2", "_layer_3", "_layer_4", "_layer_5", "_layer_6", "_layer_7"};
     u8 layer = 1;
 
 
     public:
-    void setupDisplayList(const std::string &f, u8 l)
-    {
-        fileOut = f;
-        layer = l;
-    }
+    void setLayer(u8 l) { layer = l; }
 
-    void writeDisplayList(VertexBuffer *vBuf, u16 vBuffers, Material* mat)
+    void writeDisplayList(const std::string &fileOut, VertexBuffer *vBuf, u16 vBuffers, Material* mat)
     {
         bool oldGeo[5] = {false};
         std::fstream gfxOut;
         s16 currMat = -1; /* force update at start*/
 
         gfxOut.open(fileOut + "/model.s", std::ofstream::out | std::ofstream::app);
-
+        std::cout << "opened " << fileOut + "/model.s" << std::endl;
         for (u16 i = 0; i < vBuffers; i++) {
             if (vBuf[i].hasLayer(layer)) { /* don't load what we don't need */
-                if (vBuf[i].getVtxMat() != currMat) { /* load before vtx load if possible */
+                std::cout << "vtx " << i << " contains layer " << (u16)layer << std::endl;
+                if (vBuf[i].getLayeredVtxMat(layer) != currMat) { /* load before vtx load if possible */
+                    currMat = vBuf[i].getLayeredVtxMat(layer);
                     gfxOut << "/* " << mat[currMat].getName() << " */" << std::endl
                                     << mat[currMat].getMaterial(oldGeo);
                 }
@@ -36,6 +34,7 @@ class DisplayList
 
                 while (!vBuf[i].isBufferComplete()) {
                     if (vBuf[i].getVtxMat() != currMat) {
+                        currMat = vBuf[i].getLayeredVtxMat(layer);
                         gfxOut << "/* " << mat[currMat].getName() << " */" << std::endl
                                         << mat[currMat].getMaterial(oldGeo);
                     }

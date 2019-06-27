@@ -340,7 +340,7 @@ static void write_textures(const std::string &fileOut, Material *mat, const aiSc
 static void write_display_list_obj(const std::string &fileOut, VertexBuffer* vBuf, DisplayList* dl, Material* mat)
 {
     for (u8 i = 0; i < layers; i++) {
-        dl[i].writeDisplayList(vBuf, vBuffers, mat);
+        dl[i].writeDisplayList(fileOut, vBuf, vBuffers, mat);
     }
 }
 /** Main function for the F3D build process. */
