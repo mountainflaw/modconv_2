@@ -174,8 +174,12 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                             layer = i;
                             setLayer[i] = true;
                             break;
+                        } else {
+                            setLayer[1] = true;
                         }
                     }
+                } else {
+                    setLayer[1] = true;
                 }
 
                 vBuf[vBuffer].addVtx(pos[AXIS_X], pos[AXIS_Y], pos[AXIS_Z],
@@ -345,7 +349,7 @@ static inline void set_layers_amt()
         }
     }
 
-    if (layers == 0) {
+    if (layers == 0) { /* default to layer 1 if no layer is specified */
         setLayer[0] = true;
         layers = 1;
     }
