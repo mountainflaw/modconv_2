@@ -50,7 +50,7 @@ u32 vert     = 0,
     vert2    = 0;
 u16 vBuffers = 0,
     vBuffer  = 0;
-u8  layers   = 1;
+u8  layers   = 0;
 bool setLayer[8] = { false };
 
 u8 diffuse[6] = {0xFF, 0xFF, 0xFF, 0x28, 0x28, 0x28}, ambient[3] = {0x66, 0x66, 0x66};
@@ -172,6 +172,7 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                     for (u8 i = 0; i < 8; i++) {
                         if (nameStr.find(layerTags[i]) != std::string::npos) {
                             layer = i;
+                            setLayer[i] = true;
                             break;
                         }
                     }
@@ -336,8 +337,32 @@ static void write_textures(const std::string &fileOut, Material *mat, const aiSc
  * 4.) End displaylist after all of that crap is done.
  */
 
+static inline void set_layers_amt()
+{
+    for (u8 i = 0; i < 8; i++) {
+        if (setLayer[i]) {
+            layers++;
+        }
+    }
+
+    if (layers == 0) {
+        setLayer[0] = true;
+        layers = 1;
+    }
+}
+
+static inline void set_layers(DisplayList *dl)
+{
+    u8 index = 0;
+    for (u8 i = 0; i < 8; i++) {
+        if (setLayer[i]) {
+            dl[index++].setLayer(i);
+        }
+    }
+}
+
 /* New DL writer */
-static void write_display_list_obj(const std::string &fileOut, VertexBuffer* vBuf, DisplayList* dl, Material* mat)
+static inline void write_display_list_obj(const std::string &fileOut, VertexBuffer* vBuf, DisplayList* dl, Material* mat)
 {
     for (u8 i = 0; i < layers; i++) {
         dl[i].writeDisplayList(fileOut, vBuf, vBuffers, mat);
@@ -376,6 +401,8 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
     cycle_vbuffers(vBuf, OPTIMIZE, 0);
     write_vtx(fileOut, "", vBuf);
     cycle_vbuffers(vBuf, RESET, 0);
-    DisplayList dl[1];
+    set_layers_amt();
+    DisplayList dl[layers];
+    set_layers(dl);
     write_display_list_obj(fileOut, vBuf, dl, mat);
 }
