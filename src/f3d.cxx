@@ -50,10 +50,12 @@ u32 vert     = 0,
     vert2    = 0;
 u16 vBuffers = 0,
     vBuffer  = 0;
+u8  layers   = 1;
+bool setLayer[8] = { false };
 
 u8 diffuse[6] = {0xFF, 0xFF, 0xFF, 0x28, 0x28, 0x28}, ambient[3] = {0x66, 0x66, 0x66};
 
-static void count_vtx(aiNode* node, const aiScene* scene)
+static void inspect_vtx(aiNode* node, const aiScene* scene)
 {
     for (u16 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
@@ -61,7 +63,7 @@ static void count_vtx(aiNode* node, const aiScene* scene)
     }
 
     for (u16 i = 0; i < node->mNumChildren; i++) {
-        count_vtx(node->mChildren[i], scene);
+        inspect_vtx(node->mChildren[i], scene);
     }
 }
 
@@ -325,64 +327,13 @@ static void write_textures(const std::string &fileOut, Material *mat, const aiSc
  * 4.) End displaylist after all of that crap is done.
  */
 
-static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, Material* mat)
+/* New DL writer */
+static void write_display_list_obj(const std::string &fileOut, VertexBuffer* vBuf, DisplayList* dl, Material* mat)
 {
-    bool oldGeo[5] = {0x00};
-    std::fstream gfxOut;
-    gfxOut.open(fileOut + "/model.s", std::ofstream::out | std::ofstream::app);
-    s16 currMat = -1;
-    gfxOut << std::endl << "glabel " << get_filename(fileOut) << "_dl" << std::endl
-           << "gsSPClearGeometryMode G_LIGHTING" << std::endl;
-    for (u16 i = 0; i < vBuffers; i++) {
-        if (vBuf[i].getVtxMat() != currMat) {
-            currMat = vBuf[i].getVtxMat();
-            gfxOut << "/* " << mat[currMat].getName() << " */" << std::endl
-                            << mat[currMat].getMaterial(oldGeo);
-        }
-
-        gfxOut << "gsSPVertex " <<  get_filename(fileOut) << "_vertex_" << i
-               << " " << std::to_string(vBuf[i].loadSize) << ", 0" << std::endl;
-        extern_data(fileOut, "extern Vertex *" + get_filename(fileOut) + "_vertex_" + std::to_string(i) + "[" + std::to_string(vBuf[i].loadSize) + "];");
-        while (!vBuf[i].isBufferComplete()) {
-            if (vBuf[i].getVtxMat() != currMat) {
-                currMat = vBuf[i].getVtxMat();
-                gfxOut << "/* " << mat[currMat].getName() << " */" << std::endl
-                                << mat[currMat].getMaterial(oldGeo);
-            }
-
-            if (vBuf[i].canTri2()) {
-                u16 triTwo[6] = { vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex(),
-                                  vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex() };
-
-                gfxOut << "gsSP2Triangles "
-                       << triTwo[0] << ", "
-                       << triTwo[1] << ", "
-                       << triTwo[2] << ", 0x00, "
-                       << triTwo[3] << ", "
-                       << triTwo[4] << ", "
-                       << triTwo[5] << ", 0x00"
-                       << std::endl;
-            } else {
-                u16 triOne[3] = { vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex(), vBuf[i].getVtxIndex() };
-
-                gfxOut << "gsSP1Triangle "
-                       << triOne[0] << ", "
-                       << triOne[1] << ", "
-                       << triOne[2] << ", 0x00" << std::endl;
-            }
-        }
+    for (u8 i = 0; i < layers; i++) {
+        dl[i].writeDisplayList(vBuf, vBuffers, mat);
     }
-
-    gfxOut << "gsSPTexture -1, -1, 0, 0, 0\n"
-           << "gsDPPipeSync\n"
-           << "gsDPSetCombineMode1Cycle G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE\n"
-           << "gsSPSetGeometryMode G_LIGHTING\n"
-           << "gsDPSetTextureLUT G_TT_NONE\n"
-           << "gsSPEndDisplayList" << std::endl;
 }
-
-
-//#define AI_CONFIG_PP_PTV_NORMALIZE   "PP_PTV_NORMALIZE"
 /** Main function for the F3D build process. */
 void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8 microcode, bool level, bool uvFlip)
 {
@@ -392,7 +343,7 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
     const aiScene* scene = importer.ReadFile(file, aiProcess_ValidateDataStructure | aiProcess_Triangulate | aiProcess_PreTransformVertices | aiProcess_GenUVCoords);
 
     reset_file(fileOut + "/model.s");
-    count_vtx(scene->mRootNode, scene);
+    inspect_vtx(scene->mRootNode, scene);
 
     vBuffers = vert / microcode;
 
@@ -416,5 +367,6 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
     cycle_vbuffers(vBuf, OPTIMIZE, 0);
     write_vtx(fileOut, "", vBuf);
     cycle_vbuffers(vBuf, RESET, 0);
-    write_display_list(fileOut, vBuf, mat);
+    DisplayList dl[1];
+    write_display_list_obj(fileOut, vBuf, dl, mat);
 }

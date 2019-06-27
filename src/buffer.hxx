@@ -140,6 +140,8 @@ class VertexBuffer
             vtxCount++;
             getLayeredVtxIndex(layer);
         }
+
+        return 0;
     }
 
     u16 getLayeredVtxMat(u8 layer)
