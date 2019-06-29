@@ -86,6 +86,13 @@ void print_help(const std::string &name)
               << "  - r         - Amount of red" << std::endl
               << "  - g         - Amount of green" << std::endl
               << "  - b         - Amount of blue" << std::endl
+              << "--fog    - Enables fog and also sets fog color and distance" << std::endl
+              << "  - r         - Amount of red" << std::endl
+              << "  - g         - Amount of green" << std::endl
+              << "  - b         - Amount of blue" << std::endl
+              << "  - a         - Amount of alpha" << std::endl
+              << "  - n         - Near amount of fog" << std::endl
+              << "  - f         - Far amount of fog" << std::endl
               << "--help   - Bring up this menu and quit" << std::endl
               << std::endl
               << print_bold("TIPS: ") << std::endl
@@ -190,6 +197,20 @@ int main(int argc, char* argv[])
             ambient[0] = std::stoi(argv[i + 1]);
             ambient[1] = std::stoi(argv[i + 2]);
             ambient[2] = std::stoi(argv[i + 3]);
+        }
+
+        if (arg.compare("--fog") == 0) {
+            if (i + 6 >= argc) {
+                error_message("--fog requires six arguments.");
+            }
+
+            fogSettings[0] = std::stoi(argv[i + 1]);
+            fogSettings[1] = std::stoi(argv[i + 2]);
+            fogSettings[2] = std::stoi(argv[i + 3]);
+            fogSettings[3] = std::stoi(argv[i + 4]);
+            fogSettings[4] = std::stoi(argv[i + 5]);
+            fogSettings[5] = std::stoi(argv[i + 6]);
+            fog = true;
         }
 
         if (arg.compare("--help") == 0) {

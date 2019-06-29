@@ -70,22 +70,23 @@ class VertexBuffer
             s16 vtxCRed, s16 vtxCGreen, s16 vtxCBlue, s16 vtxCAlpha,
             u16 mesh, u8 layer)
     {
-        vtx[vtxCount].pos[AXIS_X] = vtxPosX;
-        vtx[vtxCount].pos[AXIS_Y] = vtxPosY;
-        vtx[vtxCount].pos[AXIS_Z] = vtxPosZ;
+        vtx[vtxCount].pos[AXIS_X]        = vtxPosX;
+        vtx[vtxCount].pos[AXIS_Y]        = vtxPosY;
+        vtx[vtxCount].pos[AXIS_Z]        = vtxPosZ;
 
-        vtx[vtxCount].st[AXIS_X] = vtxPosU;
-        vtx[vtxCount].st[AXIS_Y] = vtxPosV;
+        vtx[vtxCount].st[AXIS_X]         = vtxPosU;
+        vtx[vtxCount].st[AXIS_Y]         = vtxPosV;
 
-        vtx[vtxCount].col[C_RED]  = vtxCRed;
-        vtx[vtxCount].col[C_GRN]  = vtxCGreen;
-        vtx[vtxCount].col[C_BLU]  = vtxCBlue;
-        vtx[vtxCount].col[C_APH]  = vtxCAlpha;
+        vtx[vtxCount].col[C_RED]         = vtxCRed;
+        vtx[vtxCount].col[C_GRN]         = vtxCGreen;
+        vtx[vtxCount].col[C_BLU]         = vtxCBlue;
+        vtx[vtxCount].col[C_APH]         = vtxCAlpha;
 
-        vtx[vtxCount].useless = false;
+        vtx[vtxCount].useless            = false;
         vtx[vtxCount].flag[MATERIAL]     = mesh;
-        vtx[vtxCount].flag[OLDPOS] = vtxCount;
+        vtx[vtxCount].flag[OLDPOS]       = vtxCount;
 
+        vtx[vtxCount].layer              = layer;
         vtxCount++;
     }
 
@@ -123,47 +124,6 @@ class VertexBuffer
 
     Vertex getVtx() { return vtx[vtxCount++]; }
     u16 getVtxMat() { return vtx[vtxCount].flag[MATERIAL]; }
-
-    bool canTri2() { return (vtxCount + 6 <= bufferSize) && (vtx[vtxCount + 3].flag[MATERIAL] == vtx[vtxCount].flag[MATERIAL]); }
-
-
-    /* Layering methods */
-    u16 getLayeredVtxIndex(u8 layer)
-    {
-        if (vtx[vtxCount].layer == layer) {
-            if (vtx[vtxCount].useless) { /* original vertex */
-                return vtx[vtx[vtxCount++].flag[OLDPOS]].flag[NEWPOS];
-            } else { /* redundant vertex */
-                return vtx[vtxCount++].flag[NEWPOS];
-            }
-        } else {
-            vtxCount++;
-            getLayeredVtxIndex(layer);
-        }
-    }
-
-    u16 getLayeredVtxMat(u8 layer)
-    {
-        if (vtx[vtxCount].layer == layer) {
-            return vtx[vtxCount].flag[MATERIAL];
-        } else {
-            vtxCount++;
-            getLayeredVtxMat(layer);
-        }
-    }
-
-    bool canLayeredTri2(u8 layer)
-    {
-        return (vtxCount + 6 <= bufferSize) && (vtx[vtxCount + 3].flag[MATERIAL] == vtx[vtxCount].flag[MATERIAL]) && (vtx[vtxCount + 3].layer == layer);
-    }
-
-    bool hasLayer(u8 layer)
-    {
-        for (u8 i = 0; i < bufferSize; i++) {
-            if (vtx[i].layer == layer) {
-                return true;
-            }
-        }
-        return false;
-    }
+    u8  getVtxLayer() { return vtx[vtxCount].layer; }
+    bool canTri2() { return (vtxCount + 6 <= bufferSize) && (vtx[vtxCount + 3].flag[MATERIAL] == vtx[vtxCount].flag[MATERIAL]) && (vtx[vtxCount + 3].layer == vtx[vtxCount].layer); }
 };

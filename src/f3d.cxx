@@ -42,7 +42,6 @@ enum Layers { LAYER_0, LAYER_1, LAYER_2, LAYER_3, LAYER_4, LAYER_5, LAYER_6, LAY
 #include "modconv.hxx"
 #include "buffer.hxx"
 #include "material.hxx"
-#include "displaylist.hxx"
 
 /* global variabes */
 
@@ -52,6 +51,9 @@ u16 vBuffers = 0,
     vBuffer  = 0;
 
 u8 diffuse[6] = {0xFF, 0xFF, 0xFF, 0x28, 0x28, 0x28}, ambient[3] = {0x66, 0x66, 0x66};
+
+bool fog = false;
+u16 fogSettings[6];
 
 static void count_vtx(aiNode* node, const aiScene* scene)
 {
@@ -327,13 +329,56 @@ static void write_textures(const std::string &fileOut, Material *mat, const aiSc
 
 static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, Material* mat)
 {
+    std::string layers[8] = {
+        "G_RM_ZB_OPA_SURF, G_RM_AA_ZB_OPA_SURF",        /* layer 0 */
+        "G_RM_AA_ZB_OPA_DECAL, G_RM_AA_ZB_OPA_INTER",   /* layer 1 */
+        "G_RM_AA_ZB_TEX_EDGE, G_RM_AA_ZB_XLU_SURF",     /* layer 2 */
+        "G_RM_AA_ZB_XLU_DECAL, G_RM_AA_ZB_XLU_INTER",   /* layer 3 */
+        "G_RM_ZB_OPA_SURF2, G_RM_AA_ZB_OPA_SURF2",      /* layer 4 */
+        "G_RM_AA_ZB_OPA_DECAL2, G_RM_AA_ZB_OPA_INTER2", /* layer 5 */
+        "G_RM_AA_ZB_TEX_EDGE2, G_RM_AA_ZB_XLU_SURF2",   /* layer 6 */
+        "G_RM_AA_ZB_XLU_DECAL2, G_RM_AA_ZB_XLU_INTER2", /* layer 7 */
+    };
+
     bool oldGeo[5] = {0x00};
     std::fstream gfxOut;
     gfxOut.open(fileOut + "/model.s", std::ofstream::out | std::ofstream::app);
     s16 currMat = -1;
+    u8 currLayer = 1;
     gfxOut << std::endl << "glabel " << get_filename(fileOut) << "_dl" << std::endl
            << "gsSPClearGeometryMode G_LIGHTING" << std::endl;
+    if (fog) {
+        currLayer = vBuf[0].getVtxLayer(); /* Fog only allows two rendermode settings. */
+
+        gfxOut << "gsDPSetCycleType G_CYC_2CYCLE" << std::endl;
+
+        if (currLayer > 1) { /* transparency layers */
+            gfxOut << "gsDPSetRenderMode G_RM_FOG_SHADE_A, G_RM_AA_ZB_XLU_SURF2" << std::endl;
+        } else { /* opaque layers */
+            gfxOut << "gsDPSetRenderMode G_RM_FOG_SHADE_A, G_RM_AA_ZB_OPA_SURF2" << std::endl;
+        }
+
+        gfxOut << "gsSPSetGeometryMode G_FOG" << std::endl
+               << "gsSPFogPosition " << fogSettings[4] << ", " << fogSettings[5] << std::endl
+               << "gsDPSetFogColor " << fogSettings[0] << ", " << fogSettings[1] << ", "
+                                     << fogSettings[2] << ", " << fogSettings[3] << std::endl;
+
+    }
     for (u16 i = 0; i < vBuffers; i++) {
+        if (vBuf[i].getVtxLayer() != currLayer) {
+            currLayer = vBuf[i].getVtxLayer();
+
+            if (fog) {
+                if (currLayer > 1) {
+                    gfxOut << "gsDPSetRenderMode G_RM_FOG_SHADE_A, G_RM_AA_ZB_XLU_SURF2" << std::endl;
+                } else {
+                    gfxOut << "gsDPSetRenderMode G_RM_FOG_SHADE_A, G_RM_AA_ZB_OPA_SURF2" << std::endl;
+                }
+            } else {
+                gfxOut << "gsDPSetRenderMode " << layers[currLayer] << std::endl;
+            }
+        }
+
         if (vBuf[i].getVtxMat() != currMat) {
             currMat = vBuf[i].getVtxMat();
             gfxOut << "/* " << mat[currMat].getName() << " */" << std::endl
@@ -348,6 +393,20 @@ static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, M
                 currMat = vBuf[i].getVtxMat();
                 gfxOut << "/* " << mat[currMat].getName() << " */" << std::endl
                                 << mat[currMat].getMaterial(oldGeo);
+            }
+
+            if (vBuf[i].getVtxLayer() != currLayer) {
+                currLayer = vBuf[i].getVtxLayer();
+
+                if (fog) {
+                    if (currLayer > 1) {
+                        gfxOut << "gsDPSetRenderMode G_RM_FOG_SHADE_A, G_RM_AA_ZB_XLU_SURF2" << std::endl;
+                    } else {
+                        gfxOut << "gsDPSetRenderMode G_RM_FOG_SHADE_A, G_RM_AA_ZB_OPA_SURF2" << std::endl;
+                    }
+                } else {
+                    gfxOut << "gsDPSetRenderMode " << layers[currLayer] << std::endl;
+                }
             }
 
             if (vBuf[i].canTri2()) {
@@ -377,8 +436,15 @@ static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, M
            << "gsDPPipeSync\n"
            << "gsDPSetCombineMode1Cycle G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE\n"
            << "gsSPSetGeometryMode G_LIGHTING\n"
-           << "gsDPSetTextureLUT G_TT_NONE\n"
-           << "gsSPEndDisplayList" << std::endl;
+           << "gsDPSetTextureLUT G_TT_NONE\n" << std::endl;
+
+    if (fog) { /* Clear fog settings */
+        gfxOut << "gsDPSetCylceType G_CYC_1CYCLE" << std::endl
+               << "gsDPSetRenderMode G_RM_AA_ZB_OPA_SURF, G_RM_NOOP2" << std::endl
+               << "gsSPClearGeometryMode G_FOG" << std::endl;
+    }
+
+    gfxOut << "gsSPEndDisplayList" << std::endl;
 }
 
 
