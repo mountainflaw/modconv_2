@@ -365,6 +365,13 @@ static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, M
 
     }
     for (u16 i = 0; i < vBuffers; i++) {
+
+        if (vBuf[i].getVtxMat() != currMat) {
+            currMat = vBuf[i].getVtxMat();
+            gfxOut << "/* " << mat[currMat].getName() << " */" << std::endl
+                            << mat[currMat].getMaterial(oldGeo);
+        }
+
         if (vBuf[i].getVtxLayer() != currLayer) {
             currLayer = vBuf[i].getVtxLayer();
 
@@ -377,12 +384,6 @@ static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, M
             } else {
                 gfxOut << "gsDPSetRenderMode " << layers[currLayer] << std::endl;
             }
-        }
-
-        if (vBuf[i].getVtxMat() != currMat) {
-            currMat = vBuf[i].getVtxMat();
-            gfxOut << "/* " << mat[currMat].getName() << " */" << std::endl
-                            << mat[currMat].getMaterial(oldGeo);
         }
 
         gfxOut << "gsSPVertex " <<  get_filename(fileOut) << "_vertex_" << i
@@ -432,11 +433,11 @@ static void write_display_list(const std::string &fileOut, VertexBuffer* vBuf, M
         }
     }
 
-    gfxOut << "gsSPTexture -1, -1, 0, 0, 0\n"
-           << "gsDPPipeSync\n"
-           << "gsDPSetCombineMode1Cycle G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE\n"
-           << "gsSPSetGeometryMode G_LIGHTING\n"
-           << "gsDPSetTextureLUT G_TT_NONE\n" << std::endl;
+    gfxOut << "gsSPTexture -1, -1, 0, 0, 0" << std::endl
+           << "gsDPPipeSync" << std::endl
+           << "gsDPSetCombineMode1Cycle G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE" << std::endl
+           << "gsSPSetGeometryMode G_LIGHTING" << std::endl
+           << "gsDPSetTextureLUT G_TT_NONE" << std::endl;
 
     if (fog) { /* Clear fog settings */
         gfxOut << "gsDPSetCylceType G_CYC_1CYCLE" << std::endl
