@@ -369,9 +369,11 @@ static inline void set_layers(DisplayList *dl)
 static inline void write_display_list_obj(const std::string &fileOut, VertexBuffer* vBuf, DisplayList* dl, Material* mat)
 {
     for (u8 i = 0; i < layers; i++) {
+        vBuf[i].vtxCount = 0;
         dl[i].writeDisplayList(fileOut, vBuf, vBuffers, mat);
     }
 }
+
 /** Main function for the F3D build process. */
 void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8 microcode, bool level, bool uvFlip)
 {

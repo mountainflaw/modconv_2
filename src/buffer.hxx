@@ -60,6 +60,7 @@ class VertexBuffer
 
     public:
     u8 vtxCount   = 0,
+       vtxCount2  = 0,
        bufferSize = 15,
        loadSize = 0;
 
@@ -130,33 +131,31 @@ class VertexBuffer
 
 
     /* Layering methods */
-    u16 getLayeredVtxIndex(u8 layer)
+    s16 getLayeredVtxIndex(u8 layer)
     {
-        if (vtx[vtxCount].layer == layer) {
+        if (vtx[vtxCount].layer == layer) { /* layer is found */
             if (vtx[vtxCount].useless) { /* original vertex */
                 return vtx[vtx[vtxCount++].flag[OLDPOS]].flag[NEWPOS];
             } else { /* redundant vertex */
                 return vtx[vtxCount++].flag[NEWPOS];
             }
-        } else {
+        } else { /* triangle not on layer */
             vtxCount++;
-            getLayeredVtxIndex(layer);
+            return -1;
         }
 
         return 0; /* Fallback */
     }
 
-    u16 getLayeredVtxMat(u8 layer)
+    s16 getLayeredVtxMat(u8 layer)
     {
         std::cout << "mat" << std::endl;
-        if (vtx[vtxCount].layer == layer) {
-            std::cout << "mat " << vtx[vtxCount].flag[MATERIAL] << std::endl;
-            return vtx[vtxCount].flag[MATERIAL];
+        if (vtx[vtxCount2].layer == layer) {
+            std::cout << "mat " << vtx[vtxCount2].flag[MATERIAL] << std::endl;
+            return vtx[vtxCount2].flag[MATERIAL];
         } else {
-            vtxCount++;
-            getLayeredVtxMat(layer);
+            return -2;
         }
-        return 0; /* Fallback */
     }
 
     bool canLayeredTri2(u8 layer)
@@ -167,8 +166,8 @@ class VertexBuffer
     bool hasLayer(u8 layer)
     {
         for (u8 i = 0; i < bufferSize; i++) {
-            std::cout << (u16)vtx[i].layer << std::endl;
             if (vtx[i].layer == layer) {
+                std::cout << (u16)layer << " exists in this buffer!" << std::endl;
                 return true;
             }
         }
