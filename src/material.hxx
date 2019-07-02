@@ -152,7 +152,7 @@ bool ourGeo[GROUP_TAGS] = {0x00};
 std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#SHADE", "#BACKFACE" },
     geoModes[GROUP_TAGS] = { "G_TEXTURE_GEN", "G_TEXTURE_GEN_LINEAR", "G_LIGHTING", "G_SHADE", "G_CULL_BACK"};
 
-    std::string GetGeometryMode(bool oldGeo[GROUP_TAGS])
+    std::string GetGeometryMode(bool* oldGeo)
     {
         std::string setRet = "", clearRet = "";
         bool setOring = false, clearOring = false;
@@ -163,7 +163,8 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
         }
 
         for (u8 i = 0; i < GROUP_TAGS; i++) {
-            if (ourGeo[i] && !oldGeo[i]) { /* set */
+            std::cout << name << " new " << ourGeo[i] << " old" << oldGeo[i] << std::endl;
+            if ((ourGeo[i] && !oldGeo[i]) || (!oldGeo[i] && ourGeo[i])) { /* set */
                 if (setOring && i != BACKFACE) {
                     setRet += " | " + geoModes[i];
                 }
@@ -185,7 +186,7 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
                 }
             }
 
-            if (!ourGeo[i] && oldGeo[i]) { /* clear */
+            if ((!ourGeo[i] && oldGeo[i]) || (oldGeo[i] && !ourGeo[i])) { /* clear */
                 if (clearOring && i != BACKFACE) {
                     clearRet += " | " + geoModes[i];
                 }
@@ -216,6 +217,14 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
             lights += "gsSPLight " + get_filename(fileOut) + "_diffuse_light, 1\n";
             lights += "gsSPLight " + get_filename(fileOut) + "_ambient_light, 2\n";
         }
+
+        /* copy over current geo to old geo */
+        for (u8 i = 0; i < GROUP_TAGS; i++) {
+            if (ourGeo[i]) {
+                oldGeo[i] = ourGeo[i];
+            }
+        }
+
         return setRet + newline_if_true(setOring) + clearRet + newline_if_true(clearOring) + lights;
     }
 
@@ -249,10 +258,10 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
     /** Returns the incbins. */
     std::string d;
     /** Returns the exact F3D settings that represent this material. */
-    std::string getMaterial(bool oldGeo[GROUP_TAGS])
+    std::string getMaterial(bool* oldGeo)
     {
         std::string ret;
-        //ret += GetGeometryMode(oldGeo);
+        ret += GetGeometryMode(oldGeo);
         if (textured) {
             ret += GetFuckingFrauber() + GetTextureLoad();
         }

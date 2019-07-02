@@ -55,6 +55,10 @@ bool setLayer[8] = { false };
 
 u8 diffuse[6] = {0xFF, 0xFF, 0xFF, 0x28, 0x28, 0x28}, ambient[3] = {0x66, 0x66, 0x66};
 
+bool fog = false;
+u16 fogSettings[6]; /* rgba near far */
+enum FogSettings { FOG_RED, FOG_GREEN, FOG_BLUE, FOG_NEAR, FOG_FAR };
+
 static void inspect_vtx(aiNode* node, const aiScene* scene)
 {
     for (u16 i = 0; i < node->mNumMeshes; i++) {
@@ -67,6 +71,7 @@ static void inspect_vtx(aiNode* node, const aiScene* scene)
     }
 }
 
+/* FBX multiplies vertex positions by 100. We counter this by multiplying FBX models by 0.01. */
 static inline f32 scaling_hack(const std::string &file)
 {
     if (file.substr(file.length() - 4, file.length()).compare(".fbx") == 0) {

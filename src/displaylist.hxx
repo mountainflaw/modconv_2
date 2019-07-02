@@ -16,7 +16,6 @@ class DisplayList
     {
         for (u8 i = 0; i < size; i++) {
             if (tri[i] == -1) {
-                std::cout << "tri ind " << tri[i] << std::endl;
                 return false;
             }
         }
@@ -34,12 +33,9 @@ class DisplayList
 
         gfxOut.open(fileOut + "/model.s", std::ofstream::out | std::ofstream::app);
         gfxOut << std::endl << "glabel " << fileOut + dlTypes[layer] << std::endl;
-        std::cout << "opened " << fileOut + "/model.s" << std::endl;
         for (u16 i = 0; i < vBuffers; i++) {
-            vBuf[i].vtxCount = 0;
-            vBuf[i].vtxCount2 = 0;
+            vBuf[i].vtxCount = 0; /* reset this from the last layer */
             if (vBuf[i].hasLayer(layer)) { /* don't load what we don't need */
-                std::cout << "vtx " << i << " contains layer " << (u16)layer << std::endl;
                 if (vBuf[i].getLayeredVtxMat(layer) != currMat && vBuf[i].getLayeredVtxMat(layer) != MAT_NOT_LAYER) { /* load before vtx load if possible */
                     currMat = vBuf[i].getLayeredVtxMat(layer);
                     gfxOut << "/* " << mat[currMat].getName() << " */" << std::endl
@@ -48,7 +44,6 @@ class DisplayList
                 gfxOut << "gsSPVertex " << get_filename(fileOut) << "_vertex_" << i << " " << std::to_string(vBuf[i].loadSize) << ", 0" << std::endl;
 
                 while (!vBuf[i].isBufferComplete()) {
-                    vBuf[i].vtxCount2 = vBuf[i].vtxCount;
                     if (vBuf[i].getVtxMat() != currMat && vBuf[i].getLayeredVtxMat(layer) != MAT_NOT_LAYER) {
                         currMat = vBuf[i].getLayeredVtxMat(layer);
                         gfxOut << "/* " << mat[currMat].getName() << " */" << std::endl
@@ -79,8 +74,6 @@ class DisplayList
                         }
                     }
                 }
-            } else {
-                std::cout << "buffer " << (u16)i << " does not have layer " << layer << std::endl;
             }
         }
         gfxOut << "gsSPTexture -1, -1, 0, 0, 0\n"

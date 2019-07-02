@@ -60,7 +60,6 @@ class VertexBuffer
 
     public:
     u8 vtxCount   = 0,
-       vtxCount2  = 0,
        bufferSize = 15,
        loadSize = 0;
 
@@ -149,10 +148,8 @@ class VertexBuffer
 
     s16 getLayeredVtxMat(u8 layer)
     {
-        std::cout << "mat" << std::endl;
-        if (vtx[vtxCount2].layer == layer) {
-            std::cout << "mat " << vtx[vtxCount2].flag[MATERIAL] << std::endl;
-            return vtx[vtxCount2].flag[MATERIAL];
+        if (vtx[vtxCount].layer == layer) {
+            return vtx[vtxCount].flag[MATERIAL];
         } else {
             return -2;
         }
@@ -167,7 +164,6 @@ class VertexBuffer
     {
         for (u8 i = 0; i < bufferSize; i++) {
             if (vtx[i].layer == layer) {
-                std::cout << (u16)layer << " exists in this buffer!" << std::endl;
                 return true;
             }
         }
