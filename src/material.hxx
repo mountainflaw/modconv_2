@@ -236,6 +236,15 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
     bool useless = false, textured = false;
     void setName(const std::string &n) { name = n; }
     void setFile(const std::string &f) { fileOut = f; }
+
+    /**
+     * Returns true if lighting will be enabled.
+     * Used to fix weird colors caused by
+     * enabling lighting in some situations.
+     */
+
+    bool getLighting(const bool* oldGeo) { return !oldGeo[LIGHTING] && ourGeo[LIGHTING]; }
+
     void setPath(const std::string &p)
     {
         tex.path = p;

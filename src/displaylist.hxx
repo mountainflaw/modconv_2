@@ -104,8 +104,13 @@ class DisplayList
                 while (!vBuf[i].isBufferComplete()) {
                     if (vBuf[i].getVtxMat() != currMat && vBuf[i].getLayeredVtxMat(layer) != MAT_NOT_LAYER) {
                         currMat = vBuf[i].getLayeredVtxMat(layer);
+                        bool resetVtxCache = mat[currMat].getLighting(oldGeo);
                         gfxOut << "/* " << mat[currMat].getName() << " */" << std::endl
                                         << mat[currMat].getMaterial(oldGeo, layer);
+
+                        if (resetVtxCache) {
+                            gfxOut << "gsSPVertex " << get_filename(fileOut) << "_vertex_" << i << " " << std::to_string(vBuf[i].loadSize) << ", 0" << std::endl;
+                        }
                     }
 
                     if (vBuf[i].canLayeredTri2(layer)) {
