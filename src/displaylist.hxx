@@ -1,4 +1,5 @@
 #include "modconv.hxx"
+enum GeoModes { ENVMAP, LIN_ENVMAP, LIGHTING, SHADE, BACKFACE};
 
 /*
  * Display list class
@@ -104,6 +105,7 @@ class DisplayList
                 }
             }
         }
+        bool clearOring = false;
         /* Reset display list settings */
         gfxOut << "gsSPTexture -1, -1, 0, 0, 0" << std::endl
                << "gsDPPipeSync" << std::endl
@@ -118,6 +120,29 @@ class DisplayList
         if (fog) {
             gfxOut << "gsDPSetRenderMode G_RM_AA_ZB_OPA_SURF, G_RM_NOOP2" << std::endl
                    << "gsSPClearGeometryMode G_FOG" << std::endl;
+        }
+
+        /* Disable group tags */
+        if (oldGeo[ENVMAP]) {
+            gfxOut << "gsSPClearGeometryMode G_TEXTURE_GEN";
+            clearOring = true;
+        }
+
+        if (oldGeo[LIN_ENVMAP]) {
+            if (clearOring) {
+                gfxOut << "gsSPClearGeometryMode G_TEXTURE_GEN_LINEAR";
+            } else {
+                gfxOut << " | G_TEXTURE_GEN_LINEAR";
+            }
+            clearOring = true;
+        }
+
+        if (clearOring) {
+            gfxOut << std::endl;
+        }
+
+        if (oldGeo[BACKFACE]) {
+            gfxOut << "gsSPClearGeometryMode G_CULL_BACK" << std::endl;
         }
 
         gfxOut << "gsSPEndDisplayList" << std::endl;

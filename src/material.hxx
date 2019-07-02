@@ -151,7 +151,6 @@ class Material
     }
 
 #define GROUP_TAGS 5
-enum GeoModes { ENVMAP, LIN_ENVMAP, LIGHTING, SHADE, BACKFACE};
 bool ourGeo[GROUP_TAGS] = {0x00};
 std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#SHADE", "#BACKFACE" },
     geoModes[GROUP_TAGS] = { "G_TEXTURE_GEN", "G_TEXTURE_GEN_LINEAR", "G_LIGHTING", "G_SHADE", "G_CULL_BACK"};
@@ -159,7 +158,7 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
     std::string GetGeometryMode(bool* oldGeo)
     {
         std::string setRet = "", clearRet = "";
-        bool setOring = false, clearOring = false;
+        bool clearOring = false, setOring = false;
         for (u8 i = 0; i < GROUP_TAGS; i++) {
             if (name.find(groupTags[i]) != std::string::npos) {
                 ourGeo[i] = true;
@@ -233,6 +232,7 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
     }
 
     public:
+    enum GeoModes { ENVMAP, LIN_ENVMAP, LIGHTING, SHADE, BACKFACE};
     bool useless = false, textured = false;
     void setName(const std::string &n) { name = n; }
     void setFile(const std::string &f) { fileOut = f; }
