@@ -1,3 +1,4 @@
+#include "modconv.hxx"
 
 /*
  * Display list class
@@ -11,8 +12,9 @@ class DisplayList
     private:
     std::string dlTypes[8] = {"_layer_0", "_layer_1", "_layer_2", "_layer_3", "_layer_4", "_layer_5", "_layer_6", "_layer_7"};
     u8 layer = 1;
+    bool twoCycle = false;
 
-    bool writeTri(s16 tri[], u8 size)
+    bool WriteTri(s16 tri[], u8 size)
     {
         for (u8 i = 0; i < size; i++) {
             if (tri[i] == -1) {
@@ -23,7 +25,13 @@ class DisplayList
     }
 
     public:
-    void setLayer(u8 l) { layer = l; }
+    void setLayer(u8 l)
+    {
+        layer = l;
+        if (layer > 1) {
+            twoCycle = true;
+        }
+    }
 
     void writeDisplayList(const std::string &fileOut, VertexBuffer *vBuf, u16 vBuffers, Material* mat)
     {
@@ -33,28 +41,48 @@ class DisplayList
 
         gfxOut.open(fileOut + "/model.s", std::ofstream::out | std::ofstream::app);
         gfxOut << std::endl << "glabel " << fileOut + dlTypes[layer] << std::endl;
+
+        if (twoCycle || fog) {
+            gfxOut << "gsDPSetCycleType G_CYC_2CYCLE" << std::endl;
+        }
+
+        if (fog) {
+            twoCycle = true; /* so G_CYC_2CYCLE is disabled */
+
+            if (layer > 1) { /* transparency */
+                gfxOut << "gsDPSetRenderMode G_RM_FOG_SHADE_A, G_RM_AA_ZB_XLU_SURF2" << std::endl;
+            } else { /* 0 and 1 */
+                gfxOut << "gsDPSetRenderMode G_RM_FOG_SHADE_A, G_RM_AA_ZB_OPA_SURF2" << std::endl;
+            }
+
+            gfxOut << "gsSPSetGeometryMode G_FOG" << std::endl
+                   << "gsSPFogPosition " << fogSettings[4] << ", " << fogSettings[5] << std::endl
+                   << "gsDPSetFogColor " << fogSettings[0] << ", " << fogSettings[1] << ", "
+                                         << fogSettings[2] << ", " << fogSettings[3] << std::endl;
+        }
+
         for (u16 i = 0; i < vBuffers; i++) {
             vBuf[i].vtxCount = 0; /* reset this from the last layer */
             if (vBuf[i].hasLayer(layer)) { /* don't load what we don't need */
                 if (vBuf[i].getLayeredVtxMat(layer) != currMat && vBuf[i].getLayeredVtxMat(layer) != MAT_NOT_LAYER) { /* load before vtx load if possible */
                     currMat = vBuf[i].getLayeredVtxMat(layer);
                     gfxOut << "/* " << mat[currMat].getName() << " */" << std::endl
-                                    << mat[currMat].getMaterial(oldGeo);
+                                    << mat[currMat].getMaterial(oldGeo, layer);
                 }
+
                 gfxOut << "gsSPVertex " << get_filename(fileOut) << "_vertex_" << i << " " << std::to_string(vBuf[i].loadSize) << ", 0" << std::endl;
 
                 while (!vBuf[i].isBufferComplete()) {
                     if (vBuf[i].getVtxMat() != currMat && vBuf[i].getLayeredVtxMat(layer) != MAT_NOT_LAYER) {
                         currMat = vBuf[i].getLayeredVtxMat(layer);
                         gfxOut << "/* " << mat[currMat].getName() << " */" << std::endl
-                                        << mat[currMat].getMaterial(oldGeo);
+                                        << mat[currMat].getMaterial(oldGeo, layer);
                     }
 
                     if (vBuf[i].canLayeredTri2(layer)) {
-                   // if (false) {
                         s16 triTwo[6] = { vBuf[i].getLayeredVtxIndex(layer), vBuf[i].getLayeredVtxIndex(layer), vBuf[i].getLayeredVtxIndex(layer),
                                           vBuf[i].getLayeredVtxIndex(layer), vBuf[i].getLayeredVtxIndex(layer), vBuf[i].getLayeredVtxIndex(layer) };
-                        if (writeTri(triTwo, 6)) {
+                        if (WriteTri(triTwo, 6)) {
                             gfxOut << "gsSP2Triangles "
                                    << triTwo[0] << ", "
                                    << triTwo[1] << ", "
@@ -66,7 +94,7 @@ class DisplayList
                         }
                     } else {
                         s16 triOne[3] = { vBuf[i].getLayeredVtxIndex(layer), vBuf[i].getLayeredVtxIndex(layer), vBuf[i].getLayeredVtxIndex(layer) };
-                        if (writeTri(triOne, 3)) {
+                        if (WriteTri(triOne, 3)) {
                             gfxOut << "gsSP1Triangle "
                                    << triOne[0] << ", "
                                    << triOne[1] << ", "
@@ -76,11 +104,22 @@ class DisplayList
                 }
             }
         }
-        gfxOut << "gsSPTexture -1, -1, 0, 0, 0\n"
-               << "gsDPPipeSync\n"
-               << "gsDPSetCombineMode1Cycle G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE\n"
-               << "gsSPSetGeometryMode G_LIGHTING\n"
-               << "gsDPSetTextureLUT G_TT_NONE\n"
-               << "gsSPEndDisplayList" << std::endl;
+        /* Reset display list settings */
+        gfxOut << "gsSPTexture -1, -1, 0, 0, 0" << std::endl
+               << "gsDPPipeSync" << std::endl
+               << "gsDPSetCombineMode1Cycle G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE" << std::endl
+               << "gsSPSetGeometryMode G_LIGHTING" << std::endl
+               << "gsDPSetTextureLUT G_TT_NONE" << std::endl;
+
+        if (twoCycle) { /* Return back to 1 cycle */
+            gfxOut << "gsDPSetCycleType G_CYC_1CYCLE" << std::endl;
+        }
+
+        if (fog) {
+            gfxOut << "gsDPSetRenderMode G_RM_AA_ZB_OPA_SURF, G_RM_NOOP2" << std::endl
+                   << "gsSPClearGeometryMode G_FOG" << std::endl;
+        }
+
+        gfxOut << "gsSPEndDisplayList" << std::endl;
     }
 };
