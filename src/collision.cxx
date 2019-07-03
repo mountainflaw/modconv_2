@@ -145,7 +145,7 @@ static void clean_vtx(CollisionVtx* vtx)
     /* Stage 1 - Mark redundant vertices */
     for (u32 i = 0; i < vertex; i++) {
         for (u32 j = 0; j < vertex; j++) {
-            if (cprVtx(vtx, i, j) && j > i) {
+            if (cprVtx(vtx, i, j) && j > i && !vtx[j].useless) {
                 vtx[j].useless = true;
                 vtx[j].list = i;
             }
@@ -204,8 +204,8 @@ void collision_converter_main(const std::string &file, const std::string &fileOu
     inspect_vtx(scene->mRootNode, scene, mat);
     CollisionVtx vtx[vertex];
     setup_vtx(file, scene->mRootNode, scene, vtx, scale);
+    clean_vtx(vtx);
 
     /* Write data*/
     write_vtx(fileOut, vtx);
-    clean_vtx(vtx);
 }
