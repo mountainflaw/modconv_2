@@ -30,7 +30,7 @@
 #include "modconv.hxx"
 
 /* Globals */
-u32 vertex = 0, internalVtx = 0;
+u32 vertex = 0, internalVtx = 0, writeSize = 0;
 
 typedef struct {
     s16 pos[3];
@@ -138,7 +138,6 @@ static inline bool cprVtx(const CollisionVtx* vtx, const u32 i, const u32 j)
 
 static void clean_vtx(CollisionVtx* vtx)
 {
-    u32 writeSize = 0;
     /* Stage 1 - Mark redundant vertices */
     for (u32 i = 0; i < vertex; i++) {
         for (u32 j = 0; j < vertex; j++) {
@@ -162,6 +161,7 @@ static void write_vtx(const std::string &fileOut, const CollisionVtx* vtx)
 {
     std::fstream colOut;
     colOut.open(fileOut + "/collision.s", std::iostream::out | std::iostream::app);
+    colOut << "colVertexInit " << writeSize << std::endl;
     for (u32 i = 0; i < vertex; i++) {
         if (vtx[i].useless == false) {
             colOut << "colVertex " << vtx[i].pos[AXIS_X] << ", "
@@ -186,17 +186,20 @@ static void write_tri(const std::string &fileOut, const CollisionVtx* vtx, const
     u32 i = 0;
     u16 currSurf = 0;
 
+    std::fstream colOut;
+    colOut.open(fileOut + "/collision.s", std::iostream::out | std::iostream::app);
+
     while (i < vertex) {
         if (vtx[i].material != currSurf || i == 0) {
             currSurf = vtx[i].material;
-            std::cout << "colTriInit " << mat[vtx[i].material].surf << ", " << mat[vtx[i].material].tri << std::endl;
+            colOut << "colTriInit " << mat[vtx[i].material].surf << ", " << mat[vtx[i].material].tri << std::endl;
         }
 
-        std::cout << "colTri " << get_vtx_index(vtx, i) << ", " << get_vtx_index(vtx, i + 1) << ", " << get_vtx_index(vtx, i + 2) << std::endl;
+        colOut << "colTri " << get_vtx_index(vtx, i) << ", " << get_vtx_index(vtx, i + 1) << ", " << get_vtx_index(vtx, i + 2) << std::endl;
         i += 3;
     }
-    std::cout << "colTriStop" << std::endl
-              << "colEnd"     << std::endl;
+    colOut << "colTriStop" << std::endl
+           << "colEnd"     << std::endl;
 }
 
 void collision_converter_main(const std::string &file, const std::string &fileOut, s16 scale)
@@ -207,7 +210,8 @@ void collision_converter_main(const std::string &file, const std::string &fileOu
     std::fstream collisionOut;
     collisionOut.open(fileOut + "/collision.s", std::iostream::out | std::iostream::app);
     reset_file(fileOut + "/collision.s");
-    collisionOut << "glabel " << get_filename(fileOut) << "_collision"
+    collisionOut << std::endl
+                 << "glabel " << get_filename(fileOut) << "_collision"
                  << std::endl << "colInit" << std::endl;
     collisionOut.close();
 
