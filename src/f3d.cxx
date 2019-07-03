@@ -90,7 +90,7 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
 
         /* we go by faces instead of verts so we don't accidentally add what we don't need */
         for (u32 j = 0; j < mesh->mNumFaces; j++) {
-            for (u8 k = 0; k <= 2; k++) {
+            for (u8 k = 0; k < 3; k++) {
                 u32 currVtx = mesh->mFaces[j].mIndices[k];
 
                 if (vBuffers == 1) { /* if we only have one buffer, set it to the size of vert so we don't overflow */

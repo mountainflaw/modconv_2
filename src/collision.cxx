@@ -28,78 +28,126 @@
 
 /* This file handles creating collision data out of a model imported with ASSIMP. */
 #include "modconv.hxx"
-#include "surfaces.hxx"
 
-s32 vertex = 0, tri = 0, vtx = 0; /* Globals */
+/* Globals */
+u32 vertex = 0, internalVtx = 0;
 
-static void write_vertex(aiNode* node, const aiScene* scene, const std::string &fileOut, s16 scale)
+typedef struct {
+    s16 pos[3];
+    u8 list;
+    u16 material;
+    bool useless;
+} CollisionVtx;
+
+typedef struct {
+    u16 tri;
+    std::string surf;
+} CollisionMat;
+
+static void configure_materials(const aiScene* scene, CollisionMat* mat)
 {
-    std::fstream collisionOut;
-    collisionOut.open(fileOut + "/collision.s", std::iostream::out | std::iostream::app);
+    u16 pos[2] = { 0 };
+    for (u16 i = 0; scene->mNumMaterials; i++) {
+        aiString aiName;
+        scene->mMaterials[i]->Get(AI_MATKEY_NAME, aiName);
+        mat[i].tri = 0;
 
+        std::string nameStr = aiName.data;
+
+        enum SurfaceString { STARTPOS, ENDPOS };
+
+        /*
+         * Find surface setting:
+         * This searches for the first instance of !,
+         * which will mark the beginning of the the surface
+         * set, the ending is either the end of the string
+         * or until the first instance of a space.
+         */
+
+        if (nameStr.find("!") != std::string::npos) {
+            pos[STARTPOS] = nameStr.find("!") + 1;
+            for (u16 j = 0; j < nameStr.length(); i++) {
+                pos[ENDPOS] = i;
+                if (nameStr[i] == ' ') {
+                    pos[ENDPOS] = i - 1;
+                    break;
+                }
+            mat[i].surf = nameStr.substr(pos[STARTPOS], pos[ENDPOS]);
+            }
+        } else {
+            mat[i].surf = "SURF_ENV_DEFAULT";
+        }
+    }
+}
+
+static void inspect_vtx(aiNode* node, const aiScene* scene, CollisionMat* mat)
+{
     for (u16 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        for (u16 i = 0; i < mesh->mNumVertices; i++) {
-            collisionOut << "colVertex "
-                << std::to_string((s16)((mesh->mVertices[i].x * scale) * 0.01)) << ", "
-                << std::to_string((s16)((mesh->mVertices[i].y * scale) * 0.01)) << ", "
-                << std::to_string((s16)((mesh->mVertices[i].z * scale) * 0.01)) << std::endl;
-        }
+        vertex += mesh->mNumFaces * 3;
+        mat[mesh->mMaterialIndex].tri += mesh->mNumFaces;
     }
 
     for (u16 i = 0; i < node->mNumChildren; i++) {
-        write_vertex(node->mChildren[i], scene, fileOut, scale);
+        inspect_vtx(node->mChildren[i], scene, mat);
     }
+}
+
+/* FBX multiplies vertex positions by 100. We counter this by multiplying FBX models by 0.01. */
+static inline f32 scaling_hack(const std::string &file)
+{
+    if (file.substr(file.length() - 4, file.length()).compare(".fbx") == 0) {
+        return 0.01f;
+    } else {
+        return 1.0f;
+    }
+}
+
+static void setup_vtx(const std::string &file, aiNode* node, const aiScene* scene, CollisionVtx* vtx, const s16 scale)
+{
+    for (u16 i = 0; i < node->mNumMeshes; i++) {
+        aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+
+        /* We go by faces, so we don't add loose geometry to our output. */
+        for (u32 j = 0; j < mesh->mNumFaces; j++) {
+            for (u8 k = 0; k < 3; k++) {
+                u32 currVtx = mesh->mFaces[j].mIndices[k];
+                vtx[internalVtx].pos[AXIS_X] = (s16)(((mesh->mVertices[currVtx].x) * scale) * scaling_hack(file));
+                vtx[internalVtx].pos[AXIS_Y] = (s16)(((mesh->mVertices[currVtx].y) * scale) * scaling_hack(file));
+                vtx[internalVtx].pos[AXIS_Z] = (s16)(((mesh->mVertices[currVtx].z) * scale) * scaling_hack(file));
+
+                vtx[internalVtx].list = internalVtx;
+                vtx[internalVtx].material = mesh->mMaterialIndex;
+                internalVtx++;
+            }
+        }
+    }
+}
+
+static void clean_vtx(CollisionVtx* vtx)
+{
+}
+
+static void write_vertex(const std::string &fileOut, CollisionVtx* vtx)
+{
+    std::fstream colOut;
+    colOut.open(fileOut + "/collision.s", std::iostream::out | std::iostream::app);
+    for (u32 i = 0; i < vertex; i++) {
+        if (!vtx[i].useless) {
+            colOut << "colVertex" << vtx[i].pos[AXIS_X] << ", "
+                                  << vtx[i].pos[AXIS_Y] << ", "
+                                  << vtx[i].pos[AXIS_Z] << std::endl;
+
+        }
+    }
+}
+
+static inline void get_vtx_index(const Vertex vtx)
+{
 }
 
 static void write_triangle(aiNode* node, const aiScene* scene, const std::string &fileOut)
 {
-    std::fstream collisionOut;
-    collisionOut.open(fileOut + "/collision.s", std::iostream::out | std::iostream::app);
-
-    for (u16 i = 0; i < node->mNumMeshes; i++) {
-        aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-
-        /* TODO: Add smarter parsing here. */
-        std::string terrainType = "SURF_ENV_DEFAULT";
-        aiString aiName;
-        scene->mMaterials[mesh->mMaterialIndex]->Get(AI_MATKEY_NAME, aiName);
-        std::string nameStr = aiName.data;
-
-        if (scene->HasMaterials()) {
-            std::cout << "material: " << nameStr << std::endl;
-            for (u16 j = 0; j < SURFACES; j++) {
-                if (nameStr.find(surfaces[j]) != std::string::npos) {
-                    terrainType = surfaces[j].substr(1, surfaces[j].length());
-                }
-            }
-        }
-
-        /* Triangle */
-        collisionOut << std::endl << "colTriInit " << terrainType << " " << std::to_string(mesh->mNumFaces) << std::endl;
-
-        for (u16 j = 0; j < mesh->mNumFaces; j++) {
-            collisionOut << "colTri " << vertex + mesh->mFaces[j].mIndices[0] << ", " << vertex + mesh->mFaces[j].mIndices[1] << ", " << vertex + mesh->mFaces[j].mIndices[2] << std::endl;
-        }
-
-        vertex += mesh->mNumVertices;
-    }
-
-    for (u16 i = 0; i < node->mNumChildren; i++) {
-        write_triangle(node->mChildren[i], scene, fileOut);
-    }
-}
-
-static void set_vtx_amount(aiNode* node, const aiScene* scene)
-{
-    for (u16 i = 0; i < node->mNumMeshes; i++) {
-        aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        vtx += mesh->mNumVertices;
-    }
-
-    for (u16 i = 0; i < node->mNumChildren; i++) {
-        set_vtx_amount(node->mChildren[i], scene);
-    }
 }
 
 void collision_converter_main(const std::string &file, const std::string &fileOut, s16 scale)
@@ -111,13 +159,4 @@ void collision_converter_main(const std::string &file, const std::string &fileOu
     collisionOut.open(fileOut + "/collision.s", std::iostream::out | std::iostream::app);
     reset_file(fileOut + "/collision.s");
     collisionOut << "glabel " << get_filename(fileOut) << "_collision" << std::endl << "colInit";
-
-    set_vtx_amount(scene->mRootNode, scene);
-
-    collisionOut << std::endl << "colVertexInit " << vtx << std::endl;
-    write_vertex(scene->mRootNode, scene, fileOut, scale);
-    write_triangle(scene->mRootNode, scene, fileOut);
-
-    collisionOut << std::endl << "colTriStop" << std::endl;
-    collisionOut << "colEnd" << std::endl;
 }
