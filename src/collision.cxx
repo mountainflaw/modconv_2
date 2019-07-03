@@ -128,7 +128,7 @@ static void setup_vtx(const std::string &file, aiNode* node, const aiScene* scen
     }
 }
 
-static inline bool cprVtx(CollisionVtx* vtx, u32 i, u32 j)
+static inline bool cprVtx(const CollisionVtx* vtx, const u32 i, const u32 j)
 {
     return (vtx[i].pos[AXIS_X] == vtx[j].pos[AXIS_X] &&
             vtx[i].pos[AXIS_Y] == vtx[j].pos[AXIS_Y] &&
@@ -158,7 +158,7 @@ static void clean_vtx(CollisionVtx* vtx)
     }
 }
 
-static void write_vtx(const std::string &fileOut, CollisionVtx* vtx)
+static void write_vtx(const std::string &fileOut, const CollisionVtx* vtx)
 {
     std::fstream colOut;
     colOut.open(fileOut + "/collision.s", std::iostream::out | std::iostream::app);
@@ -172,7 +172,7 @@ static void write_vtx(const std::string &fileOut, CollisionVtx* vtx)
     }
 }
 
-static inline u32 get_vtx_index(const CollisionVtx* vtx, u32 pos)
+static inline u32 get_vtx_index(const CollisionVtx* vtx, const u32 pos)
 {
     if (vtx[pos].useless) { /* optimized out */
         return vtx[vtx[pos].list].list;
@@ -181,13 +181,22 @@ static inline u32 get_vtx_index(const CollisionVtx* vtx, u32 pos)
     }
 }
 
-static void write_tri(const std::string &fileOut, const CollisionVtx* vtx)
+static void write_tri(const std::string &fileOut, const CollisionVtx* vtx, const CollisionMat* mat)
 {
     u32 i = 0;
+    u16 currSurf = 0;
+
     while (i < vertex) {
+        if (vtx[i].material != currSurf || i == 0) {
+            currSurf = vtx[i].material;
+            std::cout << "colTriInit " << mat[vtx[i].material].surf << ", " << mat[vtx[i].material].tri << std::endl;
+        }
+
         std::cout << "colTri " << get_vtx_index(vtx, i) << ", " << get_vtx_index(vtx, i + 1) << ", " << get_vtx_index(vtx, i + 2) << std::endl;
         i += 3;
     }
+    std::cout << "colTriStop" << std::endl
+              << "colEnd"     << std::endl;
 }
 
 void collision_converter_main(const std::string &file, const std::string &fileOut, s16 scale)
@@ -213,5 +222,5 @@ void collision_converter_main(const std::string &file, const std::string &fileOu
 
     /* Write data */
     write_vtx(fileOut, vtx);
-    write_tri(fileOut, vtx);
+    write_tri(fileOut, vtx, mat);
 }
