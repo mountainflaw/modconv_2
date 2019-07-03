@@ -1,4 +1,4 @@
-# modconv 2.8
+# modconv 2.9
 
 This project aims to provide a usable model converter suitable for creating custom content compatible with the decompilation of Super Mario 64.
 
@@ -22,20 +22,27 @@ modconv accepts the following flags:
 * ``--level`` - Export as level (defaults to actor otherwise).
 * ``--scale`` - Multiplier to scale the imported model by.
 * ``--type`` - What to export. (f3d, f3dex, rej (64 vtx buffer), goddard (Mario head), collision).
+* ``--glabel`` - All F3D symbols are exposed to the linker, and a C header file is created externing vertex data.
+* ``--noscalehack`` - Disables the scaling hack introduced to fix the output by the matrix transformation.
+* ``--fog rgba near far`` - Enables fog with the given parameters.
+* ``--amb rgb`` - Sets ambient lighting color.
+* ``--dif rgb xyz`` - Sets diffuse lighting color.
 
+modconv allows editing of several Fast3D material properties via placing parameters in material names ("grouptags"). The current grouptags are:
 
-## Planned Differences
+* ``#LIGHTING`` - Enables F3D vector lighting.
+* ``#ENVMAP`` - Enables environment mapping.
+* ``#LIN_ENVMAP`` - Enables environment mapping (mirrorball).
+* ``#BACKFACE`` - Disables backface culling (Unlike all other materials, this may be enabled with others).
+* ``#MIRROR(U | V)`` - Enables mirroring on the (U | V) axis.
+* ``#CLAMP(U | V)`` - Enables clamping on the (U | V) axis.
+* ``#NORMCOLORS`` - Use vertex normals as vertex colors.
+* ``#REDALPHA`` - Copy the red vertex color channel into the alpha color channel.
+* ``#LAYER_(0-7)`` - Splits display list into layer 0-7. Sets rendermode if fog is enabled.
 
-Goals have been slightly extended, as I've been asked to include a couple of material presets which you can activate
-with custom material names. The planned materials are:
+In collision mode, setting surfaces is accomplished by inserting a ``!``, followed by the surface name or ID with no space inbetween, terminated by a space at the end, unless it is the end of the material name.
 
-* ``#ENVMAP`` - Enables environment mapping
-* ``#ENVMAP2`` - Enables environment mapping (mirrorball)
-* ``#BACKFACE`` - Disables backface culling (Unlike all other materials, this may be enabled with others)
-
-Flat shaded polygons are supported by assigning a materal that does not use a texture and are setup with primcolor.
-
-For texture mapping, I will be supporting every texture that is not YUV, with automatically generated palettes.
+Example: ``material !SURF_ENV_DEFAULT #ENVMAP #LIGHTING``
 
 ## Roadmap
 
@@ -44,13 +51,10 @@ For texture mapping, I will be supporting every texture that is not YUV, with au
 * ~~Collision~~
 * Mario head
 
-Optional:
-
-* Split mesh up by material
-
 ## Credits
 
 * Trenavix, Robinerd, Davideesk for answering stupid F3D questions
 * Davideesk again for cleaning up the F3D macros (especially LoadTextureBlock!)
 * Kaze and stomatol for material ideas
-* Revo for testing.
+* Revo for testing
+* Jannik for playing anime music
