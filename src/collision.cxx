@@ -46,9 +46,10 @@ typedef struct {
 
 static void configure_materials(const aiScene* scene, CollisionMat* mat)
 {
+    aiString aiName;
     u16 pos[2] = { 0 };
-    for (u16 i = 0; scene->mNumMaterials; i++) {
-        aiString aiName;
+    for (u16 i = 0; i < scene->mNumMaterials; i++) {
+        std::cout << i << " loops" << std::endl;
         scene->mMaterials[i]->Get(AI_MATKEY_NAME, aiName);
         mat[i].tri = 0;
 
@@ -66,17 +67,18 @@ static void configure_materials(const aiScene* scene, CollisionMat* mat)
 
         if (nameStr.find("!") != std::string::npos) {
             pos[STARTPOS] = nameStr.find("!") + 1;
-            for (u16 j = 0; j < nameStr.length(); i++) {
-                pos[ENDPOS] = i;
+            for (u16 j = 0; j < nameStr.length(); j++) {
+                pos[ENDPOS] = j;
                 if (nameStr[i] == ' ') {
-                    pos[ENDPOS] = i - 1;
+                    pos[ENDPOS] = j - 1;
                     break;
                 }
-            mat[i].surf = nameStr.substr(pos[STARTPOS], pos[ENDPOS]);
+                mat[i].surf = nameStr.substr(pos[STARTPOS], pos[ENDPOS]);
             }
         } else {
             mat[i].surf = "SURF_ENV_DEFAULT";
         }
+        std::cout << "Material " << aiName.data << " -> " << mat[i].surf << std::endl;
     }
 }
 
@@ -116,39 +118,71 @@ static void setup_vtx(const std::string &file, aiNode* node, const aiScene* scen
                 vtx[internalVtx].pos[AXIS_Y] = (s16)(((mesh->mVertices[currVtx].y) * scale) * scaling_hack(file));
                 vtx[internalVtx].pos[AXIS_Z] = (s16)(((mesh->mVertices[currVtx].z) * scale) * scaling_hack(file));
 
+                vtx[internalVtx].useless = false;
                 vtx[internalVtx].list = internalVtx;
                 vtx[internalVtx].material = mesh->mMaterialIndex;
                 internalVtx++;
             }
         }
     }
+
+    for (u16 i = 0; i < node->mNumChildren; i++) {
+        setup_vtx(file, node->mChildren[i], scene, vtx, scale);
+    }
+}
+
+static inline bool cprVtx(CollisionVtx* vtx, u32 i, u32 j)
+{
+    return (vtx[i].pos[AXIS_X] == vtx[j].pos[AXIS_X] &&
+            vtx[i].pos[AXIS_Y] == vtx[j].pos[AXIS_Y] &&
+            vtx[i].pos[AXIS_Z] == vtx[j].pos[AXIS_Z]);
+
 }
 
 static void clean_vtx(CollisionVtx* vtx)
 {
+    u32 writeSize = 0;
+    /* Stage 1 - Mark redundant vertices */
+    for (u32 i = 0; i < vertex; i++) {
+        for (u32 j = 0; j < vertex; j++) {
+            if (cprVtx(vtx, i, j) && j > i) {
+                vtx[j].useless = true;
+                vtx[j].list = i;
+            }
+        }
+    }
+
+    /* Stage 2 - Give verts that will be written their correct index. */
+    for (u32 i = 0; i < vertex; i++) {
+        if (!vtx[i].useless) {
+            vtx[i].list = writeSize;
+            writeSize++;
+        }
+    }
 }
 
-static void write_vertex(const std::string &fileOut, CollisionVtx* vtx)
+static void write_vtx(const std::string &fileOut, CollisionVtx* vtx)
 {
     std::fstream colOut;
     colOut.open(fileOut + "/collision.s", std::iostream::out | std::iostream::app);
     for (u32 i = 0; i < vertex; i++) {
-        if (!vtx[i].useless) {
-            colOut << "colVertex" << vtx[i].pos[AXIS_X] << ", "
-                                  << vtx[i].pos[AXIS_Y] << ", "
-                                  << vtx[i].pos[AXIS_Z] << std::endl;
+        if (vtx[i].useless == false) {
+            std::cout << "vertex" << std::endl;
+            colOut << "colVertex " << vtx[i].pos[AXIS_X] << ", "
+                                   << vtx[i].pos[AXIS_Y] << ", "
+                                   << vtx[i].pos[AXIS_Z] << std::endl;
 
         }
     }
 }
 
-static inline void get_vtx_index(const Vertex vtx)
+/*static inline void get_vtx_index(const CollisionVtx* vtx)
 {
-}
+}*/
 
-static void write_triangle(aiNode* node, const aiScene* scene, const std::string &fileOut)
+/*static void write_tri(const std::string &fileOut, const CollisionVtx* vtx);
 {
-}
+}*/
 
 void collision_converter_main(const std::string &file, const std::string &fileOut, s16 scale)
 {
@@ -158,5 +192,20 @@ void collision_converter_main(const std::string &file, const std::string &fileOu
     std::fstream collisionOut;
     collisionOut.open(fileOut + "/collision.s", std::iostream::out | std::iostream::app);
     reset_file(fileOut + "/collision.s");
-    collisionOut << "glabel " << get_filename(fileOut) << "_collision" << std::endl << "colInit";
+    collisionOut << "glabel " << get_filename(fileOut) << "_collision"
+                 << std::endl << "colInit" << std::endl;
+    collisionOut.close();
+
+    CollisionMat mat[scene->mNumMaterials];
+    std::cout << scene->mNumMaterials << std::endl;
+    configure_materials(scene, mat);
+
+    /* Count vtx amount, setup vtx and cleanup output */
+    inspect_vtx(scene->mRootNode, scene, mat);
+    CollisionVtx vtx[vertex];
+    setup_vtx(file, scene->mRootNode, scene, vtx, scale);
+
+    /* Write data*/
+    write_vtx(fileOut, vtx);
+    clean_vtx(vtx);
 }
