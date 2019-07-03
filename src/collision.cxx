@@ -34,7 +34,7 @@ u32 vertex = 0, internalVtx = 0, writeSize = 0;
 
 typedef struct {
     s16 pos[3];
-    u8 list;
+    u32 list;
     u16 material;
     bool useless;
 } CollisionVtx;
@@ -92,16 +92,6 @@ static void inspect_vtx(aiNode* node, const aiScene* scene, CollisionMat* mat)
     }
 }
 
-/* FBX multiplies vertex positions by 100. We counter this by multiplying FBX models by 0.01. */
-static inline f32 scaling_hack(const std::string &file)
-{
-    if (file.substr(file.length() - 4, file.length()).compare(".fbx") == 0) {
-        return 0.01f;
-    } else {
-        return 1.0f;
-    }
-}
-
 static void setup_vtx(const std::string &file, aiNode* node, const aiScene* scene, CollisionVtx* vtx, const s16 scale)
 {
     for (u16 i = 0; i < node->mNumMeshes; i++) {
@@ -111,9 +101,9 @@ static void setup_vtx(const std::string &file, aiNode* node, const aiScene* scen
         for (u32 j = 0; j < mesh->mNumFaces; j++) {
             for (u8 k = 0; k < 3; k++) {
                 u32 currVtx = mesh->mFaces[j].mIndices[k];
-                vtx[internalVtx].pos[AXIS_X] = (s16)(((mesh->mVertices[currVtx].x) * scale) * scaling_hack(file));
-                vtx[internalVtx].pos[AXIS_Y] = (s16)(((mesh->mVertices[currVtx].y) * scale) * scaling_hack(file));
-                vtx[internalVtx].pos[AXIS_Z] = (s16)(((mesh->mVertices[currVtx].z) * scale) * scaling_hack(file));
+                vtx[internalVtx].pos[AXIS_X] = (s16)(((mesh->mVertices[currVtx].x) * scale) * scaling_hack());
+                vtx[internalVtx].pos[AXIS_Y] = (s16)(((mesh->mVertices[currVtx].y) * scale) * scaling_hack());
+                vtx[internalVtx].pos[AXIS_Z] = (s16)(((mesh->mVertices[currVtx].z) * scale) * scaling_hack());
 
                 vtx[internalVtx].useless = false;
                 vtx[internalVtx].list = internalVtx;
@@ -161,6 +151,9 @@ static void write_vtx(const std::string &fileOut, const CollisionVtx* vtx)
 {
     std::fstream colOut;
     colOut.open(fileOut + "/collision.s", std::iostream::out | std::iostream::app);
+    if (writeSize == 0) {
+        writeSize = vertex; /* handle case with no stripping */
+    }
     colOut << "colVertexInit " << writeSize << std::endl;
     for (u32 i = 0; i < vertex; i++) {
         if (vtx[i].useless == false) {
@@ -191,8 +184,9 @@ static void write_tri(const std::string &fileOut, const CollisionVtx* vtx, const
 
     while (i < vertex) {
         if (vtx[i].material != currSurf || i == 0) {
+            colOut << std::endl;
             currSurf = vtx[i].material;
-            colOut << "colTriInit " << mat[vtx[i].material].surf << ", " << mat[vtx[i].material].tri << std::endl;
+            colOut << "colTriInit " << mat[vtx[i].material].surf << " " << mat[vtx[i].material].tri << std::endl;
         }
 
         colOut << "colTri " << get_vtx_index(vtx, i) << ", " << get_vtx_index(vtx, i + 1) << ", " << get_vtx_index(vtx, i + 2) << std::endl;

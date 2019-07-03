@@ -69,7 +69,8 @@ class DisplayList
         s16 currMat = -1; /* force update at start*/
 
         gfxOut.open(fileOut + "/model.s", std::ofstream::out | std::ofstream::app);
-        gfxOut << std::endl << "glabel " << fileOut + dlTypes[layer] << std::endl;
+        gfxOut << std::endl << "glabel " << fileOut + dlTypes[layer] << std::endl
+               << "gsSPClearGeometryMode G_LIGHTING" << std::endl;
 
         if (twoCycle || fog) {
             gfxOut << "gsDPSetCycleType G_CYC_2CYCLE" << std::endl;

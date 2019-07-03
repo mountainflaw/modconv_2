@@ -71,20 +71,11 @@ static void inspect_vtx(aiNode* node, const aiScene* scene)
     }
 }
 
-/* FBX multiplies vertex positions by 100. We counter this by multiplying FBX models by 0.01. */
-static inline f32 scaling_hack(const std::string &file)
-{
-    if (file.substr(file.length() - 4, file.length()).compare(".fbx") == 0) {
-        return 0.01f;
-    } else {
-        return 1.0f;
-    }
-}
-
 /** Add vertices to vertex buffers. */
 static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
         VertexBuffer* vBuf, const std::string &file, bool uvFlip)
 {
+    bool untextured = false;
     for (u16 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
 
@@ -108,9 +99,9 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
 
                 s16 pos[3];
 
-                pos[AXIS_X] = (s16)(((mesh->mVertices[currVtx].x) * scale) * scaling_hack(file));
-                pos[AXIS_Y] = (s16)(((mesh->mVertices[currVtx].y) * scale) * scaling_hack(file));
-                pos[AXIS_Z] = (s16)(((mesh->mVertices[currVtx].z) * scale) * scaling_hack(file));
+                pos[AXIS_X] = (s16)(((mesh->mVertices[currVtx].x) * scale) * scaling_hack());
+                pos[AXIS_Y] = (s16)(((mesh->mVertices[currVtx].y) * scale) * scaling_hack());
+                pos[AXIS_Z] = (s16)(((mesh->mVertices[currVtx].z) * scale) * scaling_hack());
 
                 s16 uv[2] = {0x00};
 
@@ -126,6 +117,8 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                     } else if (file_exists(get_path(file) + path) && !(is_directory(get_path(file) + path))) { /* relative */
                         uv[AXIS_X] = mesh->mTextureCoords[0][currVtx].x * 32 * get_dimension(AXIS_X, get_path(file) + path);
                         uv[AXIS_Y] = mesh->mTextureCoords[0][currVtx].y * 32 * get_dimension(AXIS_Y, get_path(file) + path);
+                    } else {
+                        untextured = true;
                     }
 
                     /* Some formats use flipped UVs. Flip them here if the option was passed. */
@@ -153,7 +146,7 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                  */
 
                 if (scene->HasMaterials() && mesh->HasNormals() && (nameStr.find("#LIGHTING") != std::string::npos
-                            || nameStr.find("#NORMCOLOR") != std::string::npos)) {
+                            || nameStr.find("#NORMCOLOR") != std::string::npos || untextured)) {
 
                     rgba[C_RED] = mesh->mNormals[currVtx].x * 127;
                     rgba[C_GRN] = mesh->mNormals[currVtx].y * 127;
@@ -261,7 +254,6 @@ static void configure_materials(const std::string &file, const std::string &file
         scene->mMaterials[i]->Get(AI_MATKEY_NAME, aiName);
         scene->mMaterials[i]->GetTexture(aiTextureType_DIFFUSE, 0, &aiPath);
 
-        mat[i].setName(aiName.data);
         mat[i].setFile(fileOut);
 
         if (file_exists(aiPath.data)) { /* absolute */
@@ -271,6 +263,14 @@ static void configure_materials(const std::string &file, const std::string &file
             mat[i].setPath(get_path(file) + aiPath.data);
             mat[i].textured = true;
         }
+
+        /* Untextured models are always shaded. */
+        std::string lightingToggle = "";
+        if (!mat[i].textured) {
+            lightingToggle = " #LIGHTING";
+        }
+
+        mat[i].setName(aiName.data + lightingToggle);
 
         std::cout << "Texture (absolute) " << aiPath.data << std::endl;
         std::cout << "Texture (relative) " << get_path(file) + aiPath.data << std::endl;

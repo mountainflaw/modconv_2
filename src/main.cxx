@@ -30,6 +30,7 @@
 
 /* glabel mode */
 bool glabel = false;
+bool scalingHack = true;
 /* std::string glabelData; */
 
 u8 output = OUTPUT_F3D;
@@ -93,6 +94,7 @@ void print_help(const std::string &name)
               << "  - a         - Amount of alpha" << std::endl
               << "  - n         - Near amount of fog" << std::endl
               << "  - f         - Far amount of fog" << std::endl
+              << "--noscalehack - Disable the scaling hack (disables multiplying scale by 0.01)" << std::endl
               << "--help   - Bring up this menu and quit" << std::endl
               << std::endl
               << print_bold("TIPS: ") << std::endl
@@ -120,6 +122,16 @@ void extern_data(const std::string &fileOut, const std::string &a)
         header.open(fileOut + "/" + fileOut + ".h", std::iostream::out | std::iostream::app);
         header << a << std::endl;
         header.close();
+    }
+}
+
+/* FBX multiplies vertex positions by 100. We counter this by multiplying FBX models by 0.01. */
+f32 scaling_hack()
+{
+    if (scalingHack) {
+        return 0.01f;
+    } else {
+        return 1.0f;
     }
 }
 
@@ -211,6 +223,10 @@ int main(int argc, char* argv[])
             fogSettings[4] = std::stoi(argv[i + 5]);
             fogSettings[5] = std::stoi(argv[i + 6]);
             fog = true;
+        }
+
+        if (arg.compare("--noscalehack") == 0) {
+            scalingHack = false;
         }
 
         if (arg.compare("--help") == 0) {
