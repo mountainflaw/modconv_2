@@ -120,9 +120,9 @@ static void setup_vtx(const std::string &file, aiNode* node, const aiScene* scen
 
 static inline bool cprVtx(const CollisionVtx* vtx, const u32 i, const u32 j)
 {
-    return abs(vtx[i].pos[AXIS_X] - vtx[j].pos[AXIS_X]) <= 1 &&
-           abs(vtx[i].pos[AXIS_Y] - vtx[j].pos[AXIS_Y]) <= 1 &&
-           abs(vtx[i].pos[AXIS_Z] - vtx[j].pos[AXIS_Z]) <= 1;
+    return abs(vtx[i].pos[AXIS_X] - vtx[j].pos[AXIS_X]) <= leniencyFactor &&
+           abs(vtx[i].pos[AXIS_Y] - vtx[j].pos[AXIS_Y]) <= leniencyFactor &&
+           abs(vtx[i].pos[AXIS_Z] - vtx[j].pos[AXIS_Z]) <= leniencyFactor;
 
 }
 

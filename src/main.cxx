@@ -28,9 +28,9 @@
 
 #include "modconv.hxx"
 
-/* glabel mode */
 bool glabel = false;
 bool scalingHack = true;
+u8 leniencyFactor = 1;
 /* std::string glabelData; */
 
 u8 output = OUTPUT_F3D;
@@ -223,6 +223,10 @@ int main(int argc, char* argv[])
             fogSettings[4] = std::stoi(argv[i + 5]);
             fogSettings[5] = std::stoi(argv[i + 6]);
             fog = true;
+        }
+
+        if (arg.compare("--leniencyfactor") == 0) {
+            leniencyFactor = std::stoi(flw);
         }
 
         if (arg.compare("--noscalehack") == 0) {

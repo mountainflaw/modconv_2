@@ -126,3 +126,4 @@ extern u8 ambient[3];
 
 extern bool fog;
 extern u16 fogSettings[6];
+extern u8 leniencyFactor;
