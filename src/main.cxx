@@ -95,6 +95,7 @@ void print_help(const std::string &name)
               << "  - n         - Near amount of fog" << std::endl
               << "  - f         - Far amount of fog" << std::endl
               << "--noscalehack - Disable the scaling hack (disables multiplying scale by 0.01)" << std::endl
+              << "--leniencyfactor - Sets the triangle optimization leniency factor. Defaults to 1." << std::endl
               << "--help   - Bring up this menu and quit" << std::endl
               << std::endl
               << print_bold("TIPS: ") << std::endl

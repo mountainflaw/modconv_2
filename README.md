@@ -27,6 +27,7 @@ modconv accepts the following flags:
 * ``--fog rgba near far`` - Enables fog with the given parameters.
 * ``--amb rgb`` - Sets ambient lighting color.
 * ``--dif rgb xyz`` - Sets diffuse lighting color.
+* ``--leniencyfactor`` - Sets the triangle optimization leniency factor. Defaults to 1.
 
 modconv allows editing of several Fast3D material properties via placing parameters in material names ("grouptags"). The current grouptags are:
 
