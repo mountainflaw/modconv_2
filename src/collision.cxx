@@ -186,7 +186,7 @@ static void write_tri(const std::string &fileOut, const CollisionVtx* vtx, const
         if (vtx[i].material != currSurf || i == 0) {
             colOut << std::endl;
             currSurf = vtx[i].material;
-            colOut << "colTriInit " << mat[vtx[i].material].surf << " " << mat[vtx[i].material].tri << std::endl;
+            colOut << "colTriInit " << mat[vtx[i].material].surf << ", " << mat[vtx[i].material].tri << std::endl;
         }
 
         colOut << "colTri " << get_vtx_index(vtx, i) << ", " << get_vtx_index(vtx, i + 1) << ", " << get_vtx_index(vtx, i + 2) << std::endl;
