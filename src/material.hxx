@@ -53,6 +53,7 @@ class Material
     /** Returns texture load string. */
     std::string GetTextureLoad()
     {
+        bool tex4b = false;
         std::string ret = "", texLoadType, texLoadSize;
         u8 type = 0; /* RGBA16 just in case */
         for (u8 i = 0; i < FORMATS; i++) {
@@ -71,6 +72,7 @@ class Material
             case CI4:
             texLoadType = "G_IM_FMT_CI, ";
             texLoadSize = "G_IM_SIZ_4b, ";
+            tex4b = true;
             break;
 
             case CI8:
@@ -81,6 +83,7 @@ class Material
             case IA4:
             texLoadType = "G_IM_FMT_IA, ";
             texLoadSize = "G_IM_SIZ_4b, ";
+            tex4b = true;
             break;
 
             case IA8:
@@ -91,6 +94,7 @@ class Material
             case I4:
             texLoadType = "G_IM_FMT_I, ";
             texLoadSize = "G_IM_SIZ_8b, ";
+            tex4b = true;
             break;
 
             case I8:
@@ -106,13 +110,9 @@ class Material
 
         if (type == CI4) {
             ret += "gsDPSetTextureLUT G_TT_RGBA16\ngsDPLoadTLUT_pal16 0, " + getFileNameNoExtension() + "_pal\n";
-        }
-
-        else if (type == CI8) {
+        } else if (type == CI8) {
             ret += "gsDPSetTextureLUT G_TT_RGBA16\ngsDPLoadTLUT_pal256 0, " + getFileNameNoExtension() + "_pal\n";
-        }
-
-        else {
+        } else {
             ret += "gsDPSetTextureLUT G_TT_NONE\n";
         }
 
@@ -129,7 +129,12 @@ class Material
                 }
             }
         }
-        ret += "gsDPLoadTextureBlock " + getFileNameNoExtension() + ", " + texLoadType + texLoadSize + std::to_string(tex.size[AXIS_X]) + ", " + std::to_string(tex.size[AXIS_Y]) + ", 0, G_TX_WRAP | " + texFlagU + ",  G_TX_WRAP | " + texFlagV + ", " + std::to_string(tex.sizeLog2[AXIS_X]) + ", " + std::to_string(tex.sizeLog2[AXIS_Y]) + ", G_TX_NOLOD, G_TX_NOLOD\ngsSPTexture -1, -1, 0, 0, 1\ngsDPTileSync\n";
+
+        if (tex4b) { /* Thank you SGI, very cool! */
+            ret += "gsDPLoadTextureBlock_4b " + getFileNameNoExtension() + ", " + texLoadType + std::to_string(tex.size[AXIS_X]) + ", " + std::to_string(tex.size[AXIS_Y]) + ", 0, G_TX_WRAP | " + texFlagU + ",  G_TX_WRAP | " + texFlagV + ", " + std::to_string(tex.sizeLog2[AXIS_X]) + ", " + std::to_string(tex.sizeLog2[AXIS_Y]) + ", G_TX_NOLOD, G_TX_NOLOD\ngsSPTexture -1, -1, 0, 0, 1\ngsDPTileSync\n";
+        } else {
+            ret += "gsDPLoadTextureBlock " + getFileNameNoExtension() + ", " + texLoadType + texLoadSize + std::to_string(tex.size[AXIS_X]) + ", " + std::to_string(tex.size[AXIS_Y]) + ", 0, G_TX_WRAP | " + texFlagU + ",  G_TX_WRAP | " + texFlagV + ", " + std::to_string(tex.sizeLog2[AXIS_X]) + ", " + std::to_string(tex.sizeLog2[AXIS_Y]) + ", G_TX_NOLOD, G_TX_NOLOD\ngsSPTexture -1, -1, 0, 0, 1\ngsDPTileSync\n";
+        }
         return ret;
     }
 
@@ -170,9 +175,7 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
             if ((ourGeo[i] && !oldGeo[i]) || (!oldGeo[i] && ourGeo[i])) { /* set */
                 if (setOring && i != BACKFACE) {
                     setRet += " | " + geoModes[i];
-                }
-
-                else if (!setOring && i != BACKFACE) {
+                } else if (!setOring && i != BACKFACE) {
                     setOring = true;
                     setRet = "gsSPSetGeometryMode " + geoModes[i];
                 }
@@ -181,9 +184,7 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
 
                 else if (clearOring && i == BACKFACE) {
                     clearRet += " | " + geoModes[i];
-                }
-
-                else if (!clearOring && i == BACKFACE) {
+                } else if (!clearOring && i == BACKFACE) {
                     clearOring = true;
                     clearRet = "gsSPClearGeometryMode " + geoModes[i];
                 }
@@ -192,9 +193,7 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
             if ((!ourGeo[i] && oldGeo[i]) || (oldGeo[i] && !ourGeo[i])) { /* clear */
                 if (clearOring && i != BACKFACE) {
                     clearRet += " | " + geoModes[i];
-                }
-
-                else if (!clearOring && i != BACKFACE) {
+                } else if (!clearOring && i != BACKFACE) {
                     clearOring = true;
                     clearRet = "gsSPClearGeometryMode " + geoModes[i];
                 }
@@ -203,9 +202,7 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
 
                 else if (setOring && i == BACKFACE) {
                     setRet += " | " + geoModes[i];
-                }
-
-                else if (!setOring && i == BACKFACE) {
+                } else if (!setOring && i == BACKFACE) {
                     setOring = true;
                     clearRet = "gsSPSetGeometryMode " + geoModes[i];
                 }
