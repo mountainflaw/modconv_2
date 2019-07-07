@@ -122,7 +122,7 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                     }
 
                     /* Some formats use flipped UVs. Flip them here if the option was passed. */
-                    if (uvFlip) {
+                    if (!uvFlip) {
                         uv[AXIS_Y] *= -1;
                     }
                 }
