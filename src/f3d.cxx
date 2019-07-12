@@ -71,22 +71,23 @@ static void inspect_vtx(aiNode* node, const aiScene* scene)
     }
 }
 
-namespace vtx
-{
+namespace uvutil {
     /** Resets UVs to zero if they overflow. */
-    static s16 reset_uv(s32 uv)
-    {
+    static inline s16 reset_uv(s32 uv) {
         if (uv > 32767 || uv < -32768) {
             return 0;
         } else {
             return uv;
         }
     }
+
+    static inline bool texture_exists(const std::string &file, const std::string &path)
+    {   return file_exists(path) || (file_exists(get_path(file) + path) && !(is_directory(get_path(file) + path))); }
 }
 
 /** Add vertices to vertex buffers. */
 static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
-        VertexBuffer* vBuf, const std::string &file, bool uvFlip)
+        VertexBuffer* vBuf, const std::string &file, bool uvFlip, Material* mat)
 {
     bool untextured = false;
     for (u16 i = 0; i < node->mNumMeshes; i++) {
@@ -124,12 +125,9 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                     scene->mMaterials[mesh->mMaterialIndex]->GetTexture(aiTextureType_DIFFUSE, 0, &aiPath);
                     std::string path = aiPath.data;
 
-                    if (file_exists(path)) { /* absolute */
-                        uv[AXIS_X] = vtx::reset_uv(mesh->mTextureCoords[0][currVtx].x * 32 * get_dimension(AXIS_X, path));
-                        uv[AXIS_Y] = vtx::reset_uv(mesh->mTextureCoords[0][currVtx].y * 32 * get_dimension(AXIS_Y, path));
-                    } else if (file_exists(get_path(file) + path) && !(is_directory(get_path(file) + path))) { /* relative */
-                        uv[AXIS_X] = vtx::reset_uv(mesh->mTextureCoords[0][currVtx].x * 32 * get_dimension(AXIS_X, get_path(file) + path));
-                        uv[AXIS_Y] = vtx::reset_uv(mesh->mTextureCoords[0][currVtx].y * 32 * get_dimension(AXIS_Y, get_path(file) + path));
+                    if (mat[mesh->mMaterialIndex].textured) { /* absolute */
+                        uv[AXIS_X] = uvutil::reset_uv(mesh->mTextureCoords[0][currVtx].x * 32 * mat[mesh->mMaterialIndex].getDimension(AXIS_X));
+                        uv[AXIS_Y] = uvutil::reset_uv(mesh->mTextureCoords[0][currVtx].y * 32 * mat[mesh->mMaterialIndex].getDimension(AXIS_Y));
                     } else {
                         untextured = true;
                     }
@@ -201,7 +199,7 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
         }
     }
     for (u16 i = 0; i < node->mNumChildren; i++) {
-        setup_vtx(node->mChildren[i], scene, scale, vBuf, file, uvFlip);
+        setup_vtx(node->mChildren[i], scene, scale, vBuf, file, uvFlip, mat);
     }
 }
 
@@ -285,8 +283,8 @@ static void configure_materials(const std::string &file, const std::string &file
 
         mat[i].setName(aiName.data + lightingToggle);
 
-        std::cout << "Texture (absolute) " << aiPath.data << std::endl;
-        std::cout << "Texture (relative) " << get_path(file) + aiPath.data << std::endl;
+        //std::cout << "Texture (absolute) " << aiPath.data << std::endl;
+        //std::cout << "Texture (relative) " << get_path(file) + aiPath.data << std::endl;
     }
 }
 
@@ -415,15 +413,15 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
     VertexBuffer vBuf[vBuffers];
     cycle_vbuffers(vBuf, BUFFER, microcode);
 
-    setup_vtx(scene->mRootNode, scene, scale, vBuf, file, uvFlip);
-
     /* Materials */
     Material mat[scene->mNumMaterials];
     configure_materials(file, fileOut, mat, scene);
     write_textures(fileOut, mat, scene, level);
 
+    setup_vtx(scene->mRootNode, scene, scale, vBuf, file, uvFlip, mat);
     cycle_vbuffers(vBuf, OPTIMIZE, 0);
     write_vtx(fileOut, "", vBuf);
+
     cycle_vbuffers(vBuf, RESET, 0);
     set_layers_amt();
     DisplayList dl[layers];

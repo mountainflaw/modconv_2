@@ -268,6 +268,7 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
         tex.sizeLog2[AXIS_Y] = log2(tex.size[AXIS_Y]);
     }
 
+    s16 getDimension(u8 axis) { return tex.size[axis]; }
     std::string getPath() { return tex.path; }
     std::string getName() { return name; }
 
