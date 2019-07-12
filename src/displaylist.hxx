@@ -36,15 +36,13 @@ enum GeoModes { ENVMAP, LIN_ENVMAP, LIGHTING, SHADE, BACKFACE};
 
 #define MAT_NOT_LAYER -2
 
-class DisplayList
-{
+class DisplayList {
     private:
     std::string dlTypes[8] = {"_layer_0", "_layer_1", "_layer_2", "_layer_3", "_layer_4", "_layer_5", "_layer_6", "_layer_7"};
     u8 layer = 1;
     bool twoCycle = false;
 
-    bool WriteTri(s16 tri[], u8 size)
-    {
+    bool WriteTri(s16 tri[], u8 size) {
         for (u8 i = 0; i < size; i++) {
             if (tri[i] == -1) {
                 return false;
@@ -56,8 +54,7 @@ class DisplayList
     public:
     void setLayer(u8 l) { layer = l; }
 
-    void writeDisplayList(const std::string &fileOut, VertexBuffer *vBuf, u16 vBuffers, Material* mat)
-    {
+    void writeDisplayList(const std::string &fileOut, VertexBuffer *vBuf, u16 vBuffers, Material* mat) {
         bool oldGeo[5] = {false};
         std::fstream gfxOut;
         s16 currMat = -1; /* force update at start*/

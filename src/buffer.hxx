@@ -28,8 +28,7 @@
 
 enum MaterialEnum { MATERIAL, OLDPOS, NEWPOS};
 
-typedef struct
-{
+typedef struct {
     bool useless;
     s16  pos[3], st[2];
     u16  flag[3]; /* optimizer flag */
@@ -38,14 +37,12 @@ typedef struct
 } Vertex;
 
 /* Used in the F3D DL builder. */
-class VertexBuffer
-{
+class VertexBuffer {
     private:
     Vertex vtx[65];
 
     /** Can't use memcpr because of the flag member. */
-    bool cprVert(Vertex *vtx, u8 i, u8 k)
-    {
+    bool cprVert(Vertex *vtx, u8 i, u8 k) {
         bool cprPos = ((vtx[i].pos[AXIS_X] == vtx[k].pos[AXIS_X]) && (vtx[i].pos[AXIS_Y] == vtx[k].pos[AXIS_Y])
                 && (vtx[i].pos[AXIS_Z] == vtx[k].pos[AXIS_Z]));
 
@@ -68,8 +65,7 @@ class VertexBuffer
     void addVtx(s16 vtxPosX, s16 vtxPosY, s16 vtxPosZ,
             s16 vtxPosU, s16 vtxPosV,
             s16 vtxCRed, s16 vtxCGreen, s16 vtxCBlue, s16 vtxCAlpha,
-            u16 mesh, u8 layer)
-    {
+            u16 mesh, u8 layer) {
         vtx[vtxCount].pos[AXIS_X] = vtxPosX;
         vtx[vtxCount].pos[AXIS_Y] = vtxPosY;
         vtx[vtxCount].pos[AXIS_Z] = vtxPosZ;
@@ -91,8 +87,7 @@ class VertexBuffer
         vtxCount++;
     }
 
-    void optimizeVerts()
-    {
+    void optimizeVerts() {
         /* Stage 1: Mark redundant vertices. */
         for (u8 i = 0; i < bufferSize; i++) {
             for (u8 k = 0; k < bufferSize; k++) {
@@ -114,8 +109,7 @@ class VertexBuffer
         vtxCount = 0;
     }
 
-    u16 getVtxIndex()
-    {
+    u16 getVtxIndex() {
         if (vtx[vtxCount].useless) { /* original vertex */
             return vtx[vtx[vtxCount++].flag[OLDPOS]].flag[NEWPOS];
         } else { /* redundant vertex */
@@ -130,8 +124,7 @@ class VertexBuffer
 
 
     /* Layering methods */
-    s16 getLayeredVtxIndex(u8 layer)
-    {
+    s16 getLayeredVtxIndex(u8 layer) {
         if (vtx[vtxCount].layer == layer) { /* layer is found */
             if (vtx[vtxCount].useless) { /* original vertex */
                 return vtx[vtx[vtxCount++].flag[OLDPOS]].flag[NEWPOS];
@@ -146,8 +139,7 @@ class VertexBuffer
         return 0; /* Fallback */
     }
 
-    s16 getLayeredVtxMat(u8 layer)
-    {
+    s16 getLayeredVtxMat(u8 layer) {
         if (vtx[vtxCount].layer == layer) {
             return vtx[vtxCount].flag[MATERIAL];
         } else {
@@ -155,13 +147,11 @@ class VertexBuffer
         }
     }
 
-    bool canLayeredTri2(u8 layer)
-    {
+    bool canLayeredTri2(u8 layer) {
         return (vtxCount + 6 <= bufferSize) && (vtx[vtxCount + 3].flag[MATERIAL] == vtx[vtxCount].flag[MATERIAL]) && (vtx[vtxCount + 3].layer == layer);
     }
 
-    bool hasLayer(u8 layer)
-    {
+    bool hasLayer(u8 layer) {
         for (u8 i = 0; i < bufferSize; i++) {
             if (vtx[i].layer == layer) {
                 return true;

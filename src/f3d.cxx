@@ -59,8 +59,7 @@ bool fog = false;
 u16 fogSettings[6]; /* rgba near far */
 enum FogSettings { FOG_RED, FOG_GREEN, FOG_BLUE, FOG_NEAR, FOG_FAR };
 
-static void inspect_vtx(aiNode* node, const aiScene* scene)
-{
+static void inspect_vtx(aiNode* node, const aiScene* scene) {
     for (u16 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
         vert += mesh->mNumFaces * 3;
@@ -80,15 +79,11 @@ namespace uvutil {
             return uv;
         }
     }
-
-    static inline bool texture_exists(const std::string &file, const std::string &path)
-    {   return file_exists(path) || (file_exists(get_path(file) + path) && !(is_directory(get_path(file) + path))); }
 }
 
 /** Add vertices to vertex buffers. */
 static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
-        VertexBuffer* vBuf, const std::string &file, bool uvFlip, Material* mat)
-{
+        VertexBuffer* vBuf, const std::string &file, bool uvFlip, Material* mat) {
     bool untextured = false;
     for (u16 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
@@ -206,8 +201,7 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
 enum BufferModes {RESET, OPTIMIZE, BUFFER};
 
 /** Function for common vbuffer operations (reset counter, run the optimizer, etc). */
-static inline void cycle_vbuffers(VertexBuffer *vBuf, u8 mode, u8 microcode)
-{
+static inline void cycle_vbuffers(VertexBuffer *vBuf, u8 mode, u8 microcode) {
     switch (mode) {
         case BUFFER:
         for (u16 i = 0; i < vBuffers; i++) {
@@ -228,8 +222,7 @@ static inline void cycle_vbuffers(VertexBuffer *vBuf, u8 mode, u8 microcode)
     }
 }
 
-static void write_vtx(const std::string fileOut, const std::string &path, VertexBuffer *vBuf)
-{
+static void write_vtx(const std::string fileOut, const std::string &path, VertexBuffer *vBuf) {
     std::fstream vtxOut;
     vtxOut.open(fileOut + "/model.s", std::ofstream::out | std::ofstream::app);
     for (u16 i = 0; i < vBuffers; i++) {
@@ -251,15 +244,13 @@ static void write_vtx(const std::string fileOut, const std::string &path, Vertex
     }
 }
 
-static inline std::string hex_string(const u8 hex)
-{
+static inline std::string hex_string(const u8 hex) {
     std::stringstream s;
     s << std::hex << (u16)hex;
     return "0x" + s.str();
 }
 
-static void configure_materials(const std::string &file, const std::string &fileOut, Material* mat, const aiScene* scene)
-{
+static void configure_materials(const std::string &file, const std::string &fileOut, Material* mat, const aiScene* scene) {
     for (u16 i = 0; i < scene->mNumMaterials; i++) {
         aiString aiPath, aiName;
         scene->mMaterials[i]->Get(AI_MATKEY_NAME, aiName);
@@ -288,8 +279,7 @@ static void configure_materials(const std::string &file, const std::string &file
     }
 }
 
-static void write_textures(const std::string &fileOut, Material *mat, const aiScene* scene, bool level)
-{
+static void write_textures(const std::string &fileOut, Material *mat, const aiScene* scene, bool level) {
     std::fstream texOut;
     if (level) {
         reset_file(fileOut + "/texture.s");
@@ -357,8 +347,7 @@ static void write_textures(const std::string &fileOut, Material *mat, const aiSc
  * 4.) End displaylist after all of that crap is done.
  */
 
-static inline void set_layers_amt()
-{
+static inline void set_layers_amt() {
     for (u8 i = 0; i < 8; i++) {
         if (setLayer[i]) {
             layers++;
@@ -371,8 +360,7 @@ static inline void set_layers_amt()
     }
 }
 
-static inline void set_layers(DisplayList *dl)
-{
+static inline void set_layers(DisplayList *dl) {
     u8 index = 0;
     for (u8 i = 0; i < 8; i++) {
         if (setLayer[i]) {
@@ -382,8 +370,7 @@ static inline void set_layers(DisplayList *dl)
 }
 
 /* New DL writer */
-static inline void write_display_list_obj(const std::string &fileOut, VertexBuffer* vBuf, DisplayList* dl, Material* mat)
-{
+static inline void write_display_list_obj(const std::string &fileOut, VertexBuffer* vBuf, DisplayList* dl, Material* mat) {
     for (u8 i = 0; i < layers; i++) {
         vBuf[i].vtxCount = 0;
         dl[i].writeDisplayList(fileOut, vBuf, vBuffers, mat);
@@ -391,8 +378,7 @@ static inline void write_display_list_obj(const std::string &fileOut, VertexBuff
 }
 
 /** Main function for the F3D build process. */
-void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8 microcode, bool level, bool uvFlip)
-{
+void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8 microcode, bool level, bool uvFlip) {
     Assimp::Importer importer;
 
     /* We don't use ASSIMP's built in tristripping because of the vertex buffer. */

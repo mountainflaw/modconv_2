@@ -35,8 +35,7 @@ u8 leniencyFactor = 1;
 
 u8 output = OUTPUT_F3D;
 
-inline std::string print_bold(const std::string &s)
-{
+inline std::string print_bold(const std::string &s) {
 #ifdef _WIN32
     return s;
 #else
@@ -44,8 +43,7 @@ inline std::string print_bold(const std::string &s)
 #endif
 }
 
-inline void error_message(const std::string &message)
-{
+inline void error_message(const std::string &message) {
     std::cout << print_bold("ERROR: ") << message << std::endl;
     exit(1);
 }
@@ -56,8 +54,7 @@ inline void warn_message(const std::string &message)
 inline void info_message(const std::string &message)
 { std::cout << print_bold("INFO: ") << message << std::endl; }
 
-void print_help(const std::string &name)
-{
+void print_help(const std::string &name) {
     std::cout << print_bold("- MODCONV 2.8 HELP -") << std::endl
               << std::endl
               << print_bold("SYNOPSIS: ") << std::endl
@@ -107,8 +104,7 @@ void print_help(const std::string &name)
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 
 /** Used to generate assembler labels so we can easily use glabel mode. */
-std::string labelize(const std::string &label)
-{
+std::string labelize(const std::string &label) {
     if (glabel) {
         return "glabel " + label;
     } else { /* Regular labels (default behavior) */
@@ -116,8 +112,7 @@ std::string labelize(const std::string &label)
     }
 }
 
-void extern_data(const std::string &fileOut, const std::string &a)
-{
+void extern_data(const std::string &fileOut, const std::string &a) {
     if (glabel) {
         std::fstream header;
         header.open(fileOut + "/" + fileOut + ".h", std::iostream::out | std::iostream::app);
@@ -127,8 +122,7 @@ void extern_data(const std::string &fileOut, const std::string &a)
 }
 
 /* FBX multiplies vertex positions by 100. We counter this by multiplying FBX models by 0.01. */
-f32 scaling_hack()
-{
+f32 scaling_hack() {
     if (scalingHack) {
         return 0.01f;
     } else {
@@ -136,8 +130,7 @@ f32 scaling_hack()
     }
 }
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]) {
     std::cout << print_bold("- MODCONV 2.8 BY RED -") << std::endl;
     std::string filePath = argv[argc - 1],
                 fileOut  = "model";

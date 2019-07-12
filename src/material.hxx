@@ -35,8 +35,7 @@ typedef struct {
 } Texture;
 
 /** Fast3D material class */
-class Material
-{
+class Material {
     private:
     Texture tex;
     enum TexType { RGBA16, RGBA32, CI4, CI8, IA4, IA8, I4, I8 };
@@ -44,15 +43,13 @@ class Material
     std::string name = "DEFAULT MATERIAL (GENERATED NAME)";
     std::string fileOut = "";
 
-    inline std::string NewlineIfTrue(const bool a)
-    {
+    inline std::string NewlineIfTrue(const bool a) {
         if (a) { return "\n"; }
         else { return ""; }
     }
 
     /** Returns texture load string. */
-    std::string GetTextureLoad()
-    {
+    std::string GetTextureLoad() {
         bool tex4b = false;
         std::string ret = "", texLoadType, texLoadSize;
         u8 type = 0; /* RGBA16 just in case */
@@ -139,8 +136,7 @@ class Material
     }
 
     /** Returns combiner settings. */
-    std::string GetFuckingFrauber(const u8 layer, const bool twoCycle)
-    {
+    std::string GetFuckingFrauber(const u8 layer, const bool twoCycle) {
         if (twoCycle) { /* Shoutouts to SGI once again, for making the RDP incredibly annoying. */
             if (name.find("#DIFFUSE") != std::string::npos) {
                 goto untextured_2cycle;
@@ -177,8 +173,7 @@ bool ourGeo[GROUP_TAGS] = {0x00};
 std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#SHADE", "#BACKFACE" },
     geoModes[GROUP_TAGS] = { "G_TEXTURE_GEN", "G_TEXTURE_GEN_LINEAR", "G_LIGHTING", "G_SHADE", "G_CULL_BACK"};
 
-    std::string GetGeometryMode(bool* oldGeo)
-    {
+    std::string GetGeometryMode(bool* oldGeo) {
         std::string setRet = "", clearRet = "";
         bool clearOring = false, setOring = false;
         for (u8 i = 0; i < GROUP_TAGS; i++) {
@@ -258,8 +253,7 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
 
     bool getLighting(const bool* oldGeo) { return !oldGeo[LIGHTING] && ourGeo[LIGHTING]; }
 
-    void setPath(const std::string &p)
-    {
+    void setPath(const std::string &p) {
         tex.path = p;
         tex.size[AXIS_X] = get_dimension(AXIS_X, p);
         tex.size[AXIS_Y] = get_dimension(AXIS_Y, p);
@@ -273,8 +267,7 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
     std::string getName() { return name; }
 
 
-    std::string getFileNameNoExtension()
-    {
+    std::string getFileNameNoExtension() {
         std::string toReturn = get_filename(tex.path);
         return toReturn.substr(0, toReturn.length() - 4); /* <- Hack */
     }
@@ -283,8 +276,7 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
     void setMaterial(std::string n, std::string p) {}
 
     /** Returns the exact F3D settings that represent this material. */
-    std::string getMaterial(bool* oldGeo, const u8 layer, const bool twoCycle)
-    {
+    std::string getMaterial(bool* oldGeo, const u8 layer, const bool twoCycle) {
         std::string ret;
         ret += GetGeometryMode(oldGeo);
         if (textured) {

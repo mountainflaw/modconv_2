@@ -44,8 +44,7 @@ typedef struct {
     std::string surf;
 } CollisionMat;
 
-static void configure_materials(const aiScene* scene, CollisionMat* mat)
-{
+static void configure_materials(const aiScene* scene, CollisionMat* mat) {
     aiString aiName;
     u16 pos[2] = { 0 };
     for (u16 i = 0; i < scene->mNumMaterials; i++) {
@@ -79,8 +78,7 @@ static void configure_materials(const aiScene* scene, CollisionMat* mat)
     }
 }
 
-static void inspect_vtx(aiNode* node, const aiScene* scene, CollisionMat* mat)
-{
+static void inspect_vtx(aiNode* node, const aiScene* scene, CollisionMat* mat) {
     for (u16 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
         vertex += mesh->mNumFaces * 3;
@@ -92,8 +90,7 @@ static void inspect_vtx(aiNode* node, const aiScene* scene, CollisionMat* mat)
     }
 }
 
-static void setup_vtx(const std::string &file, aiNode* node, const aiScene* scene, CollisionVtx* vtx, const s16 scale)
-{
+static void setup_vtx(const std::string &file, aiNode* node, const aiScene* scene, CollisionVtx* vtx, const s16 scale) {
     for (u16 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
 
@@ -118,16 +115,14 @@ static void setup_vtx(const std::string &file, aiNode* node, const aiScene* scen
     }
 }
 
-static inline bool cprVtx(const CollisionVtx* vtx, const u32 i, const u32 j)
-{
+static inline bool cprVtx(const CollisionVtx* vtx, const u32 i, const u32 j) {
     return abs(vtx[i].pos[AXIS_X] - vtx[j].pos[AXIS_X]) <= leniencyFactor &&
            abs(vtx[i].pos[AXIS_Y] - vtx[j].pos[AXIS_Y]) <= leniencyFactor &&
            abs(vtx[i].pos[AXIS_Z] - vtx[j].pos[AXIS_Z]) <= leniencyFactor;
 
 }
 
-static void clean_vtx(CollisionVtx* vtx)
-{
+static void clean_vtx(CollisionVtx* vtx) {
     /* Stage 1 - Mark redundant vertices */
     for (u32 i = 0; i < vertex; i++) {
         for (u32 j = 0; j < vertex; j++) {
@@ -147,8 +142,7 @@ static void clean_vtx(CollisionVtx* vtx)
     }
 }
 
-static void write_vtx(const std::string &fileOut, const CollisionVtx* vtx)
-{
+static void write_vtx(const std::string &fileOut, const CollisionVtx* vtx) {
     std::fstream colOut;
     colOut.open(fileOut + "/collision.s", std::iostream::out | std::iostream::app);
     if (writeSize == 0) {
@@ -165,8 +159,7 @@ static void write_vtx(const std::string &fileOut, const CollisionVtx* vtx)
     }
 }
 
-static inline u32 get_vtx_index(const CollisionVtx* vtx, const u32 pos)
-{
+static inline u32 get_vtx_index(const CollisionVtx* vtx, const u32 pos) {
     if (vtx[pos].useless) { /* optimized out */
         return vtx[vtx[pos].list].list;
     } else { /* original vertex */
@@ -174,8 +167,7 @@ static inline u32 get_vtx_index(const CollisionVtx* vtx, const u32 pos)
     }
 }
 
-static void write_tri(const std::string &fileOut, const CollisionVtx* vtx, const CollisionMat* mat)
-{
+static void write_tri(const std::string &fileOut, const CollisionVtx* vtx, const CollisionMat* mat) {
     u32 i = 0;
     u16 currSurf = 0;
 
@@ -196,8 +188,7 @@ static void write_tri(const std::string &fileOut, const CollisionVtx* vtx, const
            << "colEnd"     << std::endl;
 }
 
-void collision_converter_main(const std::string &file, const std::string &fileOut, s16 scale)
-{
+void collision_converter_main(const std::string &file, const std::string &fileOut, s16 scale) {
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(file, aiProcess_ValidateDataStructure | aiProcess_Triangulate | aiProcess_PreTransformVertices);
 
