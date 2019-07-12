@@ -67,14 +67,12 @@ void reset_directory(const std::string &output)
 {    std::filesystem::create_directory(output); }
 
 /** Deletes a file. */
-void remove_file(const std::string &path)
-{
+void remove_file(const std::string &path) {
     std::filesystem::remove_all(path);
 }
 
 /** Uses LodePNG to get dimensions from a PNG image. */
-u16 get_dimension(u8 mode, const std::string &path)
-{
+u16 get_dimension(u8 mode, const std::string &path) {
     u32 w, h;
     std::vector<u8> buffer;
     std::vector<u8> image;
@@ -107,8 +105,7 @@ std::string acceptableChars = "abcdefghijklmnopqrstuvwxyz0123456789",
                capitalChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 /** Sanitizes input string for use with gas labels. */
-std::string sanitize_output(const std::string &input)
-{
+std::string sanitize_output(const std::string &input) {
     std::string toReturn = "";
     for (u16 i = 0; i < input.length(); i++) {
         /* Convert C++ string to lowercase because goddamnit the standard library doesn't have this built in in a sane way. */
@@ -136,8 +133,7 @@ void copy_file(const std::string &a, const std::string &b)
 { std::filesystem::copy(a, b); }
 
 /** Sets up the output directory. */
-void f3d_init_directory(const std::string &output, u8 area)
-{
+void f3d_init_directory(const std::string &output, u8 area) {
     reset_directory(output);
 
     /* Levels */
