@@ -281,8 +281,6 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
     /** Configures the Material object. (Unused for now) */
     void setMaterial(std::string n, std::string p) {}
 
-    /** Returns the incbins. */
-    std::string d;
     /** Returns the exact F3D settings that represent this material. */
     std::string getMaterial(bool* oldGeo, const u8 layer, const bool twoCycle)
     {
@@ -290,9 +288,7 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
         ret += GetGeometryMode(oldGeo);
         if (textured) {
             ret += GetFuckingFrauber(layer, twoCycle) + GetTextureLoad();
-        }
-
-        else { /* no texture found when setting up */
+        } else { /* no texture found when setting up */
             ret += GetFuckingFrauber(layer, twoCycle) + "gsDPSetPrimColor 0x00, 0x00, 128, 128, 128, 0xFF\n";
         }
         return ret;

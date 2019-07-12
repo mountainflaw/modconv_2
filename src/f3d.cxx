@@ -71,6 +71,19 @@ static void inspect_vtx(aiNode* node, const aiScene* scene)
     }
 }
 
+namespace vtx
+{
+    /** Resets UVs to zero if they overflow. */
+    static s16 resetUv(s32 uv)
+    {
+        if (uv > 32767 || uv < -32768) {
+            return 0;
+        } else {
+            return uv;
+        }
+    }
+}
+
 /** Add vertices to vertex buffers. */
 static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
         VertexBuffer* vBuf, const std::string &file, bool uvFlip)
@@ -112,11 +125,11 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                     std::string path = aiPath.data;
 
                     if (file_exists(path)) { /* absolute */
-                        uv[AXIS_X] = mesh->mTextureCoords[0][currVtx].x * 32 * get_dimension(AXIS_X, path);
-                        uv[AXIS_Y] = mesh->mTextureCoords[0][currVtx].y * 32 * get_dimension(AXIS_Y, path);
+                        uv[AXIS_X] = vtx::resetUv(mesh->mTextureCoords[0][currVtx].x * 32 * get_dimension(AXIS_X, path));
+                        uv[AXIS_Y] = vtx::resetUv(mesh->mTextureCoords[0][currVtx].y * 32 * get_dimension(AXIS_Y, path));
                     } else if (file_exists(get_path(file) + path) && !(is_directory(get_path(file) + path))) { /* relative */
-                        uv[AXIS_X] = mesh->mTextureCoords[0][currVtx].x * 32 * get_dimension(AXIS_X, get_path(file) + path);
-                        uv[AXIS_Y] = mesh->mTextureCoords[0][currVtx].y * 32 * get_dimension(AXIS_Y, get_path(file) + path);
+                        uv[AXIS_X] = vtx::resetUv(mesh->mTextureCoords[0][currVtx].x * 32 * get_dimension(AXIS_X, get_path(file) + path));
+                        uv[AXIS_Y] = vtx::resetUv(mesh->mTextureCoords[0][currVtx].y * 32 * get_dimension(AXIS_Y, get_path(file) + path));
                     } else {
                         untextured = true;
                     }
