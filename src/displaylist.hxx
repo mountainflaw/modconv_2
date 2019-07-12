@@ -54,13 +54,7 @@ class DisplayList
     }
 
     public:
-    void setLayer(u8 l)
-    {
-        layer = l;
-        if (layer > 1) {
-            twoCycle = true;
-        }
-    }
+    void setLayer(u8 l) { layer = l; }
 
     void writeDisplayList(const std::string &fileOut, VertexBuffer *vBuf, u16 vBuffers, Material* mat)
     {
@@ -71,6 +65,10 @@ class DisplayList
         gfxOut.open(fileOut + "/model.s", std::ofstream::out | std::ofstream::app);
         gfxOut << std::endl << "glabel " << fileOut + dlTypes[layer] << std::endl
                << "gsSPClearGeometryMode G_LIGHTING" << std::endl;
+
+        if (layer > 2) {
+            twoCycle = true;
+        }
 
         if (twoCycle || fog) {
             gfxOut << "gsDPSetCycleType G_CYC_2CYCLE" << std::endl;
@@ -97,7 +95,7 @@ class DisplayList
                 if (vBuf[i].getLayeredVtxMat(layer) != currMat && vBuf[i].getLayeredVtxMat(layer) != MAT_NOT_LAYER) { /* load before vtx load if possible */
                     currMat = vBuf[i].getLayeredVtxMat(layer);
                     gfxOut << "/* " << mat[currMat].getName() << " */" << std::endl
-                                    << mat[currMat].getMaterial(oldGeo, layer);
+                                    << mat[currMat].getMaterial(oldGeo, layer, twoCycle);
                 }
 
                 gfxOut << "gsSPVertex " << get_filename(fileOut) << "_vertex_" << i << " " << std::to_string(vBuf[i].loadSize) << ", 0" << std::endl;
@@ -107,7 +105,7 @@ class DisplayList
                         currMat = vBuf[i].getLayeredVtxMat(layer);
                         bool resetVtxCache = mat[currMat].getLighting(oldGeo);
                         gfxOut << "/* " << mat[currMat].getName() << " */" << std::endl
-                                        << mat[currMat].getMaterial(oldGeo, layer);
+                                        << mat[currMat].getMaterial(oldGeo, layer, twoCycle);
 
                         if (resetVtxCache) {
                             gfxOut << "gsSPVertex " << get_filename(fileOut) << "_vertex_" << i << " " << std::to_string(vBuf[i].loadSize) << ", 0" << std::endl;

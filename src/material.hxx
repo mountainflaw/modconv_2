@@ -41,7 +41,7 @@ class Material
     Texture tex;
     enum TexType { RGBA16, RGBA32, CI4, CI8, IA4, IA8, I4, I8 };
     const std::string format[FORMATS] = { "rgba16", "rgba32", "ci4", "ci8", "ia4", "ia8", "i4", "i8" };
-    std::string name = "DEFAULT MATERIAL";
+    std::string name = "DEFAULT MATERIAL (GENERATED NAME)";
     std::string fileOut = "";
 
     inline std::string NewlineIfTrue(const bool a)
@@ -139,19 +139,36 @@ class Material
     }
 
     /** Returns combiner settings. */
-    std::string GetFuckingFrauber(const u8 layer)
+    std::string GetFuckingFrauber(const u8 layer, const bool twoCycle)
     {
-        if (name.find("#DIFFUSE") != std::string::npos) {
-            return "gsDPSetCombineMode1Cycle G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE\n";
-
-        } else if (textured) {
-            if (layer > 1) { /* lazy way to fix transparency */
-                return "gsDPSetCombineMode G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_TEXEL0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_TEXEL0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_COMBINED, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_COMBINED\n";
+        if (twoCycle) { /* Shoutouts to SGI once again, for making the RDP incredibly annoying. */
+            if (name.find("#DIFFUSE") != std::string::npos) {
+                goto untextured_2cycle;
+            } else if (textured) {
+                if (layer > 1) { /* lazy way to fix transparency */
+                    return "gsDPSetCombineMode G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_TEXEL0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_TEXEL0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_COMBINED, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_COMBINED\n";
+                } else {
+                    return "gsDPSetCombineMode G_CCMUX_TEXEL0, G_CCMUX_0, G_CCMUX_SHADE, G_CCMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE, G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_COMBINED, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_COMBINED\n";
+                }
             } else {
-                return "gsDPSetCombineMode1Cycle G_CCMUX_TEXEL0, G_CCMUX_0, G_CCMUX_SHADE, G_CCMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE\n";
+                untextured_2cycle:
+                return "gsDPSetCombineMode G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_1, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE, G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_COMBINED, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_COMBINED\n";
             }
-        } else {
-            return "gsDPSetCombineMode1Cycle G_CCMUX_PRIMITIVE, G_CCMUX_0, G_CCMUX_SHADE, G_CCMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE\n";
+        }
+
+        else { /* 1 cycle combiners */
+            if (name.find("#DIFFUSE") != std::string::npos) {
+                goto untextured_1cycle;
+            } else if (textured) {
+                if (layer > 1) {
+                    return "gsDPSetCombineMode1Cycle G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_TEXEL0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_TEXEL0\n";
+                } else {
+                    return "gsDPSetCombineMode1Cycle G_CCMUX_TEXEL0, G_CCMUX_0, G_CCMUX_SHADE, G_CCMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE\n";
+                }
+            } else {
+                    untextured_1cycle:
+                    return "gsDPSetCombineMode1Cycle G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE\n";
+                }
         }
     }
 
@@ -171,7 +188,6 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
         }
 
         for (u8 i = 0; i < GROUP_TAGS; i++) {
-            std::cout << name << " new " << ourGeo[i] << " old" << oldGeo[i] << std::endl;
             if ((ourGeo[i] && !oldGeo[i]) || (!oldGeo[i] && ourGeo[i])) { /* set */
                 if (setOring && i != BACKFACE) {
                     setRet += " | " + geoModes[i];
@@ -268,16 +284,16 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
     /** Returns the incbins. */
     std::string d;
     /** Returns the exact F3D settings that represent this material. */
-    std::string getMaterial(bool* oldGeo, const u8 layer)
+    std::string getMaterial(bool* oldGeo, const u8 layer, const bool twoCycle)
     {
         std::string ret;
         ret += GetGeometryMode(oldGeo);
         if (textured) {
-            ret += GetFuckingFrauber(layer) + GetTextureLoad();
+            ret += GetFuckingFrauber(layer, twoCycle) + GetTextureLoad();
         }
 
         else { /* no texture found when setting up */
-            ret += GetFuckingFrauber(layer) + "gsDPSetPrimColor 0x00, 0x00, 128, 128, 128, 0xFF\n";
+            ret += GetFuckingFrauber(layer, twoCycle) + "gsDPSetPrimColor 0x00, 0x00, 128, 128, 128, 0xFF\n";
         }
         return ret;
     }
