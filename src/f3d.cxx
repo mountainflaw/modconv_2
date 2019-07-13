@@ -224,6 +224,17 @@ static inline void cycle_vbuffers(VertexBuffer *vBuf, u8 mode, u8 microcode) {
     }
 }
 
+static inline std::string hex_string(const u8 hex) {
+    std::stringstream s;
+    s << std::hex << (u16)hex;
+
+    if (hex < 0x10) {
+        return "0x0" + s.str();
+    }
+
+    return "0x" + s.str();
+}
+
 static void write_vtx(const std::string fileOut, const std::string &path, VertexBuffer *vBuf) {
     std::fstream vtxOut;
     vtxOut.open(fileOut + "/model.s", std::ofstream::out | std::ofstream::app);
@@ -237,19 +248,13 @@ static void write_vtx(const std::string fileOut, const std::string &path, Vertex
                                     << vtx.pos[AXIS_Z] << ", "
                                     << vtx.st[AXIS_X]  << ", "
                                     << vtx.st[AXIS_Y]  << ", "
-                                    << (u16)((u8)vtx.col[C_RED])  << ", "
-                                    << (u16)((u8)vtx.col[C_GRN])  << ", "
-                                    << (u16)((u8)vtx.col[C_BLU])  << ", "
-                                    << (u16)((u8)vtx.col[C_APH])  << std::endl;
+                                    << hex_string(vtx.col[C_RED])  << ", "
+                                    << hex_string(vtx.col[C_GRN])  << ", "
+                                    << hex_string(vtx.col[C_BLU])  << ", "
+                                    << hex_string(vtx.col[C_APH])  << std::endl;
             }
         }
     }
-}
-
-static inline std::string hex_string(const u8 hex) {
-    std::stringstream s;
-    s << std::hex << (u16)hex;
-    return "0x" + s.str();
 }
 
 static void configure_materials(const std::string &file, const std::string &fileOut, Material* mat, const aiScene* scene) {
