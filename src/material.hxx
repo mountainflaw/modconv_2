@@ -27,7 +27,8 @@
  */
 
 #define FORMATS 8
-const std::string format[FORMATS] = { "rgba16", "rgba32", "ci4", "ci8", "ia4", "ia8", "i4", "i8" };
+
+extern const std::string format[FORMATS];
 
 typedef struct {
     std::string path;

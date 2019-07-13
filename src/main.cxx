@@ -149,29 +149,28 @@ int main(int argc, char* argv[]) {
                     flw = argv[i + 1];
 
         if (arg.compare("--level") == 0) {
-            std::cout << "DBG - Level mode enabled" << std::endl;
+            //std::cout << "DBG - Level mode enabled" << std::endl;
             level = true;
         }
 
         if (arg.compare("--dir") == 0) {
-            std::cout << "DBG - Output is " << flw << std::endl;
+            //std::cout << "DBG - Output is " << flw << std::endl;
             fileOut = flw;
         }
 
         if (arg.compare("--scale") == 0) {
             scale = std::stoi(flw);
-            std::cout << "DBG - Scale: " << scale << std::endl;
+            //std::cout << "DBG - Scale: " << scale << std::endl;
         }
 
         if (arg.compare("--type") == 0) {
-            std::cout << "DBG - Type: " << flw << std::endl;
-
             if (flw.compare("f3d") == 0) {            output = OUTPUT_F3D; }
             else if (flw.compare("f3dex") == 0) {     output = OUTPUT_F3DEX; }
             else if (flw.compare("rej") == 0) {       output = OUTPUT_REJ; }
             else if (flw.compare("goddard") == 0) {   output = OUTPUT_GODDARD; }
             else if (flw.compare("collision") == 0) { output = OUTPUT_COLLISION; }
             else { error_message("Invalid output type."); }
+            info_message("Type: " + flw);
         }
 
         if (arg.compare("--uvflip") == 0) {
@@ -242,7 +241,7 @@ int main(int argc, char* argv[]) {
         error_message(filePath + " does not exist.");
     }
 
-    std::cout << "DBG - Args: " << argc << std::endl;
+    //std::cout << "DBG - Args: " << argc << std::endl;
     info_message("Starting...");
 
     reset_directory(fileOut);
