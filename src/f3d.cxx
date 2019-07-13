@@ -273,7 +273,7 @@ static void configure_materials(const std::string &file, const std::string &file
         }
 
         mat[i].setName(aiName.data + lightingToggle);
-
+        mat[i].setIndex(i);
         //std::cout << "Texture (absolute) " << aiPath.data << std::endl;
         //std::cout << "Texture (relative) " << get_path(file) + aiPath.data << std::endl;
     }
@@ -286,6 +286,14 @@ static inline bool has_texture_type(const std::string &path) {
         }
     }
     return false;
+}
+
+static inline std::string get_tex_incbin(const std::string &incbin) {
+    if (has_texture_type(incbin)) {
+        return incbin;
+    } else {
+        return incbin + ".rgba16";
+    }
 }
 
 static void write_textures(const std::string &fileOut, Material *mat, const aiScene* scene, bool level) {
@@ -318,18 +326,26 @@ static void write_textures(const std::string &fileOut, Material *mat, const aiSc
 
     /* Phase 3: Write and copy textures */
     for (u16 i = 0; i < scene->mNumMaterials; i++) {
+        std::string texturePath;
+
+        if (has_texture_type(mat[i].getPath())) {
+            texturePath = get_filename(mat[i].getPath());
+        } else {
+            texturePath = get_filename(mat[i].getPath().substr(0, mat[i].getPath().length() - 4) + ".rgba16.png");
+        }
+
         if (!mat[i].useless && mat[i].textured) {
             texOut << std::endl;
-            texOut << labelize(mat[i].getFileNameNoExtension()) << std::endl;
+            texOut << labelize(fileOut + "_texture_" + std::to_string(i)) << std::endl;
             if (level) {
-                texOut << ".incbin " << R"(")" << "levels/" << get_filename(fileOut) << "/" << mat[i].getFileNameNoExtension() << R"(")" << std::endl;
+                texOut << ".incbin " << R"(")" << "levels/" << get_filename(fileOut) << "/" << get_tex_incbin(mat[i].getFileNameNoExtension()) << R"(")" << std::endl;
                 if (mat[i].getFileNameNoExtension().find("ci4") != std::string::npos
                         || mat[i].getFileNameNoExtension().find("ci8") != std::string::npos) { /* CI palette */
                     texOut << std::endl << mat[i].getFileNameNoExtension() << "_pal:" << std::endl;
                     texOut << ".incbin " << R"(")" << "levels/" << get_filename(fileOut) << "/" << mat[i].getFileNameNoExtension() << R"(.pal")" << std::endl;
                 }
             } else { /* generating an actor */
-                texOut << ".incbin " << R"(")" << "actors/" << get_filename(fileOut) << "/" << mat[i].getFileNameNoExtension() << R"(")" << std::endl;
+                texOut << ".incbin " << R"(")" << "actors/" << get_filename(fileOut) << "/" << get_tex_incbin(mat[i].getFileNameNoExtension()) << R"(")" << std::endl;
                 if (mat[i].getFileNameNoExtension().find("ci4") != std::string::npos
                         || mat[i].getFileNameNoExtension().find("ci8") != std::string::npos) { /* CI palette */
                     texOut << std::endl << mat[i].getFileNameNoExtension() << "_pal:" << std::endl;
@@ -337,19 +353,11 @@ static void write_textures(const std::string &fileOut, Material *mat, const aiSc
                 }
             }
 
-            if (has_texture_type(mat[i].getPath())) {
-                if (file_exists(mat[i].getPath())) {
-                    remove_file(fileOut + "/" + get_filename(mat[i].getPath()));
-                }
-
-                copy_file(mat[i].getPath(), fileOut + "/" + get_filename(mat[i].getPath()));
-            } else {
-                if (file_exists(mat[i].getPath().substr(0, mat[i].getPath().length() - 4) + ".rgba16.png")) {
-                    remove_file(fileOut + "/" + get_filename(mat[i].getPath().substr(0, mat[i].getPath().length() - 4) + ".rgba16.png"));
-                }
-
-                copy_file(mat[i].getPath(), fileOut + "/" + get_filename(mat[i].getPath().substr(0, mat[i].getPath().length() - 4) + ".rgba16.png"));
+            if (file_exists(fileOut + "/" + texturePath)) {
+                remove_file(fileOut + "/" + texturePath);
             }
+
+            copy_file(mat[i].getPath(), fileOut + "/" + texturePath);
         }
     }
 }
