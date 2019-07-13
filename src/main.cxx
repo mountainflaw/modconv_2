@@ -55,7 +55,7 @@ inline void info_message(const std::string &message)
 { std::cout << print_bold("INFO: ") << message << std::endl; }
 
 void print_help(const std::string &name) {
-    std::cout << print_bold("- MODCONV 2.8 HELP -") << std::endl
+    std::cout << print_bold("- MODCONV 3.0 HELP -") << std::endl
               << std::endl
               << print_bold("SYNOPSIS: ") << std::endl
               << name << " <parameters> <model>" << std::endl
@@ -131,7 +131,7 @@ f32 scaling_hack() {
 }
 
 int main(int argc, char* argv[]) {
-    std::cout << print_bold("- MODCONV 2.8 BY RED -") << std::endl;
+    std::cout << print_bold("- MODCONV 3.0 BY RED -") << std::endl;
     std::string filePath = argv[argc - 1],
                 fileOut  = "model";
     s16 scale            = DEFAULT_SCALE;
