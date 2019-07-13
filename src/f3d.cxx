@@ -73,12 +73,95 @@ static void inspect_vtx(aiNode* node, const aiScene* scene) {
 }
 
 namespace uvutil {
-    /** Resets UVs to zero if they overflow. */
-    static inline s16 reset_uv(s32 uv) {
-        if (uv > 32767 || uv < -32768) {
-            return 0;
-        } else {
-            return uv;
+    enum UvUtilFirstLast { FIRST, LAST };
+
+    /* Min */
+
+    static inline u8 sort_u_last(s32 uv[3][2]) {
+        if (uv[1][AXIS_X] < uv[0][AXIS_X]) {
+            return 1;
+        }
+
+        if (uv[2][AXIS_X] < uv[0][AXIS_X]) {
+            return 2;
+        }
+
+        return 0;
+    }
+
+    static inline u8 sort_v_last(s32 uv[3][2]) {
+        if (uv[1][AXIS_Y] < uv[0][AXIS_Y]) {
+            return 1;
+        }
+
+        if (uv[2][AXIS_Y] < uv[0][AXIS_Y]) {
+            return 2;
+        }
+
+        return 0;
+    }
+
+    /* Max */
+
+    static inline u8 sort_u_first(s32 uv[3][2]) {
+        if (uv[1][AXIS_X] > uv[0][AXIS_X]) {
+            return 1;
+        }
+
+        if (uv[2][AXIS_X] > uv[0][AXIS_X]) {
+            return 2;
+        }
+
+        return 0;
+    }
+
+    static inline u8 sort_v_first(s32 uv[3][2]) {
+        if (uv[1][AXIS_Y] > uv[0][AXIS_Y]) {
+            return 1;
+        }
+
+        if (uv[2][AXIS_Y] > uv[0][AXIS_Y]) {
+            return 2;
+        }
+
+        return 0;
+    }
+
+    /**
+     * Fixes UVs above s16 limits.
+     * Credits to pilzinsel's for originally implementing
+     * this in Super Mario 64 ROM Manager.
+     */
+
+    static void reset_uv(s32 uv[3][2], u16 w, u16 h) {
+        u16 jump = w * 0x40;
+        u8 sortUv[2][2] = {{sort_u_last(uv), sort_v_last(uv)}, {sort_u_first(uv), sort_v_first(uv)}};
+
+        while (uv[sortUv[LAST][AXIS_X]][AXIS_X] > 32767) {
+            uv[0][AXIS_X] -= jump;
+            uv[1][AXIS_X] -= jump;
+            uv[2][AXIS_X] -= jump;
+
+        }
+
+        while (uv[sortUv[FIRST][AXIS_X]][AXIS_X] < -32768) {
+            uv[0][AXIS_X] += jump;
+            uv[1][AXIS_X] += jump;
+            uv[2][AXIS_X] += jump;
+        }
+
+        jump = h * 0x40;
+
+        while (uv[sortUv[LAST][AXIS_Y]][AXIS_Y] > 32767) {
+            uv[0][AXIS_Y] -= jump;
+            uv[1][AXIS_Y] -= jump;
+            uv[2][AXIS_Y] -= jump;
+        }
+
+        while (uv[sortUv[FIRST][AXIS_Y]][AXIS_Y] < -32768) {
+            uv[0][AXIS_Y] += jump;
+            uv[1][AXIS_Y] += jump;
+            uv[2][AXIS_Y] += jump;
         }
     }
 }
@@ -86,12 +169,26 @@ namespace uvutil {
 /** Add vertices to vertex buffers. */
 static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
         VertexBuffer* vBuf, const std::string &file, bool uvFlip, Material* mat) {
-    bool untextured = false;
     for (u16 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
 
         /* we go by faces instead of verts so we don't accidentally add what we don't need */
         for (u32 j = 0; j < mesh->mNumFaces; j++) {
+            s32 uv[3][2] = {0x00};
+
+            /* Calculate UVs per triangle, in case we have to correct them. */
+            if (scene->HasMaterials() && mesh->HasTextureCoords(0) && mat[mesh->mMaterialIndex].textured) {
+                uv[0][AXIS_X] = mesh->mTextureCoords[0][mesh->mFaces[j].mIndices[0]].x * 32 * mat[mesh->mMaterialIndex].getDimension(AXIS_X);
+                uv[1][AXIS_X] = mesh->mTextureCoords[0][mesh->mFaces[j].mIndices[1]].x * 32 * mat[mesh->mMaterialIndex].getDimension(AXIS_X);
+                uv[2][AXIS_X] = mesh->mTextureCoords[0][mesh->mFaces[j].mIndices[2]].x * 32 * mat[mesh->mMaterialIndex].getDimension(AXIS_X);
+
+                uv[0][AXIS_Y] = mesh->mTextureCoords[0][mesh->mFaces[j].mIndices[0]].y * 32 * mat[mesh->mMaterialIndex].getDimension(AXIS_Y);
+                uv[1][AXIS_Y] = mesh->mTextureCoords[0][mesh->mFaces[j].mIndices[1]].y * 32 * mat[mesh->mMaterialIndex].getDimension(AXIS_Y);
+                uv[2][AXIS_Y] = mesh->mTextureCoords[0][mesh->mFaces[j].mIndices[2]].y * 32 * mat[mesh->mMaterialIndex].getDimension(AXIS_Y);
+
+                uvutil::reset_uv(uv, mat[mesh->mMaterialIndex].getDimension(AXIS_X), mat[mesh->mMaterialIndex].getDimension(AXIS_Y));
+            }
+
             for (u8 k = 0; k < 3; k++) {
                 u32 currVtx = mesh->mFaces[j].mIndices[k];
 
@@ -114,27 +211,6 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                 pos[AXIS_Y] = (s16)(((mesh->mVertices[currVtx].y) * scale) * scaling_hack());
                 pos[AXIS_Z] = (s16)(((mesh->mVertices[currVtx].z) * scale) * scaling_hack());
 
-                s16 uv[2] = {0x00};
-
-                /* We have to look at material data so we can multiply the UV data. */
-                if (scene->HasMaterials() && mesh->HasTextureCoords(0)) { /* ditto */
-                    aiString aiPath;
-                    scene->mMaterials[mesh->mMaterialIndex]->GetTexture(aiTextureType_DIFFUSE, 0, &aiPath);
-                    std::string path = aiPath.data;
-
-                    if (mat[mesh->mMaterialIndex].textured) { /* absolute */
-                        uv[AXIS_X] = uvutil::reset_uv(mesh->mTextureCoords[0][currVtx].x * 32 * mat[mesh->mMaterialIndex].getDimension(AXIS_X));
-                        uv[AXIS_Y] = uvutil::reset_uv(mesh->mTextureCoords[0][currVtx].y * 32 * mat[mesh->mMaterialIndex].getDimension(AXIS_Y));
-                    } else {
-                        untextured = true;
-                    }
-
-                    /* Some formats use flipped UVs. Flip them here if the option was passed. */
-                    if (!uvFlip) {
-                        uv[AXIS_Y] *= -1;
-                    }
-                }
-
                 s16 rgba[4] = {0xff, 0xff, 0xff, 0xff};
 
                 if (mesh->HasVertexColors(0)) { /* Get around segfault. */
@@ -154,7 +230,7 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                  */
 
                 if (scene->HasMaterials() && mesh->HasNormals() && (nameStr.find("#LIGHTING") != std::string::npos
-                            || nameStr.find("#NORMCOLOR") != std::string::npos || untextured)) {
+                            || nameStr.find("#NORMCOLOR") != std::string::npos || !mat[mesh->mMaterialIndex].textured)) {
 
                     rgba[C_RED] = mesh->mNormals[currVtx].x * 127;
                     rgba[C_GRN] = mesh->mNormals[currVtx].y * 127;
@@ -189,7 +265,7 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                 }
 
                 vBuf[vBuffer].addVtx(pos[AXIS_X], pos[AXIS_Y], pos[AXIS_Z],
-                        uv[AXIS_X], uv[AXIS_Y],
+                        (s16)uv[k][AXIS_X], (s16)uv[k][AXIS_Y],
                         rgba[C_RED], rgba[C_GRN], rgba[C_BLU], rgba[C_APH], mesh->mMaterialIndex, layer);
                 vert2++;
             }
