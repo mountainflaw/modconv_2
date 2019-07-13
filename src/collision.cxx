@@ -74,7 +74,7 @@ static void configure_materials(const aiScene* scene, CollisionMat* mat) {
         } else {
             mat[i].surf = "SURF_ENV_DEFAULT";
         }
-        std::cout << "Material " << aiName.data << " -> " << mat[i].surf << std::endl;
+        info_message("Material to surface: " + nameStr + " -> " + mat[i].surf);
     }
 }
 
