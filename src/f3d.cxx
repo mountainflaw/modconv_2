@@ -279,6 +279,15 @@ static void configure_materials(const std::string &file, const std::string &file
     }
 }
 
+static inline bool has_texture_type(const std::string &path) {
+    for (u8 i = 0; i < FORMATS; i++) {
+        if (path.find(format[i]) != std::string::npos) {
+            return true;
+        }
+    }
+    return false;
+}
+
 static void write_textures(const std::string &fileOut, Material *mat, const aiScene* scene, bool level) {
     std::fstream texOut;
     if (level) {
@@ -328,11 +337,19 @@ static void write_textures(const std::string &fileOut, Material *mat, const aiSc
                 }
             }
 
-            if (file_exists(mat[i].getPath())) {
-                remove_file(fileOut + "/" + get_filename(mat[i].getPath()));
-            }
+            if (has_texture_type(mat[i].getPath())) {
+                if (file_exists(mat[i].getPath())) {
+                    remove_file(fileOut + "/" + get_filename(mat[i].getPath()));
+                }
 
-            copy_file(mat[i].getPath(), fileOut + "/" + get_filename(mat[i].getPath()));
+                copy_file(mat[i].getPath(), fileOut + "/" + get_filename(mat[i].getPath()));
+            } else {
+                if (file_exists(mat[i].getPath().substr(0, mat[i].getPath().length() - 4) + ".rgba16.png")) {
+                    remove_file(fileOut + "/" + get_filename(mat[i].getPath().substr(0, mat[i].getPath().length() - 4) + ".rgba16.png"));
+                }
+
+                copy_file(mat[i].getPath(), fileOut + "/" + get_filename(mat[i].getPath().substr(0, mat[i].getPath().length() - 4) + ".rgba16.png"));
+            }
         }
     }
 }
