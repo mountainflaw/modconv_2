@@ -27,6 +27,7 @@
  */
 
 #define FORMATS 8
+const std::string format[FORMATS] = { "rgba16", "rgba32", "ci4", "ci8", "ia4", "ia8", "i4", "i8" };
 
 typedef struct {
     std::string path;
@@ -39,7 +40,6 @@ class Material {
     private:
     Texture tex;
     enum TexType { RGBA16, RGBA32, CI4, CI8, IA4, IA8, I4, I8 };
-    const std::string format[FORMATS] = { "rgba16", "rgba32", "ci4", "ci8", "ia4", "ia8", "i4", "i8" };
     std::string name = "DEFAULT MATERIAL (GENERATED NAME)";
     std::string fileOut = "";
 
