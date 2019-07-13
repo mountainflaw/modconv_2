@@ -255,7 +255,15 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
      * enabling lighting in some situations.
      */
 
-    bool getLighting(const bool* oldGeo) { return !oldGeo[LIGHTING] && ourGeo[LIGHTING]; }
+    bool getLighting(const bool* oldGeo) {
+        for (u8 i = 0; i < GROUP_TAGS; i++) {
+            if (name.find(groupTags[i]) != std::string::npos) {
+                ourGeo[i] = true;
+            }
+        }
+
+        return !oldGeo[LIGHTING] && ourGeo[LIGHTING];
+    }
 
     void setPath(const std::string &p) {
         tex.path = p;
