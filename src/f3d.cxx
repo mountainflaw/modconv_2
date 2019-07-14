@@ -439,7 +439,7 @@ static void write_textures(const std::string &fileOut, Material *mat, const aiSc
             std::cout << "material filename " << get_filename(mat[i].getPath()) << std::endl;
 
             if (mat[i].getFileNameNoExtension().find("ci4") != std::string::npos || mat[i].getFileNameNoExtension().find("ci8") != std::string::npos) { /* CI palette */
-                texOut << std::endl << fileOut + "_palette_" << std::to_string(i) << std::endl;
+                texOut << std::endl << labelize(fileOut + "_palette_" + std::to_string(i)) << std::endl;
                 texOut << ".incbin " << R"(")" << exportType << "/" << get_filename(fileOut) << "/" << mat[i].getFileNameNoExtension() << R"(.pal")" << std::endl;
             }
 
