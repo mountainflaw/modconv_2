@@ -63,10 +63,6 @@ class DisplayList {
         gfxOut << std::endl << "glabel " << fileOut + dlTypes[layer] << std::endl
                << "gsSPClearGeometryMode G_LIGHTING" << std::endl;
 
-        if (layer > 2) {
-            twoCycle = true;
-        }
-
         if (twoCycle || fog) {
             gfxOut << "gsDPSetCycleType G_CYC_2CYCLE" << std::endl;
         }
