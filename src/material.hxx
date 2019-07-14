@@ -187,6 +187,7 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
         for (u8 i = 0; i < GROUP_TAGS; i++) {
             if ((ourGeo[i] && !oldGeo[i]) || (!oldGeo[i] && ourGeo[i])) { /* set */
                 if (setOring && i != BACKFACE) {
+                    setOring = true;
                     setRet += " | " + geoModes[i];
                 } else if (!setOring && i != BACKFACE) {
                     setOring = true;
@@ -196,6 +197,7 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
                 /* !! The #BACKFACE group tag DISABLES backface culling !!*/
 
                 else if (clearOring && i == BACKFACE) {
+                    clearOring = true;
                     clearRet += " | " + geoModes[i];
                 } else if (!clearOring && i == BACKFACE) {
                     clearOring = true;
@@ -205,6 +207,7 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
 
             if ((!ourGeo[i] && oldGeo[i]) || (oldGeo[i] && !ourGeo[i])) { /* clear */
                 if (clearOring && i != BACKFACE) {
+                    clearOring = true;
                     clearRet += " | " + geoModes[i];
                 } else if (!clearOring && i != BACKFACE) {
                     clearOring = true;
@@ -214,10 +217,11 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
                 /* !! The #BACKFACE group tag DISABLES backface culling !!*/
 
                 else if (setOring && i == BACKFACE) {
+                    setOring = true;
                     setRet += " | " + geoModes[i];
                 } else if (!setOring && i == BACKFACE) {
                     setOring = true;
-                    clearRet = "gsSPSetGeometryMode " + geoModes[i];
+                    setRet = "gsSPSetGeometryMode " + geoModes[i];
                 }
             }
         }
