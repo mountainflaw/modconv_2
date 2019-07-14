@@ -378,10 +378,11 @@ static inline bool has_texture_type(const std::string &path) {
 }
 
 static inline std::string get_tex_incbin(const std::string &incbin) {
+    std::string incbinFile = get_filename(incbin);
     if (has_texture_type(incbin)) {
-        return incbin;
+        return incbinFile.substr(0, incbinFile.length() - 4);
     } else {
-        return incbin + ".rgba16";
+        return incbinFile.substr(0, incbinFile.length() - 4) + ".rgba16";
     }
 }
 
@@ -395,10 +396,8 @@ static void write_textures(const std::string &fileOut, Material *mat, const aiSc
     }
 
 
-    /*
-     * Phase 1: Copy lights
-     * These should be changable soon.
-     */
+    /* Phase 1: Copy lights */
+
     texOut << std::endl << get_filename(fileOut) << "_ambient_light:" << std::endl
            << ".byte " + hex_string(ambient[0]) + ", " + hex_string(ambient[1]) + ", " + hex_string(ambient[2]) + ", 0x00, " + hex_string(ambient[0]) + ", " + hex_string(ambient[1]) + ", " + hex_string(ambient[2]) + ", 0x00" << std::endl
            << get_filename(fileOut) << "_diffuse_light:" << std::endl
@@ -413,7 +412,8 @@ static void write_textures(const std::string &fileOut, Material *mat, const aiSc
         }
     }
 
-    /* Phase 3: Write and copy textures */
+    /* Phase 2: Write and copy textures */
+
     for (u16 i = 0; i < scene->mNumMaterials; i++) {
         std::string texturePath;
 
@@ -424,21 +424,23 @@ static void write_textures(const std::string &fileOut, Material *mat, const aiSc
         }
 
         if (!mat[i].useless && mat[i].textured) {
+            std::string exportType;
+
+            if (level) {
+                exportType = "levels";
+            } else {
+                exportType = "actors";
+            }
+
             texOut << std::endl;
             texOut << labelize(fileOut + "_texture_" + std::to_string(i)) << std::endl;
-            if (level) {
-                texOut << ".incbin " << R"(")" << "levels/" << get_filename(fileOut) << "/" << get_tex_incbin(mat[i].getFileNameNoExtension()) << R"(")" << std::endl;
-                if (mat[i].getFileNameNoExtension().find("ci4") != std::string::npos
-                        || mat[i].getFileNameNoExtension().find("ci8") != std::string::npos) { /* CI palette */
-                    texOut << std::endl << mat[i].getFileNameNoExtension() << "_pal:" << std::endl;
-                    texOut << ".incbin " << R"(")" << "levels/" << get_filename(fileOut) << "/" << mat[i].getFileNameNoExtension() << R"(.pal")" << std::endl;
-                }
-            } else { /* generating an actor */
-                texOut << ".incbin " << R"(")" << "actors/" << get_filename(fileOut) << "/" << get_tex_incbin(mat[i].getFileNameNoExtension()) << R"(")" << std::endl;
-                if (mat[i].getPath().find(".ci4.png") != std::string::npos || mat[i].getPath().find(".ci8.png") != std::string::npos) { /* CI palette */
-                    texOut << std::endl << mat[i].getFileNameNoExtension() << "_pal:" << std::endl;
-                    texOut << ".incbin " << R"(")" << "actors/" << get_filename(fileOut) << "/" << mat[i].getFileNameNoExtension() << R"(.pal")" << std::endl;
-                }
+            texOut << ".incbin " << R"(")" << exportType << "/" << get_filename(fileOut) << "/" << get_tex_incbin(mat[i].getPath()) << R"(")" << std::endl;
+            std::cout << "material path " << mat[i].getPath() << std::endl;
+            std::cout << "material filename " << get_filename(mat[i].getPath()) << std::endl;
+
+            if (mat[i].getFileNameNoExtension().find("ci4") != std::string::npos || mat[i].getFileNameNoExtension().find("ci8") != std::string::npos) { /* CI palette */
+                texOut << std::endl << fileOut + "_palette_" << std::to_string(i) << std::endl;
+                texOut << ".incbin " << R"(")" << exportType << "/" << get_filename(fileOut) << "/" << mat[i].getFileNameNoExtension() << R"(.pal")" << std::endl;
             }
 
             if (file_exists(fileOut + "/" + texturePath)) {

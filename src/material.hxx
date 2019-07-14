@@ -108,10 +108,10 @@ class Material {
         }
 
         if (type == CI4) {
-            ret += "gsDPSetTextureLUT G_TT_RGBA16\ngsDPLoadTLUT_pal16 0, " + getFileNameNoExtension() + "_pal\n";
+            ret += "gsDPSetTextureLUT G_TT_RGBA16\ngsDPLoadTLUT_pal16 0, " + fileOut + "_palette_" + std::to_string(index) + "\n";
         } else if (type == CI8) {
-            ret += "gsDPSetTextureLUT G_TT_RGBA16\ngsDPLoadTLUT_pal256 0, " + getFileNameNoExtension() + "_pal\n";
-        } else {
+            ret += "gsDPSetTextureLUT G_TT_RGBA16\ngsDPLoadTLUT_pal256 0, " + fileOut + "_palette_" + std::to_string(index) + "\n";
+        } else { /* No palette -- Prevents problems with non-CI formats */
             ret += "gsDPSetTextureLUT G_TT_NONE\n";
         }
 
