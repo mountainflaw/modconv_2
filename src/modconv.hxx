@@ -116,7 +116,7 @@ void warn_message(const std::string &message);
 void info_message(const std::string &message);
 std::string labelize(const std::string &label);
 
-void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8 microcode, bool level, bool uvFlip);
+void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8 microcode, bool level);
 void collision_converter_main(const std::string &file, const std::string &fileOut, s16 scale);
 void extern_data(const std::string &fileOut, const std::string &a);
 f32 scaling_hack();
@@ -124,6 +124,7 @@ f32 scaling_hack();
 extern u8 diffuse[6];
 extern u8 ambient[3];
 
+extern bool gUvFlip;
 extern bool fog;
 extern u16 fogSettings[6];
 extern u8 leniencyFactor;

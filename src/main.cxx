@@ -31,6 +31,7 @@
 bool glabel = false;
 bool scalingHack = true;
 u8 leniencyFactor = 1;
+bool gUvFlip          = false;
 /* std::string glabelData; */
 
 u8 output = OUTPUT_F3D;
@@ -135,8 +136,7 @@ int main(int argc, char* argv[]) {
     std::string filePath = argv[argc - 1],
                 fileOut  = "model";
     s16 scale            = DEFAULT_SCALE;
-    bool level           = false,
-         uvFlip          = false;
+    bool level           = false;
 
     if (argc < 2) {
         print_help(argv[0]);
@@ -174,7 +174,7 @@ int main(int argc, char* argv[]) {
         }
 
         if (arg.compare("--uvflip") == 0) {
-            uvFlip = true;
+            gUvFlip = true;
         }
 
         if (arg.compare("--glabel") == 0) {
@@ -260,7 +260,7 @@ int main(int argc, char* argv[]) {
         case OUTPUT_F3DEX:
         case OUTPUT_REJ:
         case OUTPUT_REJ2:
-        f3d_main(filePath, fileOut, scale, output, level, uvFlip);
+        f3d_main(filePath, fileOut, scale, output, level);
         break;
 
         case OUTPUT_COLLISION:

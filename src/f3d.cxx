@@ -163,12 +163,18 @@ namespace uvutil {
             uv[1][AXIS_Y] += jump;
             uv[2][AXIS_Y] += jump;
         }
+
+        if (!gUvFlip) {
+            uv[0][AXIS_Y] *= -1;
+            uv[1][AXIS_Y] *= -1;
+            uv[2][AXIS_Y] *= -1;
+        }
     }
 }
 
 /** Add vertices to vertex buffers. */
 static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
-        VertexBuffer* vBuf, const std::string &file, bool uvFlip, Material* mat) {
+        VertexBuffer* vBuf, const std::string &file, Material* mat) {
     for (u16 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
 
@@ -272,7 +278,7 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
         }
     }
     for (u16 i = 0; i < node->mNumChildren; i++) {
-        setup_vtx(node->mChildren[i], scene, scale, vBuf, file, uvFlip, mat);
+        setup_vtx(node->mChildren[i], scene, scale, vBuf, file, mat);
     }
 }
 
@@ -429,8 +435,7 @@ static void write_textures(const std::string &fileOut, Material *mat, const aiSc
                 }
             } else { /* generating an actor */
                 texOut << ".incbin " << R"(")" << "actors/" << get_filename(fileOut) << "/" << get_tex_incbin(mat[i].getFileNameNoExtension()) << R"(")" << std::endl;
-                if (mat[i].getFileNameNoExtension().find("ci4") != std::string::npos
-                        || mat[i].getFileNameNoExtension().find("ci8") != std::string::npos) { /* CI palette */
+                if (mat[i].getPath().find(".ci4.png") != std::string::npos || mat[i].getPath().find(".ci8.png") != std::string::npos) { /* CI palette */
                     texOut << std::endl << mat[i].getFileNameNoExtension() << "_pal:" << std::endl;
                     texOut << ".incbin " << R"(")" << "actors/" << get_filename(fileOut) << "/" << mat[i].getFileNameNoExtension() << R"(.pal")" << std::endl;
                 }
@@ -486,7 +491,7 @@ static inline void write_display_list_obj(const std::string &fileOut, VertexBuff
 }
 
 /** Main function for the F3D build process. */
-void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8 microcode, bool level, bool uvFlip) {
+void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8 microcode, bool level) {
     Assimp::Importer importer;
 
     /* We don't use ASSIMP's built in tristripping because of the vertex buffer. */
@@ -512,7 +517,7 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
     configure_materials(file, fileOut, mat, scene);
     write_textures(fileOut, mat, scene, level);
 
-    setup_vtx(scene->mRootNode, scene, scale, vBuf, file, uvFlip, mat);
+    setup_vtx(scene->mRootNode, scene, scale, vBuf, file, mat);
     cycle_vbuffers(vBuf, OPTIMIZE, 0);
     write_vtx(fileOut, "", vBuf);
 
