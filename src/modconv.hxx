@@ -107,6 +107,10 @@ typedef double f64;
 
 enum axis { AXIS_X, AXIS_Y, AXIS_Z };
 
+enum RgbaColors { C_RED, C_GRN, C_BLU, C_APH };
+enum Layers { LAYER_0, LAYER_1, LAYER_2, LAYER_3, LAYER_4, LAYER_5, LAYER_6, LAYER_7 };
+enum FogSettings { FOG_RED, FOG_GREEN, FOG_BLUE, FOG_NEAR, FOG_FAR };
+
 /********************************************************************************
  * PROTOTYPES                                                                   *
  ********************************************************************************/

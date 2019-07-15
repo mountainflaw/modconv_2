@@ -36,13 +36,12 @@
  * 4.) The material class has been simplified.
  */
 
-enum RgbaColors { C_RED, C_GRN, C_BLU, C_APH };
-enum Layers { LAYER_0, LAYER_1, LAYER_2, LAYER_3, LAYER_4, LAYER_5, LAYER_6, LAYER_7 };
-
 #include "modconv.hxx"
 #include "buffer.hxx"
 #include "material.hxx"
 #include "displaylist.hxx"
+
+#include "f3d.hxx"
 
 /* global variabes */
 
@@ -57,7 +56,6 @@ u8 diffuse[6] = {0xFF, 0xFF, 0xFF, 0x28, 0x28, 0x28}, ambient[3] = {0x66, 0x66, 
 
 bool fog = false;
 u16 fogSettings[6]; /* rgba near far */
-enum FogSettings { FOG_RED, FOG_GREEN, FOG_BLUE, FOG_NEAR, FOG_FAR };
 
 const std::string format[FORMATS] = { ".rgba16.png", ".rgba32.png", ".ci4.png", ".ci8.png", ".ia4.png", ".ia8.png", ".i4.png", ".i8.png" };
 
@@ -173,7 +171,7 @@ namespace uvutil {
 }
 
 /** Add vertices to vertex buffers. */
-static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
+void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
         VertexBuffer* vBuf, const std::string &file, Material* mat) {
     for (u16 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
@@ -282,10 +280,8 @@ static void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
     }
 }
 
-enum BufferModes {RESET, OPTIMIZE, BUFFER};
-
 /** Function for common vbuffer operations (reset counter, run the optimizer, etc). */
-static inline void cycle_vbuffers(VertexBuffer *vBuf, u8 mode, u8 microcode) {
+void cycle_vbuffers(VertexBuffer *vBuf, u8 mode, u8 microcode) {
     switch (mode) {
         case BUFFER:
         for (u16 i = 0; i < vBuffers; i++) {
