@@ -148,13 +148,14 @@ class DisplayList {
         }
 
         /* Disable group tags */
+
         if (oldGeo[ENVMAP]) {
             gfxOut << "gsSPClearGeometryMode G_TEXTURE_GEN";
             clearOring = true;
         }
 
         if (oldGeo[LIN_ENVMAP]) {
-            if (clearOring) {
+            if (!clearOring) {
                 gfxOut << "gsSPClearGeometryMode G_TEXTURE_GEN_LINEAR";
             } else {
                 gfxOut << " | G_TEXTURE_GEN_LINEAR";

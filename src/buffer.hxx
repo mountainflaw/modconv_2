@@ -43,8 +43,8 @@ class VertexBuffer {
 
     /** Can't use memcpr because of the flag member. */
     bool cprVert(Vertex *vtx, u8 i, u8 k) {
-        bool cprPos = ((vtx[i].pos[AXIS_X] == vtx[k].pos[AXIS_X]) && (vtx[i].pos[AXIS_Y] == vtx[k].pos[AXIS_Y])
-                && (vtx[i].pos[AXIS_Z] == vtx[k].pos[AXIS_Z]));
+        bool cprPos = (abs(vtx[i].pos[AXIS_X] - vtx[k].pos[AXIS_X]) <= leniencyFactor && abs(vtx[i].pos[AXIS_Y] - vtx[k].pos[AXIS_Y]) <= leniencyFactor
+                && abs(vtx[i].pos[AXIS_Z] - vtx[k].pos[AXIS_Z]) <= leniencyFactor);
 
         bool cprSt = ((vtx[i].st[AXIS_X] == vtx[k].st[AXIS_X]) && (vtx[i].st[AXIS_Y] == vtx[k].st[AXIS_Y]));
 

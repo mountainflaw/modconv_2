@@ -97,7 +97,7 @@ typedef double f64;
 
 /* Other outputs */
 
-#define OUTPUT_T3D       77 /* Unused */
+#define OUTPUT_REDSKIN   77
 #define OUTPUT_COLLISION 88
 #define OUTPUT_GODDARD   99
 
@@ -118,6 +118,11 @@ std::string labelize(const std::string &label);
 
 void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8 microcode, bool level);
 void collision_converter_main(const std::string &file, const std::string &fileOut, s16 scale);
+
+#ifdef BUILD_REDSKIN
+void redskin_main(const std::string &file, const std::string &fileOut, const s16 scale, const u8 microcode);
+#endif
+
 void extern_data(const std::string &fileOut, const std::string &a);
 f32 scaling_hack();
 

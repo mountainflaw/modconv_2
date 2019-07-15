@@ -169,6 +169,11 @@ int main(int argc, char* argv[]) {
             else if (flw.compare("rej") == 0) {       output = OUTPUT_REJ; }
             else if (flw.compare("goddard") == 0) {   output = OUTPUT_GODDARD; }
             else if (flw.compare("collision") == 0) { output = OUTPUT_COLLISION; }
+
+#ifdef BUILD_REDSKIN
+            else if (flw.compare("redskin") == 0) {   output = OUTPUT_REDSKIN; }
+#endif
+
             else { error_message("Invalid output type."); }
             info_message("Type: " + flw);
         }
@@ -267,6 +272,11 @@ int main(int argc, char* argv[]) {
         collision_converter_main(filePath, fileOut, scale);
         break;
 
+#ifdef BUILD_REDSKIN
+        case OUTPUT_REDSKIN:
+        redskin_main(filePath, fileOut, scale, 30);
+        break;
+#endif
     }
 
     info_message("Finished!");
