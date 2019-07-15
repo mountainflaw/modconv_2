@@ -59,7 +59,7 @@ u16 fogSettings[6]; /* rgba near far */
 
 const std::string format[FORMATS] = { ".rgba16.png", ".rgba32.png", ".ci4.png", ".ci8.png", ".ia4.png", ".ia8.png", ".i4.png", ".i8.png" };
 
-static void inspect_vtx(aiNode* node, const aiScene* scene) {
+void inspect_vtx(aiNode* node, const aiScene* scene) {
     for (u16 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
         vert += mesh->mNumFaces * 3;
@@ -335,7 +335,7 @@ static void write_vtx(const std::string fileOut, const std::string &path, Vertex
     }
 }
 
-static void configure_materials(const std::string &file, const std::string &fileOut, Material* mat, const aiScene* scene) {
+void configure_materials(const std::string &file, const std::string &fileOut, Material* mat, const aiScene* scene) {
     for (u16 i = 0; i < scene->mNumMaterials; i++) {
         aiString aiPath, aiName;
         scene->mMaterials[i]->Get(AI_MATKEY_NAME, aiName);

@@ -48,7 +48,7 @@ function compile () {
     rm *.o &> /dev/null
     rm -r build &> /dev/null
     mkdir build &> /dev/null
-    g++ $flags $forceflags $files $deps -o $output $libs $defines
+    g++ $flags $forceflags $files $files2 $deps -o $output $libs $defines
     if [ $? == 0 ]; then
         echo "[✓] Build succeeded!"
     else
@@ -62,6 +62,13 @@ function compile () {
 ###############################################################################################################
 
 if [[ $1 == "release" ]]; then
+    compile
+    exit 0
+fi
+
+if [[ $1 == "redskin" ]]; then
+    flags="-g -fsanitize=address,undefined -DBUILD_REDSKIN"
+    files2="redskin/redskin.cxx"
     compile
     exit 0
 fi

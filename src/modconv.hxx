@@ -124,7 +124,7 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
 void collision_converter_main(const std::string &file, const std::string &fileOut, s16 scale);
 
 #ifdef BUILD_REDSKIN
-void redskin_main(const std::string &file, const std::string &fileOut, const s16 scale, const u8 microcode);
+void redskin_main(const std::string &file, const std::string &fileOut, const std::string &animName, const s16 scale, const u8 microcode);
 #endif
 
 void extern_data(const std::string &fileOut, const std::string &a);
