@@ -68,6 +68,14 @@ INLINE std::string dl_command(const std::string &cmd, const std::string &arg) {
     }
 }
 
+INLINE std::string dl_command_reference(const std::string &cmd, const std::string &arg) {
+    if (gExportC) {
+        return "    " + cmd + "(&" + arg + "),";
+    } else {
+        return cmd + " " + arg;
+    }
+}
+
 void inspect_vtx(aiNode* node, const aiScene* scene) {
     for (u16 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];

@@ -130,9 +130,9 @@ class Material {
         }
 
         if (tex4b) { /* Thank you SGI, very cool! */
-            ret += dl_command("gsDPLoadTextureBlock_4b", fileOut + "_texture_" + std::to_string(index) + ", " + texLoadType + std::to_string(tex.size[AXIS_X]) + ", " + std::to_string(tex.size[AXIS_Y]) + ", 0, G_TX_WRAP | " + texFlagU + ",  G_TX_WRAP | " + texFlagV + ", " + std::to_string(tex.sizeLog2[AXIS_X]) + ", " + std::to_string(tex.sizeLog2[AXIS_Y]) + ", G_TX_NOLOD, G_TX_NOLOD") + "\n" + dl_command("gsSPTexture", "-1, -1, 0, 0, 1") + "\n" + dl_command("gsDPTileSync", "") + "\n";
+            ret += dl_command_reference("gsDPLoadTextureBlock_4b", fileOut + "_texture_" + std::to_string(index) + ", " + texLoadType + std::to_string(tex.size[AXIS_X]) + ", " + std::to_string(tex.size[AXIS_Y]) + ", 0, G_TX_WRAP | " + texFlagU + ",  G_TX_WRAP | " + texFlagV + ", " + std::to_string(tex.sizeLog2[AXIS_X]) + ", " + std::to_string(tex.sizeLog2[AXIS_Y]) + ", G_TX_NOLOD, G_TX_NOLOD") + "\n" + dl_command("gsSPTexture", "-1, -1, 0, 0, 1") + "\n" + dl_command("gsDPTileSync", "") + "\n";
         } else {
-            ret += dl_command("gsDPLoadTextureBlock", fileOut + "_texture_" + std::to_string(index) + ", " + texLoadType + texLoadSize + std::to_string(tex.size[AXIS_X]) + ", " + std::to_string(tex.size[AXIS_Y]) + ", 0, G_TX_WRAP | " + texFlagU + ",  G_TX_WRAP | " + texFlagV + ", " + std::to_string(tex.sizeLog2[AXIS_X]) + ", " + std::to_string(tex.sizeLog2[AXIS_Y]) + ", G_TX_NOLOD, G_TX_NOLOD") +"\n" + dl_command("gsSPTexture", "-1, -1, 0, 0, 1") + "\n" + dl_command("gsDPTileSync", "") + "\n";
+            ret += dl_command_reference("gsDPLoadTextureBlock", fileOut + "_texture_" + std::to_string(index) + ", " + texLoadType + texLoadSize + std::to_string(tex.size[AXIS_X]) + ", " + std::to_string(tex.size[AXIS_Y]) + ", 0, G_TX_WRAP | " + texFlagU + ",  G_TX_WRAP | " + texFlagV + ", " + std::to_string(tex.sizeLog2[AXIS_X]) + ", " + std::to_string(tex.sizeLog2[AXIS_Y]) + ", G_TX_NOLOD, G_TX_NOLOD") +"\n" + dl_command("gsSPTexture", "-1, -1, 0, 0, 1") + "\n" + dl_command("gsDPTileSync", "") + "\n";
         }
         return ret;
     }
@@ -285,8 +285,8 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
         if (ourGeo[LIGHTING]) {
 
             lights = dl_command("gsSPNumLights", "NUMLIGHTS_1") + "\n";
-            lights += dl_command("gsSPLight", get_filename(fileOut) + "_diffuse_light, 1") + "\n";
-            lights += dl_command("gsSPLight", get_filename(fileOut) + "_ambient_light, 2") + "\n";
+            lights += dl_command_reference("gsSPLight", get_filename(fileOut) + "_diffuse_light, 1") + "\n";
+            lights += dl_command_reference("gsSPLight", get_filename(fileOut) + "_ambient_light, 2") + "\n";
         }
 
         /* copy over current geo to old geo */

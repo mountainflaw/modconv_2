@@ -97,7 +97,7 @@ class DisplayList {
                                     << mat[currMat].getMaterial(oldGeo, layer, twoCycle);
                 }
 
-                gfxOut << dl_command("gsSPVertex", get_filename(fileOut) + "_vertex_" + std::to_string(i) + ", " + std::to_string(vBuf[i].loadSize) + ", 0") << std::endl;
+                gfxOut << dl_command_reference("gsSPVertex", get_filename(fileOut) + "_vertex_" + std::to_string(i) + ", " + std::to_string(vBuf[i].loadSize) + ", 0") << std::endl;
 
                 while (!vBuf[i].isBufferComplete()) {
                     if (vBuf[i].getVtxMat() != currMat && vBuf[i].getLayeredVtxMat(layer) != MAT_NOT_LAYER) {
@@ -107,7 +107,7 @@ class DisplayList {
                                         << mat[currMat].getMaterial(oldGeo, layer, twoCycle);
 
                         if (resetVtxCache) {
-                            gfxOut << dl_command("gsSPVertex", get_filename(fileOut) + "_vertex_" + std::to_string(i) + ", " + std::to_string(vBuf[i].loadSize) + ", 0") << std::endl;
+                            gfxOut << dl_command_reference("gsSPVertex", get_filename(fileOut) + "_vertex_" + std::to_string(i) + ", " + std::to_string(vBuf[i].loadSize) + ", 0") << std::endl;
                         }
                     }
 
