@@ -45,7 +45,7 @@ class Material {
     std::string fileOut = "";
     u16 index;
 
-    inline std::string NewlineIfTrue(const bool a) {
+    INLINE std::string NewlineIfTrue(const bool a) {
         if (a) { return "\n"; }
         else { return ""; }
     }
@@ -108,11 +108,11 @@ class Material {
         }
 
         if (type == CI4) {
-            ret += "gsDPSetTextureLUT G_TT_RGBA16\ngsDPLoadTLUT_pal16 0, " + fileOut + "_palette_" + std::to_string(index) + "\n";
+            ret += dl_command("gsDPSetTextureLUT", "G_TT_RGBA16") + "\n" + dl_command("gsDPLoadTLUT_pal16", "0, " + fileOut + "_palette_" + std::to_string(index)) + "\n";
         } else if (type == CI8) {
-            ret += "gsDPSetTextureLUT G_TT_RGBA16\ngsDPLoadTLUT_pal256 0, " + fileOut + "_palette_" + std::to_string(index) + "\n";
+            ret += dl_command("gsDPSetTextureLUT", "G_TT_RGBA16") + "\n" + dl_command("gsDPLoadTLUT_pal256", "0, " + fileOut + "_palette_" + std::to_string(index)) + "\n";
         } else { /* No palette -- Prevents problems with non-CI formats */
-            ret += "gsDPSetTextureLUT G_TT_NONE\n";
+            ret += dl_command("gsDPSetTextureLUT", "G_TT_NONE") + "\n";
         }
 
         std::string texFlagU = "G_TX_NOMIRROR", texFlagV = "G_TX_NOMIRROR",
@@ -130,11 +130,65 @@ class Material {
         }
 
         if (tex4b) { /* Thank you SGI, very cool! */
-            ret += "gsDPLoadTextureBlock_4b " + fileOut + "_texture_" + std::to_string(index) + ", " + texLoadType + std::to_string(tex.size[AXIS_X]) + ", " + std::to_string(tex.size[AXIS_Y]) + ", 0, G_TX_WRAP | " + texFlagU + ",  G_TX_WRAP | " + texFlagV + ", " + std::to_string(tex.sizeLog2[AXIS_X]) + ", " + std::to_string(tex.sizeLog2[AXIS_Y]) + ", G_TX_NOLOD, G_TX_NOLOD\ngsSPTexture -1, -1, 0, 0, 1\ngsDPTileSync\n";
+            ret += dl_command("gsDPLoadTextureBlock_4b", fileOut + "_texture_" + std::to_string(index) + ", " + texLoadType + std::to_string(tex.size[AXIS_X]) + ", " + std::to_string(tex.size[AXIS_Y]) + ", 0, G_TX_WRAP | " + texFlagU + ",  G_TX_WRAP | " + texFlagV + ", " + std::to_string(tex.sizeLog2[AXIS_X]) + ", " + std::to_string(tex.sizeLog2[AXIS_Y]) + ", G_TX_NOLOD, G_TX_NOLOD") + "\n" + dl_command("gsSPTexture", "-1, -1, 0, 0, 1") + "\n" + dl_command("gsDPTileSync", "") + "\n";
         } else {
-            ret += "gsDPLoadTextureBlock " + fileOut + "_texture_" + std::to_string(index) + ", " + texLoadType + texLoadSize + std::to_string(tex.size[AXIS_X]) + ", " + std::to_string(tex.size[AXIS_Y]) + ", 0, G_TX_WRAP | " + texFlagU + ",  G_TX_WRAP | " + texFlagV + ", " + std::to_string(tex.sizeLog2[AXIS_X]) + ", " + std::to_string(tex.sizeLog2[AXIS_Y]) + ", G_TX_NOLOD, G_TX_NOLOD\ngsSPTexture -1, -1, 0, 0, 1\ngsDPTileSync\n";
+            ret += dl_command("gsDPLoadTextureBlock", fileOut + "_texture_" + std::to_string(index) + ", " + texLoadType + texLoadSize + std::to_string(tex.size[AXIS_X]) + ", " + std::to_string(tex.size[AXIS_Y]) + ", 0, G_TX_WRAP | " + texFlagU + ",  G_TX_WRAP | " + texFlagV + ", " + std::to_string(tex.sizeLog2[AXIS_X]) + ", " + std::to_string(tex.sizeLog2[AXIS_Y]) + ", G_TX_NOLOD, G_TX_NOLOD") +"\n" + dl_command("gsSPTexture", "-1, -1, 0, 0, 1") + "\n" + dl_command("gsDPTileSync", "") + "\n";
         }
         return ret;
+    }
+
+    /** Returns combiner settings (new) */
+    std::string GetDrFuckingFrauber(const u8 layer, const bool twoCycle) {
+        if (name.find("#DIFFUSE") != std::string::npos) {
+            goto untextured;
+        }
+
+        if (twoCycle && textured) { /* 2 cycle */
+            switch (layer) {
+                case 0: /* opaque */
+                case 1:
+                case 2:
+                case 3:
+                return dl_command("gsDPSetCombineModeLERP", "G_CCMUX_TEXEL0, G_CCMUX_0, G_CCMUX_SHADE, G_CCMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE, G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_COMBINED, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_COMBINED") + "\n";
+                break;
+
+                case 4: /* alpha */
+                return dl_command("gsDPSetCombineModeLERP", "G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_TEXEL0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_TEXEL0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_COMBINED, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_COMBINED") + "\n";
+                break;
+
+                case 5: /* transparent */
+                case 6:
+                case 7:
+                return dl_command("gsDPSetCombineModeLERP", "G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_TEXEL0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_TEXEL0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_COMBINED, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_COMBINED") + "\n";
+                break;
+            }
+        } else if (!twoCycle && textured) { /* 1 cycle */
+            switch (layer) {
+                case 0: /* opaque */
+                case 1:
+                case 2:
+                case 3:
+                return dl_command("gsDPSetCombineModeLERP", "G_CCMUX_TEXEL0, G_CCMUX_0, G_CCMUX_SHADE, G_CCMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE, G_CCMUX_TEXEL0, G_CCMUX_0, G_CCMUX_SHADE, G_CCMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE") + "\n";
+                break;
+
+                case 4: /* alpha */
+                return dl_command("gsDPSetCombineModeLERP", "G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_TEXEL0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_TEXEL0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_TEXEL0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_TEXEL0") + "\n";
+                break;
+
+                case 5: /* transparent */
+                case 6:
+                case 7:
+                return dl_command("gsDPSetCombineModeLERP", "G_CCMUX_TEXEL0, G_CCMUX_0, G_CCMUX_SHADE, G_CCMUX_0, G_ACMUX_TEXEL0, G_ACMUX_0, G_ACMUX_SHADE, G_ACMUX_0, G_CCMUX_TEXEL0, G_CCMUX_0, G_CCMUX_SHADE, G_CCMUX_0, G_ACMUX_TEXEL0, G_ACMUX_0, G_ACMUX_SHADE, G_ACMUX_0") + "\n";
+                break;
+            }
+        }
+        /* diffuse fallback */
+        untextured:
+        if (twoCycle) {
+            return dl_command("gsDPSetCombineModeLERP", "G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE, G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_COMBINED, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_COMBINED") + "\n";
+        } else { /* 1 cycle */
+            return dl_command("gsDPSetCombineModeLERP", "G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE, G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE") + "\n";
+        }
     }
 
     /** Returns combiner settings. */
@@ -173,7 +227,7 @@ class Material {
 #define GROUP_TAGS 5
 bool ourGeo[GROUP_TAGS] = {0x00};
 std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#SHADE", "#BACKFACE" },
-    geoModes[GROUP_TAGS] = { "G_TEXTURE_GEN", "G_TEXTURE_GEN_LINEAR", "G_LIGHTING", "G_SHADE", "G_CULL_BACK"};
+    geoModes[GROUP_TAGS] = { "G_TEXTURE_GEN", "G_TEXTURE_GEN_LINEAR", "G_LIGHTING", "G_SHADE", "G_CULL_BACK" };
 
     std::string GetGeometryMode(bool* oldGeo) {
         std::string setRet = "", clearRet = "";
@@ -230,9 +284,9 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
 
         if (ourGeo[LIGHTING]) {
 
-            lights = "gsSPNumLights NUMLIGHTS_1\n";
-            lights += "gsSPLight " + get_filename(fileOut) + "_diffuse_light, 1\n";
-            lights += "gsSPLight " + get_filename(fileOut) + "_ambient_light, 2\n";
+            lights = dl_command("gsSPNumLights", "NUMLIGHTS_1") + "\n";
+            lights += dl_command("gsSPLight", get_filename(fileOut) + "_diffuse_light, 1") + "\n";
+            lights += dl_command("gsSPLight", get_filename(fileOut) + "_ambient_light, 2") + "\n";
         }
 
         /* copy over current geo to old geo */
@@ -248,10 +302,10 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
     public:
     enum GeoModes { ENVMAP, LIN_ENVMAP, LIGHTING, SHADE, BACKFACE};
     bool useless = false, textured = false;
-    void setName(const std::string &n) { name = n; }
-    void setFile(const std::string &f) { fileOut = f; }
-    void setIndex(const u16 i) { index = i; }
-    u16  getIndex() { return index; }
+    INLINE void setName(const std::string &n) { name = n; }
+    INLINE void setFile(const std::string &f) { fileOut = f; }
+    INLINE void setIndex(const u16 i) { index = i; }
+    INLINE u16 getIndex() { return index; }
 
     /**
      * Returns true if lighting will be enabled.
@@ -296,9 +350,9 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
         std::string ret;
         ret += GetGeometryMode(oldGeo);
         if (textured) {
-            ret += GetFuckingFrauber(layer, twoCycle) + GetTextureLoad();
+            ret += GetDrFuckingFrauber(layer, twoCycle) + GetTextureLoad();
         } else { /* no texture found when setting up */
-            ret += GetFuckingFrauber(layer, twoCycle) + "gsDPSetPrimColor 0x00, 0x00, 128, 128, 128, 0xFF\n";
+            ret += GetDrFuckingFrauber(layer, twoCycle);
         }
         return ret;
     }

@@ -30,8 +30,9 @@
 
 bool glabel = false;
 bool scalingHack = true;
+bool gUvFlip = false;
+bool gExportC = false;
 u8 leniencyFactor = 1;
-bool gUvFlip          = false;
 /* std::string glabelData; */
 
 u8 output = OUTPUT_F3D;
@@ -40,7 +41,7 @@ u8 output = OUTPUT_F3D;
 std::string animName;
 #endif
 
-inline std::string print_bold(const std::string &s) {
+INLINE std::string print_bold(const std::string &s) {
 #ifdef _WIN32
     return s;
 #else
@@ -48,15 +49,15 @@ inline std::string print_bold(const std::string &s) {
 #endif
 }
 
-inline void error_message(const std::string &message) {
+INLINE void error_message(const std::string &message) {
     std::cout << print_bold("ERROR: ") << message << std::endl;
     exit(1);
 }
 
-inline void warn_message(const std::string &message)
+INLINE void warn_message(const std::string &message)
 { std::cout << print_bold("WARNING: ") << message << std::endl; }
 
-inline void info_message(const std::string &message)
+INLINE void info_message(const std::string &message)
 { std::cout << print_bold("INFO: ") << message << std::endl; }
 
 void print_help(const std::string &name) {
@@ -101,6 +102,7 @@ void print_help(const std::string &name) {
               << "  - f         - Far amount of fog" << std::endl
               << "--noscalehack - Disable the scaling hack (disables multiplying scale by 0.01)" << std::endl
               << "--leniencyfactor - Sets the triangle optimization leniency factor. Defaults to 1." << std::endl
+              << "--export-c    - Exports display list data in C format instead of gas format." << std::endl
               << "--help   - Bring up this menu and quit" << std::endl
               << std::endl
               << print_bold("TIPS: ") << std::endl
@@ -248,6 +250,10 @@ int main(int argc, char* argv[]) {
             scalingHack = false;
         }
 
+        if (arg.compare("--export-c") == 0) {
+            gExportC = true;
+        }
+
         if (arg.compare("--help") == 0) {
             print_help(argv[0]);
             exit(0);
@@ -287,6 +293,10 @@ int main(int argc, char* argv[]) {
 
         case OUTPUT_COLLISION:
         collision_converter_main(filePath, fileOut, scale);
+        break;
+
+        //case OUTPUT_GODDARD:
+        //goddard_main(filePath, fileOut, scale);
         break;
 
 #ifdef BUILD_REDSKIN

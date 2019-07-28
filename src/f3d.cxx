@@ -48,7 +48,8 @@
 u32 vert     = 0,
     vert2    = 0;
 u16 vBuffers = 0,
-    vBuffer  = 0;
+    vBuffer  = 0,
+    bone     = 0;
 u8  layers   = 0;
 bool setLayer[8] = { false };
 
@@ -59,10 +60,21 @@ u16 fogSettings[6]; /* rgba near far */
 
 const std::string format[FORMATS] = { ".rgba16.png", ".rgba32.png", ".ci4.png", ".ci8.png", ".ia4.png", ".ia8.png", ".i4.png", ".i8.png" };
 
+INLINE std::string dl_command(const std::string &cmd, const std::string &arg) {
+    if (gExportC) {
+        return "    " + cmd + "(" + arg + "),";
+    } else {
+        return cmd + " " + arg;
+    }
+}
+
 void inspect_vtx(aiNode* node, const aiScene* scene) {
     for (u16 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
         vert += mesh->mNumFaces * 3;
+        if (mesh->HasBones()) {
+            bone += mesh->mNumBones;
+        }
     }
 
     for (u16 i = 0; i < node->mNumChildren; i++) {
@@ -75,7 +87,7 @@ namespace uvutil {
 
     /* Min */
 
-    static inline u8 sort_u_last(s32 uv[3][2]) {
+    static INLINE u8 sort_u_last(s32 uv[3][2]) {
         if (uv[1][AXIS_X] < uv[0][AXIS_X]) {
             return 1;
         }
@@ -87,7 +99,7 @@ namespace uvutil {
         return 0;
     }
 
-    static inline u8 sort_v_last(s32 uv[3][2]) {
+    static INLINE u8 sort_v_last(s32 uv[3][2]) {
         if (uv[1][AXIS_Y] < uv[0][AXIS_Y]) {
             return 1;
         }
@@ -101,7 +113,7 @@ namespace uvutil {
 
     /* Max */
 
-    static inline u8 sort_u_first(s32 uv[3][2]) {
+    static INLINE u8 sort_u_first(s32 uv[3][2]) {
         if (uv[1][AXIS_X] > uv[0][AXIS_X]) {
             return 1;
         }
@@ -113,7 +125,7 @@ namespace uvutil {
         return 0;
     }
 
-    static inline u8 sort_v_first(s32 uv[3][2]) {
+    static INLINE u8 sort_v_first(s32 uv[3][2]) {
         if (uv[1][AXIS_Y] > uv[0][AXIS_Y]) {
             return 1;
         }
@@ -302,7 +314,7 @@ void cycle_vbuffers(VertexBuffer *vBuf, u8 mode, u8 microcode) {
     }
 }
 
-static inline std::string hex_string(const u8 hex) {
+static INLINE std::string hex_string(const u8 hex) {
     std::stringstream s;
     s << std::hex << (u16)hex;
 
@@ -315,23 +327,49 @@ static inline std::string hex_string(const u8 hex) {
 
 static void write_vtx(const std::string fileOut, const std::string &path, VertexBuffer *vBuf) {
     std::fstream vtxOut;
-    vtxOut.open(fileOut + "/model.s", std::ofstream::out | std::ofstream::app);
+
+    if (gExportC) {
+        vtxOut.open(fileOut + "/model.inc.c", std::ofstream::out | std::ofstream::app);
+    } else {
+        vtxOut.open(fileOut + "/model.s", std::ofstream::out | std::ofstream::app);
+    }
+
+    std::string vtxDelimiterStart = "vertex ",
+                vtxDelimiterEnd   = "\n";
+
+    if (gExportC) {
+        vtxDelimiterStart = "    {";
+        vtxDelimiterEnd   = "},\n";
+    }
+
     for (u16 i = 0; i < vBuffers; i++) {
-        vtxOut << std::endl << labelize(get_filename(fileOut) + "_vertex_" + std::to_string(i)) << std::endl;
+        if (gExportC) {
+            vtxOut << std::endl << "Vertex " << get_filename(fileOut) << "_vertex_" << i << "[" << (u16)vBuf[i].loadSize << "] = {" << std::endl;
+        } else { /* asm */
+            vtxOut << std::endl << labelize(get_filename(fileOut) + "_vertex_" + std::to_string(i)) << std::endl;
+        }
         for (u16 j = 0; j < vBuf[i].bufferSize; j++) {
             Vertex vtx = vBuf[i].getVtx();
             if (!vtx.useless) {
-                vtxOut << "vertex " << vtx.pos[AXIS_X] << ", "
-                                    << vtx.pos[AXIS_Y] << ", "
-                                    << vtx.pos[AXIS_Z] << ", "
-                                    << vtx.st[AXIS_X]  << ", "
-                                    << vtx.st[AXIS_Y]  << ", "
-                                    << hex_string(vtx.col[C_RED])  << ", "
-                                    << hex_string(vtx.col[C_GRN])  << ", "
-                                    << hex_string(vtx.col[C_BLU])  << ", "
-                                    << hex_string(vtx.col[C_APH])  << std::endl;
+                vtxOut << vtxDelimiterStart << vtx.pos[AXIS_X] << ", "
+                       << vtx.pos[AXIS_Y] << ", "
+                       << vtx.pos[AXIS_Z] << ", "
+                       << vtx.st[AXIS_X]  << ", "
+                       << vtx.st[AXIS_Y]  << ", ";
+
+                if (gExportC) { /* flag (unused) */
+                    vtxOut << "0x00, ";
+                }
+
+                vtxOut << hex_string(vtx.col[C_RED])  << ", "
+                       << hex_string(vtx.col[C_GRN])  << ", "
+                       << hex_string(vtx.col[C_BLU])  << ", "
+                       << hex_string(vtx.col[C_APH])  << vtxDelimiterEnd;
             }
         }
+                if (gExportC) {
+                    vtxOut << "};" << std::endl;
+                }
     }
 }
 
@@ -364,7 +402,7 @@ void configure_materials(const std::string &file, const std::string &fileOut, Ma
     }
 }
 
-static inline bool has_texture_type(const std::string &path) {
+static INLINE bool has_texture_type(const std::string &path) {
     for (u8 i = 0; i < FORMATS; i++) {
         if (path.find(format[i]) != std::string::npos) {
             return true;
@@ -373,7 +411,7 @@ static inline bool has_texture_type(const std::string &path) {
     return false;
 }
 
-static inline std::string get_tex_incbin(const std::string &incbin) {
+static INLINE std::string get_tex_incbin(const std::string &incbin) {
     std::string incbinFile = get_filename(incbin);
     if (has_texture_type(incbin)) {
         return incbinFile.substr(0, incbinFile.length() - 4);
@@ -458,7 +496,7 @@ static void write_textures(const std::string &fileOut, Material *mat, const aiSc
  * 4.) End displaylist after all of that crap is done.
  */
 
-static inline void set_layers_amt() {
+static INLINE void set_layers_amt() {
     for (u8 i = 0; i < 8; i++) {
         if (setLayer[i]) {
             layers++;
@@ -471,7 +509,7 @@ static inline void set_layers_amt() {
     }
 }
 
-static inline void set_layers(DisplayList *dl) {
+static INLINE void set_layers(DisplayList *dl) {
     u8 index = 0;
     for (u8 i = 0; i < 8; i++) {
         if (setLayer[i]) {
@@ -481,7 +519,7 @@ static inline void set_layers(DisplayList *dl) {
 }
 
 /* New DL writer */
-static inline void write_display_list_obj(const std::string &fileOut, VertexBuffer* vBuf, DisplayList* dl, Material* mat) {
+static INLINE void write_display_list_obj(const std::string &fileOut, VertexBuffer* vBuf, DisplayList* dl, Material* mat) {
     for (u8 i = 0; i < layers; i++) {
         vBuf[i].vtxCount = 0;
         dl[i].writeDisplayList(fileOut, vBuf, vBuffers, mat);
@@ -495,7 +533,12 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
     /* We don't use ASSIMP's built in tristripping because of the vertex buffer. */
     const aiScene* scene = importer.ReadFile(file, aiProcess_ValidateDataStructure | aiProcess_Triangulate | aiProcess_PreTransformVertices | aiProcess_GenUVCoords);
 
-    reset_file(fileOut + "/model.s");
+    if (gExportC) {
+        reset_file(fileOut + "/model.inc.c");
+    } else { /* asm */
+        reset_file(fileOut + "/model.s");
+    }
+
     inspect_vtx(scene->mRootNode, scene);
 
     vBuffers = vert / microcode;

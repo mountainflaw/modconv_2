@@ -47,6 +47,7 @@
 #include <assimp/Importer.hpp>
 #include <assimp/mesh.h>
 #include <assimp/scene.h>
+#include <assimp/material.h>
 #include <assimp/postprocess.h>
 
 /********************************************************************************
@@ -73,6 +74,22 @@ typedef volatile s64 vs64;
 
 typedef float  f32;
 typedef double f64;
+
+/* From cxd4-rsp */
+
+#ifdef _MSC_VER
+#define INLINE      __inline
+#define NOINLINE    __declspec(noinline)
+#define ALIGNED     _declspec(align(16))
+#elif defined(__GNUC__)
+#define INLINE      inline
+#define NOINLINE    __attribute__((noinline))
+#define ALIGNED     __attribute__((aligned(16)))
+#else
+#define INLINE
+#define NOINLINE
+#define ALIGNED
+#endif
 
 /* Workaround so file.hxx doesn't error out. */
 #include "file.hxx"
@@ -122,6 +139,7 @@ std::string labelize(const std::string &label);
 
 void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8 microcode, bool level);
 void collision_converter_main(const std::string &file, const std::string &fileOut, s16 scale);
+void goddard_main(const std::string &file, const std::string &fileOut, const s16 scale);
 
 #ifdef BUILD_REDSKIN
 void redskin_main(const std::string &file, const std::string &fileOut, const std::string &animName, const s16 scale, const u8 microcode);
@@ -130,9 +148,12 @@ void redskin_main(const std::string &file, const std::string &fileOut, const std
 void extern_data(const std::string &fileOut, const std::string &a);
 f32 scaling_hack();
 
+std::string dl_command(const std::string &cmd, const std::string &arg);
+
 extern u8 diffuse[6];
 extern u8 ambient[3];
 
+extern bool gExportC;
 extern bool gUvFlip;
 extern bool fog;
 extern u16 fogSettings[6];
