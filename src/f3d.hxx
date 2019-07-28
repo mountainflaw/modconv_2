@@ -4,6 +4,7 @@ extern u32 vert;
 extern u32 vert2;
 extern u16 vBuffers;
 extern u16 vBuffer;
+extern u16 bone;
 extern u8  layers;
 
 void setup_vtx(aiNode *node, const aiScene* scene, s16 scale, VertexBuffer* vBuf, const std::string &file, Material* mat);

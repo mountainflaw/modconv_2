@@ -33,6 +33,7 @@ typedef struct {
     s16  pos[3], st[2];
     u16  flag[3]; /* optimizer flag */
     s16   col[4];
+    u16 bone; /* animations */
     u8 layer;
 } Vertex;
 

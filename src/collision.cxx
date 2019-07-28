@@ -30,7 +30,7 @@
 #include "modconv.hxx"
 
 /* Globals */
-u32 vertex = 0, internalVtx = 0, writeSize = 0;
+static u32 vertex = 0, internalVtx = 0, writeSize = 0;
 
 typedef struct {
     s16 pos[3];
@@ -115,7 +115,7 @@ static void setup_vtx(const std::string &file, aiNode* node, const aiScene* scen
     }
 }
 
-static inline bool cprVtx(const CollisionVtx* vtx, const u32 i, const u32 j) {
+static INLINE bool cprVtx(const CollisionVtx* vtx, const u32 i, const u32 j) {
     return abs(vtx[i].pos[AXIS_X] - vtx[j].pos[AXIS_X]) <= leniencyFactor &&
            abs(vtx[i].pos[AXIS_Y] - vtx[j].pos[AXIS_Y]) <= leniencyFactor &&
            abs(vtx[i].pos[AXIS_Z] - vtx[j].pos[AXIS_Z]) <= leniencyFactor;
@@ -159,7 +159,7 @@ static void write_vtx(const std::string &fileOut, const CollisionVtx* vtx) {
     }
 }
 
-static inline u32 get_vtx_index(const CollisionVtx* vtx, const u32 pos) {
+static INLINE u32 get_vtx_index(const CollisionVtx* vtx, const u32 pos) {
     if (vtx[pos].useless) { /* optimized out */
         return vtx[vtx[pos].list].list;
     } else { /* original vertex */
