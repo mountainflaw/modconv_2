@@ -131,7 +131,7 @@ class DisplayList {
         /* Reset display list settings */
         gfxOut << dl_command("gsSPTexture", "-1, -1, 0, 0, 0") << std::endl
                << dl_command("gsDPPipeSync", "") << std::endl
-               << dl_command("gsDPSetCombineModeLERP", "G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE, G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE") << std::endl
+               << dl_command("gsDPSetCombineMode", "G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE, G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE") << std::endl
                << dl_command("gsSPSetGeometryMode", "G_LIGHTING") << std::endl
                << dl_command("gsDPSetTextureLUT", "G_TT_NONE") << std::endl;
 
@@ -140,7 +140,51 @@ class DisplayList {
         }
 
         if (fog) {
-            gfxOut << "gsDPSetRenderMode G_RM_AA_ZB_OPA_SURF, G_RM_NOOP2" << std::endl
+            std::string renderMode1Cycle, renderMode2Cycle;
+
+            switch (layer) { /* Reset layering settings */
+                case 0:
+                renderMode1Cycle = "G_RM_ZB_OPA_SURF";
+                renderMode2Cycle = "G_RM_ZB_OPA_SURF2";
+                break;
+
+                case 1:
+                renderMode1Cycle = "G_RM_AA_ZB_OPA_SURF";
+                renderMode2Cycle = "G_RM_AA_ZB_OPA_SURF2";
+                break;
+
+                case 2:
+                renderMode1Cycle = "G_RM_AA_ZB_OPA_DECAL";
+                renderMode2Cycle = "G_RM_AA_ZB_OPA_DECAL2";
+                break;
+
+                case 3:
+                renderMode1Cycle = "G_RM_AA_ZB_OPA_INTER";
+                renderMode2Cycle = "G_RM_AA_ZB_OPA_INTER2";
+                break;
+
+                case 4:
+                renderMode1Cycle = "G_RM_AA_ZB_TEX_EDGE";
+                renderMode2Cycle = "G_RM_AA_ZB_TEX_EDGE2";
+                break;
+
+                case 5:
+                renderMode1Cycle = "G_RM_AA_ZB_XLU_SURF";
+                renderMode2Cycle = "G_RM_AA_ZB_XLU_SURF2";
+                break;
+
+                case 6:
+                renderMode1Cycle = "G_RM_AA_ZB_XLU_DECAL";
+                renderMode2Cycle = "G_RM_AA_ZB_XLU_DECAL2";
+                break;
+
+                case 7:
+                renderMode1Cycle = "G_RM_AA_ZB_XLU_INTER";
+                renderMode2Cycle = "G_RM_AA_ZB_XLU_INTER2";
+                break;
+            }
+
+            gfxOut << "gsDPSetRenderMode " << renderMode1Cycle << "," << renderMode2Cycle << std::endl
                    << "gsSPClearGeometryMode G_FOG" << std::endl;
         }
 
