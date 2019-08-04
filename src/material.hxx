@@ -50,6 +50,83 @@ class Material {
         else { return ""; }
     }
 
+#define GROUP_TAGS 5
+bool ourGeo[GROUP_TAGS] = {0x00};
+std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#SHADE", "#BACKFACE" },
+    geoModes[GROUP_TAGS] = { "G_TEXTURE_GEN", "G_TEXTURE_GEN_LINEAR", "G_LIGHTING", "G_SHADE", "G_CULL_BACK" };
+
+    public:
+    enum GeoModes { ENVMAP, LIN_ENVMAP, LIGHTING, SHADE, BACKFACE};
+    bool useless = false, textured = false;
+    INLINE void setName(const std::string &n) { name = n; }
+    INLINE void setFile(const std::string &f) { fileOut = f; }
+    INLINE void setIndex(const u16 i) { index = i; }
+    INLINE u16 getIndex() { return index; }
+
+    /**
+     * Returns true if lighting will be enabled.
+     * Used to fix weird colors caused by
+     * enabling lighting in some situations.
+     */
+
+    bool getLighting(const bool* oldGeo) {
+        for (u8 i = 0; i < GROUP_TAGS; i++) {
+            if (name.find(groupTags[i]) != std::string::npos) {
+                ourGeo[i] = true;
+            }
+        }
+
+        return !oldGeo[LIGHTING] && ourGeo[LIGHTING];
+    }
+
+    /** Returns combiner settings (new) */
+    std::string GetDrFuckingFrauber(const u8 layer, const bool twoCycle) {
+        if (name.find("#DIFFUSE") != std::string::npos) {
+            goto untextured;
+        }
+
+        if (twoCycle && textured) { /* 2 cycle */
+            switch (layer) {
+                case 0: /* opaque */
+                case 1:
+                case 2:
+                case 3:
+                return dl_command("gsDPSetCombineMode", "G_CCMUX_TEXEL0, G_CCMUX_0, G_CCMUX_SHADE, G_CCMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE, G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_COMBINED, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_COMBINED") + "\n";
+                break;
+
+                case 4: /* alpha */
+                case 5: /* transparent */
+                case 6:
+                case 7:
+                return dl_command("gsDPSetCombineMode", "G_CCMUX_TEXEL0, G_CCMUX_0, G_CCMUX_SHADE, G_CCMUX_0, G_ACMUX_TEXEL0, G_ACMUX_0, G_ACMUX_SHADE, G_ACMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_COMBINED, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_COMBINED") + "\n";
+                break;
+            }
+        } else if (!twoCycle && textured) { /* 1 cycle */
+            switch (layer) {
+                case 0: /* opaque */
+                case 1:
+                case 2:
+                case 3:
+                return dl_command("gsDPSetCombineMode", "G_CCMUX_TEXEL0, G_CCMUX_0, G_CCMUX_SHADE, G_CCMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE, G_CCMUX_TEXEL0, G_CCMUX_0, G_CCMUX_SHADE, G_CCMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE") + "\n";
+                break;
+
+                case 4: /* alpha */
+                case 5: /* transparent */
+                case 6:
+                case 7:
+                return dl_command("gsDPSetCombineMode", "G_CCMUX_TEXEL0, G_CCMUX_0, G_CCMUX_SHADE, G_CCMUX_0, G_ACMUX_TEXEL0, G_ACMUX_0, G_ACMUX_SHADE, G_ACMUX_0, G_CCMUX_TEXEL0, G_CCMUX_0, G_CCMUX_SHADE, G_CCMUX_0, G_ACMUX_TEXEL0, G_ACMUX_0, G_ACMUX_SHADE, G_ACMUX_0") + "\n";
+                break;
+            }
+        }
+        /* diffuse fallback */
+        untextured:
+        if (twoCycle) {
+            return dl_command("gsDPSetCombineMode", "G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE, G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_COMBINED, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_COMBINED") + "\n";
+        } else { /* 1 cycle */
+            return dl_command("gsDPSetCombineMode", "G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE, G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE") + "\n";
+        }
+    }
+
     /** Returns texture load string. */
     std::string GetTextureLoad() {
         bool tex4b = false;
@@ -130,71 +207,12 @@ class Material {
         }
 
         if (tex4b) { /* Thank you SGI, very cool! */
-            ret += dl_command("gsDPLoadTextureBlock_4b", fileOut + "_texture_" + std::to_string(index) + ", " + texLoadType + std::to_string(tex.size[AXIS_X]) + ", " + std::to_string(tex.size[AXIS_Y]) + ", 0, G_TX_WRAP | " + texFlagU + ",  G_TX_WRAP | " + texFlagV + ", " + std::to_string(tex.sizeLog2[AXIS_X]) + ", " + std::to_string(tex.sizeLog2[AXIS_Y]) + ", G_TX_NOLOD, G_TX_NOLOD") + "\n" + dl_command("gsSPTexture", "-1, -1, 0, 0, 1") + "\n" + dl_command("gsDPTileSync", "") + "\n";
+            ret += dl_command("gsDPLoadTextureBlock_4b", fileOut + "_texture_" + std::to_string(index) + ", " + texLoadType + std::to_string(tex.size[AXIS_X]) + ", " + std::to_string(tex.size[AXIS_Y]) + ", 0, G_TX_WRAP | " + texFlagU + ",  G_TX_WRAP | " + texFlagV + ", " + std::to_string(tex.sizeLog2[AXIS_X]) + ", " + std::to_string(tex.sizeLog2[AXIS_Y]) + ", G_TX_NOLOD, G_TX_NOLOD") + "\n";
         } else {
-            ret += dl_command("gsDPLoadTextureBlock", fileOut + "_texture_" + std::to_string(index) + ", " + texLoadType + texLoadSize + std::to_string(tex.size[AXIS_X]) + ", " + std::to_string(tex.size[AXIS_Y]) + ", 0, G_TX_WRAP | " + texFlagU + ",  G_TX_WRAP | " + texFlagV + ", " + std::to_string(tex.sizeLog2[AXIS_X]) + ", " + std::to_string(tex.sizeLog2[AXIS_Y]) + ", G_TX_NOLOD, G_TX_NOLOD") +"\n" + dl_command("gsSPTexture", "-1, -1, 0, 0, 1") + "\n" + dl_command("gsDPTileSync", "") + "\n";
+            ret += dl_command("gsDPLoadTextureBlock", fileOut + "_texture_" + std::to_string(index) + ", " + texLoadType + texLoadSize + std::to_string(tex.size[AXIS_X]) + ", " + std::to_string(tex.size[AXIS_Y]) + ", 0, G_TX_WRAP | " + texFlagU + ",  G_TX_WRAP | " + texFlagV + ", " + std::to_string(tex.sizeLog2[AXIS_X]) + ", " + std::to_string(tex.sizeLog2[AXIS_Y]) + ", G_TX_NOLOD, G_TX_NOLOD") + "\n";
         }
         return ret;
     }
-
-    /** Returns combiner settings (new) */
-    std::string GetDrFuckingFrauber(const u8 layer, const bool twoCycle) {
-        if (name.find("#DIFFUSE") != std::string::npos) {
-            goto untextured;
-        }
-
-        if (twoCycle && textured) { /* 2 cycle */
-            switch (layer) {
-                case 0: /* opaque */
-                case 1:
-                case 2:
-                case 3:
-                return dl_command("gsDPSetCombineMode", "G_CCMUX_TEXEL0, G_CCMUX_0, G_CCMUX_SHADE, G_CCMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE, G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_COMBINED, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_COMBINED") + "\n";
-                break;
-
-                case 4: /* alpha */
-                return dl_command("gsDPSetCombineMode", "G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_TEXEL0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_TEXEL0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_COMBINED, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_COMBINED") + "\n";
-                break;
-
-                case 5: /* transparent */
-                case 6:
-                case 7:
-                return dl_command("gsDPSetCombineMode", "G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_TEXEL0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_TEXEL0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_COMBINED, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_COMBINED") + "\n";
-                break;
-            }
-        } else if (!twoCycle && textured) { /* 1 cycle */
-            switch (layer) {
-                case 0: /* opaque */
-                case 1:
-                case 2:
-                case 3:
-                return dl_command("gsDPSetCombineMode", "G_CCMUX_TEXEL0, G_CCMUX_0, G_CCMUX_SHADE, G_CCMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE, G_CCMUX_TEXEL0, G_CCMUX_0, G_CCMUX_SHADE, G_CCMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE") + "\n";
-                break;
-
-                case 4: /* alpha */
-                return dl_command("gsDPSetCombineMode", "G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_TEXEL0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_TEXEL0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_TEXEL0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_TEXEL0") + "\n";
-                break;
-
-                case 5: /* transparent */
-                case 6:
-                case 7:
-                return dl_command("gsDPSetCombineMode", "G_CCMUX_TEXEL0, G_CCMUX_0, G_CCMUX_SHADE, G_CCMUX_0, G_ACMUX_TEXEL0, G_ACMUX_0, G_ACMUX_SHADE, G_ACMUX_0, G_CCMUX_TEXEL0, G_CCMUX_0, G_CCMUX_SHADE, G_CCMUX_0, G_ACMUX_TEXEL0, G_ACMUX_0, G_ACMUX_SHADE, G_ACMUX_0") + "\n";
-                break;
-            }
-        }
-        /* diffuse fallback */
-        untextured:
-        if (twoCycle) {
-            return dl_command("gsDPSetCombineMode", "G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE, G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_COMBINED, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_COMBINED") + "\n";
-        } else { /* 1 cycle */
-            return dl_command("gsDPSetCombineMode", "G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE, G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE") + "\n";
-        }
-    }
-
-#define GROUP_TAGS 5
-bool ourGeo[GROUP_TAGS] = {0x00};
-std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#SHADE", "#BACKFACE" },
-    geoModes[GROUP_TAGS] = { "G_TEXTURE_GEN", "G_TEXTURE_GEN_LINEAR", "G_LIGHTING", "G_SHADE", "G_CULL_BACK" };
 
     std::string GetGeometryMode(bool* oldGeo) {
         std::string setRet = "", clearRet = "";
@@ -266,28 +284,13 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
         return setRet + NewlineIfTrue(setOring) + clearRet + NewlineIfTrue(clearOring) + lights;
     }
 
-    public:
-    enum GeoModes { ENVMAP, LIN_ENVMAP, LIGHTING, SHADE, BACKFACE};
-    bool useless = false, textured = false;
-    INLINE void setName(const std::string &n) { name = n; }
-    INLINE void setFile(const std::string &f) { fileOut = f; }
-    INLINE void setIndex(const u16 i) { index = i; }
-    INLINE u16 getIndex() { return index; }
-
-    /**
-     * Returns true if lighting will be enabled.
-     * Used to fix weird colors caused by
-     * enabling lighting in some situations.
-     */
-
-    bool getLighting(const bool* oldGeo) {
-        for (u8 i = 0; i < GROUP_TAGS; i++) {
-            if (name.find(groupTags[i]) != std::string::npos) {
-                ourGeo[i] = true;
-            }
+    /* Env mapping requires huge scaling */
+    std::string getTextureScaling() {
+        std::string textureArgs;
+        if (name.find("#ENVMAP")) { /* env mapping */
+            return "gsSPTexture" + std::to_string(tex.size[AXIS_X] * 62) + ", " + std::to_string(tex.size[AXIS_Y] * 62) + ", 0, 0, 1\n";
         }
-
-        return !oldGeo[LIGHTING] && ourGeo[LIGHTING];
+        return "gsSPTexture -1, -1, 0, 0, 1\n";
     }
 
     void setPath(const std::string &p) {
@@ -312,7 +315,7 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
     /** Configures the Material object. (Unused for now) */
     void setMaterial(std::string n, std::string p) {}
 
-    /** Returns the exact F3D settings that represent this material. */
+    /** Returns the exact F3D settings that represent this material. (deprecated) */
     std::string getMaterial(bool* oldGeo, const u8 layer, const bool twoCycle) {
         std::string ret;
         ret += GetGeometryMode(oldGeo);
