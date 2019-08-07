@@ -29,6 +29,7 @@
 #define FORMATS 8
 
 extern const std::string format[FORMATS];
+std::string hex_string(u8);
 
 typedef struct {
     std::string path;
@@ -60,6 +61,7 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
     public:
     enum GeoModes { ENVMAP, LIN_ENVMAP, LIGHTING, SHADE, BACKFACE};
     bool useless = false, textured = false;
+    u8 diffuse[3];
     INLINE void setName(const std::string &n) { name = n; }
     INLINE void setFile(const std::string &f) { fileOut = f; }
     INLINE void setIndex(const u16 i) { index = i; }
@@ -72,6 +74,13 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
      */
 
     bool getLighting(const bool* oldGeo) { return !oldGeo[LIGHTING] && (name.find(groupTags[LIGHTING]) != std::string::npos); }
+
+    std::string getEnvColor() {
+        if (name.find("#DIFFUSE") != std::string::npos) {
+            return dl_command("gsDPSetEnvColor", "0x00, 0x00 " + hex_string(diffuse[C_RED]) + ", " + hex_string(diffuse[C_GRN]) + ", " + hex_string(diffuse[C_BLU])) + "\n";
+        }
+        return "";
+    }
 
     /** Returns combiner settings (new) */
     std::string getSetCombine(const u8 layer, const bool twoCycle) {
@@ -105,8 +114,13 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
             return dl_command("gsDPSetCombine", combiner[CYCLE1] + ", " + combiner[CYCLE2]) + "\n";
         }
 
-        if (name.find("#DIFFUSE") != std::string::npos) {
-            goto untextured;
+        if (name.find("#DIFFUSE") != std::string::npos) { /* Custom fallback material. */
+            std::string ret;
+            if (twoCycle) {
+                return dl_command("gsDPSetCombineMode", "G_CCMUX_SHADE, G_CCMUX_0, G_CCMUX_ENVIRONMENT, G_CCMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE, G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_COMBINED, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_COMBINED") + "\n";
+            } else { /* 1 cycle */
+                return dl_command("gsDPSetCombineMode", "G_CCMUX_SHADE, G_CCMUX_0, G_CCMUX_ENVIRONMENT, G_CCMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE, G_CCMUX_SHADE, G_CCMUX_0, G_CCMUX_ENVIRONMENT, G_CCMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE") + "\n";
+            }
         }
 
         if (twoCycle && textured) { /* 2 cycle */
@@ -143,7 +157,6 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
             }
         }
         /* diffuse fallback */
-        untextured:
         if (twoCycle) {
             return dl_command("gsDPSetCombineMode", "G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE, G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_COMBINED, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_COMBINED") + "\n";
         } else { /* 1 cycle */

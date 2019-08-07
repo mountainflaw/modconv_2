@@ -35,6 +35,7 @@ enum GeoModes { ENVMAP, LIN_ENVMAP, LIGHTING, SHADE, BACKFACE};
  */
 
 #define MAT_NOT_LAYER -2
+#define PROPERTIES 5
 
 class DisplayList {
     private:
@@ -54,22 +55,24 @@ class DisplayList {
     }
 
     /** Returns delta material settings. */
-    std::string store[4];
+    std::string store[PROPERTIES];
     std::string GetMaterial(Material* mat, u16 currMat, bool* oldGeo, const bool first) {
-        enum Properties { GEO, COMBINER, TEXLOAD, TEXSCALE };
-        bool properties[4] = {0};
+        enum Properties { GEO, ENV, COMBINER, TEXLOAD, TEXSCALE };
+        bool properties[PROPERTIES] = {0};
         if (first) {
             store[GEO] = mat[currMat].getGeometryMode(oldGeo);
+            store[ENV] = mat[currMat].getEnvColor();
             store[COMBINER] = mat[currMat].getSetCombine(layer, twoCycle);
             store[TEXLOAD] = mat[currMat].getTextureLoad();
             store[TEXSCALE] = mat[currMat].getTextureScaling();
 
-            return dl_command("gsDPPipeSync") + "\n" + store[GEO] + store[COMBINER] + store[TEXLOAD] + store[TEXSCALE] + dl_command("gsDPTileSync") + "\n";
+            return dl_command("gsDPPipeSync") + "\n" + store[GEO] + store[ENV] + store[COMBINER] + store[TEXLOAD] + store[TEXSCALE] + dl_command("gsDPTileSync") + "\n";
         }
 
-        std::string write[4];
-        std::string load[4] = {
+        std::string write[PROPERTIES];
+        std::string load[PROPERTIES] = {
             mat[currMat].getGeometryMode(oldGeo),
+            mat[currMat].getEnvColor(),
             mat[currMat].getSetCombine(layer, twoCycle),
             mat[currMat].getTextureLoad(),
             mat[currMat].getTextureScaling()
@@ -82,9 +85,10 @@ class DisplayList {
             lights += dl_command_ref("gsSPLight", get_filename(fOut) + "_ambient_light, 2") + "\n";
         }
 
-        for (u16 i = 0; i < 4; i++) {
+        for (u16 i = 0; i < PROPERTIES; i++) {
+            std::cout << load[i];
             if (store[i] != load[i]) {
-                if (load[i] == "") {
+                if (load[i] == "") { /* sometimes material properties return nothing if they're redundant/not needed */
                     continue;
                 }
 
@@ -97,11 +101,11 @@ class DisplayList {
 
         std::string ret = "";
 
-        if (properties[GEO] || properties[COMBINER] || properties[TEXLOAD] || properties[TEXSCALE]) {
+        if (properties[GEO] || properties[ENV] || properties[COMBINER] || properties[TEXLOAD] || properties[TEXSCALE]) {
             ret += dl_command("gsDPPipeSync") + "\n";
         }
 
-        ret += write[GEO] + lights + write[COMBINER] + write[TEXLOAD] + write[TEXSCALE];
+        ret += write[GEO] + lights + write[ENV] + write[COMBINER] + write[TEXLOAD] + write[TEXSCALE];
 
         if (properties[TEXLOAD] || properties[TEXSCALE]) {
             ret += dl_command("gsDPTileSync") + "\n";

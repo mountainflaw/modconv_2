@@ -327,7 +327,7 @@ void cycle_vbuffers(VertexBuffer *vBuf, u8 mode, u8 microcode) {
     }
 }
 
-static INLINE std::string hex_string(const u8 hex) {
+INLINE std::string hex_string(const u8 hex) {
     std::stringstream s;
     s << std::hex << (u16)hex;
 
@@ -387,6 +387,7 @@ static void write_vtx(const std::string fileOut, const std::string &path, Vertex
 }
 
 void configure_materials(const std::string &file, const std::string &fileOut, Material* mat, const aiScene* scene) {
+    aiColor4D aiDiffuse; 
     for (u16 i = 0; i < scene->mNumMaterials; i++) {
         aiString aiPath, aiName;
         scene->mMaterials[i]->Get(AI_MATKEY_NAME, aiName);
@@ -400,6 +401,16 @@ void configure_materials(const std::string &file, const std::string &fileOut, Ma
         } else if (file_exists(get_path(file) + aiPath.data) && !(is_directory(get_path(file) + aiPath.data))) { /* relative */
             mat[i].setPath(get_path(file) + aiPath.data);
             mat[i].textured = true;
+        }
+
+        if (scene->mMaterials[i]->Get(AI_MATKEY_COLOR_DIFFUSE, aiDiffuse) == AI_SUCCESS) {
+            mat[i].diffuse[C_RED] = aiDiffuse.r * 0xFF;
+            mat[i].diffuse[C_GRN] = aiDiffuse.g * 0xFF;
+            mat[i].diffuse[C_BLU] = aiDiffuse.b * 0xFF;
+        } else { /* no diffuse colors */
+            mat[i].diffuse[C_RED] = 0xFF;
+            mat[i].diffuse[C_GRN] = 0xFF;
+            mat[i].diffuse[C_BLU] = 0xFF;
         }
 
         /* Untextured models are always shaded. */
