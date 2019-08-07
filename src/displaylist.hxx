@@ -134,6 +134,10 @@ class DisplayList {
             gfxOut << "gsDPSetCycleType G_CYC_2CYCLE" << std::endl;
         }
 
+        if (layer > 3) {
+            gfxOut << dl_command("gsDPSetDepthSource", "G_ZS_PIXEL") << std::endl;
+        }
+
         if (fog) {
             twoCycle = true; /* so G_CYC_2CYCLE is disabled */
 
