@@ -87,21 +87,21 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
         /* combiner override */
         if (name.find("$") != std::string::npos) {
             u16 pos = 0;
-            pos[STARTPOS] = name.find("$") + 1;
-            for (u16 j = pos[STARTPOS]; j < name.length(); j++) {
+            pos = name.find("$") + 1;
+            for (u16 j = pos; j < name.length(); j++) {
                 if (name[j] == ' ') {
                     break;
                 }
-                combiner[0] = name.substr(pos[STARTPOS], (j - pos[STARTPOS]) + 1);
+                combiner[0] = name.substr(pos, (j - pos) + 1);
             }
             pos = 0;
             if (name.find("%") != std::string::npos) {
-                pos[STARTPOS] = name.find("%") + 1;
-                for (u16 j = pos[STARTPOS]; j < name.length(); j++) {
+                pos = name.find("%") + 1;
+                for (u16 j = pos; j < name.length(); j++) {
                     if (name[j] == ' ') {
                         break;
                     }
-                    combiner[1] = name.substr(pos[STARTPOS], (j - pos[STARTPOS]) + 1);
+                    combiner[1] = name.substr(pos, (j - pos) + 1);
                 }
             } else { /* user did not specify cycle 2 */
                 combiner[1] = combiner[0];
