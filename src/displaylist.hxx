@@ -52,24 +52,50 @@ class DisplayList {
         return true;
     }
 
-
-    std::string storedCombiner;
-    /** Returns material properties. Only returns what is needed to reduce writing useless data. */
+    /** Returns delta material settings. */
+    std::string store[4];
     std::string GetMaterial(Material* mat, u16 currMat, bool* oldGeo, const bool first) {
+        enum Properties { GEO, COMBINER, TEXLOAD, TEXSCALE };
+        bool properties[4] = {0};
         if (first) {
-            storedCombiner = mat[currMat].getSetCombine(layer, twoCycle);
-            return "";
+            store[GEO] = mat[currMat].getGeometryMode(oldGeo);
+            store[COMBINER] = mat[currMat].getSetCombine(layer, twoCycle);
+            store[TEXLOAD] = mat[currMat].getTextureLoad();
+            store[TEXSCALE] = mat[currMat].getTextureScaling();
+
+            return dl_command("gsDPPipeSync") + "\n" + store[GEO] + store[COMBINER] + store[TEXLOAD] + store[TEXSCALE] + dl_command("gsDPTileSync") + "\n";
         }
 
-        if (storedCombiner != mat[currMat].getSetCombine(layer, twoCycle)) {
-            std::cout << "wowie our combiners are different !!!" << std::endl;
-            std::cout << "lengths " << mat[currMat].getSetCombine(layer, twoCycle).length() << " " << storedCombiner.length() << std::endl;
-        } else {
-            std::cout << "wowie our combiners are the same !!!" << std::endl;
+        std::string write[4];
+        std::string load[4] = {
+            mat[currMat].getGeometryMode(oldGeo),
+            mat[currMat].getSetCombine(layer, twoCycle),
+            mat[currMat].getTextureLoad(),
+            mat[currMat].getTextureScaling()
+        };
+
+        for (u16 i = 0; i < 4; i++) {
+            if (store[i] != load[i]) {
+                write[i] = load[i];
+                properties[i] = true;
+            } else {
+                write[i] = "";
+            }
         }
 
-        storedCombiner = mat[currMat].getSetCombine(layer, twoCycle);
-        return "";
+        std::string ret = "";
+
+        if (properties[GEO] || properties[COMBINER] || properties[TEXLOAD] || properties[TEXSCALE]) {
+            ret += dl_command("gsDPPipeSync") + "\n";
+        }
+
+        ret += write[GEO] + write[COMBINER] + write[TEXLOAD] + write[TEXSCALE];
+
+        if (properties[TEXLOAD] || properties[TEXSCALE]) {
+            ret += dl_command("gsDPTileSync") + "\n";
+        }
+
+        return ret;
     }
 
     public:
@@ -119,7 +145,7 @@ class DisplayList {
                     first = false;
                 }
 
-                gfxOut << dl_command("gsSPVertex", get_filename(fileOut) + "_vertex_" + std::to_string(i) + ", " + std::to_string(vBuf[i].loadSize) + ", 0") << std::endl;
+                gfxOut << dl_command_ref("gsSPVertex", get_filename(fileOut) + "_vertex_" + std::to_string(i) + ", " + std::to_string(vBuf[i].loadSize) + ", 0") << std::endl;
 
                 while (!vBuf[i].isBufferComplete()) {
                     if (vBuf[i].getVtxMat() != currMat && vBuf[i].getLayeredVtxMat(layer) != MAT_NOT_LAYER) {
@@ -130,7 +156,7 @@ class DisplayList {
                         first = false;
 
                         if (resetVtxCache) {
-                            gfxOut << dl_command("gsSPVertex", get_filename(fileOut) + "_vertex_" + std::to_string(i) + ", " + std::to_string(vBuf[i].loadSize) + ", 0") << std::endl;
+                            gfxOut << dl_command_ref("gsSPVertex", get_filename(fileOut) + "_vertex_" + std::to_string(i) + ", " + std::to_string(vBuf[i].loadSize) + ", 0") << std::endl;
                         }
                     }
 

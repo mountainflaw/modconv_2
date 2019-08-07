@@ -37,6 +37,7 @@ typedef struct {
 } Texture;
 
 enum Texels { TEXEL0, TEXEL1 };
+enum Cycles { CYCLE1, CYCLE2 };
 
 /** Fast3D material class */
 class Material {
@@ -92,7 +93,7 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
                 if (name[j] == ' ') {
                     break;
                 }
-                combiner[0] = name.substr(pos, (j - pos) + 1);
+                combiner[CYCLE1] = name.substr(pos, (j - pos) + 1);
             }
             pos = 0;
             if (name.find("%") != std::string::npos) {
@@ -101,13 +102,15 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
                     if (name[j] == ' ') {
                         break;
                     }
-                    combiner[1] = name.substr(pos, (j - pos) + 1);
+                    combiner[CYCLE2] = name.substr(pos, (j - pos) + 1);
                 }
             } else { /* user did not specify cycle 2 */
-                combiner[1] = combiner[0];
+                combiner[CYCLE2] = combiner[CYCLE1];
             }
 
-            return dl_command("gsDPSetCombine", combiner[0] + ", " + combiner[1]);
+
+            std::cout << dl_command("gsDPSetCombine", combiner[CYCLE1] + ", " + combiner[CYCLE2]) << std::endl;
+            return dl_command("gsDPSetCombine", combiner[CYCLE1] + ", " + combiner[CYCLE2]) + "\n";
         }
 
         if (name.find("#DIFFUSE") != std::string::npos) {
@@ -158,6 +161,10 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
 
     /** Returns texture load string. */
     std::string getTextureLoad() {
+        if (!textured) {
+            return "";
+        }
+
         bool tex4b = false;
         std::string ret = "", texLoadType, texLoadSize;
         u8 type = 0; /* RGBA16 just in case */

@@ -149,6 +149,7 @@ void extern_data(const std::string &fileOut, const std::string &a);
 f32 scaling_hack();
 
 std::string dl_command(const std::string &cmd, const std::string &arg);
+std::string dl_command_ref(const std::string &cmd, const std::string &arg);
 std::string dl_command(const std::string &cmd);
 
 extern u8 diffuse[6];
