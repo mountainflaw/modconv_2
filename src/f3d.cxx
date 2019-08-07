@@ -63,9 +63,15 @@ const std::string format[FORMATS] = { ".rgba16.png", ".rgba32.png", ".ci4.png", 
 INLINE std::string dl_command(const std::string &cmd, const std::string &arg) {
     if (gExportC) {
         return "    " + cmd + "(" + arg + "),";
-    } else {
-        return cmd + " " + arg;
     }
+    return cmd + " " + arg;
+}
+
+INLINE std::string dl_command(const std::string &cmd) {
+    if (gExportC) {
+        return "    " + cmd + "(),";
+    }
+    return cmd;
 }
 
 void inspect_vtx(aiNode* node, const aiScene* scene) {
@@ -437,11 +443,14 @@ static void write_textures(const std::string &fileOut, Material *mat, const aiSc
            << get_filename(fileOut) << "_diffuse_light:" << std::endl
            << ".byte " + hex_string(diffuse[0]) + ", " + hex_string(diffuse[1]) + ", " + hex_string(diffuse[2]) + ", 0x00, " + hex_string(diffuse[0]) + ", " + hex_string(diffuse[1]) + ", " + hex_string(diffuse[2]) + ", 0x00" << std::endl
            << ".byte " + hex_string(diffuse[3]) + ", " + hex_string(diffuse[4]) + ", " + hex_string(diffuse[5]) + ", 0x00, 0x00, 0x00, 0x00, 0x00" << std::endl;
+
     /* Phase 2 - Find redundant textures */
+
     for (u16 i = 0; i < scene->mNumMaterials; i++) {
         for (u16 j = 0; j < scene->mNumMaterials; j++) {
             if (mat[i].getPath().compare(mat[j].getPath()) == 0 && j > i) {
                 mat[j].useless = true;
+                mat[j].index = i;
             }
         }
     }
@@ -467,13 +476,13 @@ static void write_textures(const std::string &fileOut, Material *mat, const aiSc
             }
 
             texOut << std::endl;
-            texOut << labelize(fileOut + "_texture_" + std::to_string(i)) << std::endl;
+            texOut << labelize(fileOut + "_texture_" + std::to_string(mat[i].index)) << std::endl;
             texOut << ".incbin " << R"(")" << exportType << "/" << get_filename(fileOut) << "/" << get_tex_incbin(mat[i].getPath()) << R"(")" << std::endl;
             std::cout << "material path " << mat[i].getPath() << std::endl;
             std::cout << "material filename " << get_filename(mat[i].getPath()) << std::endl;
 
             if (mat[i].getFileNameNoExtension().find("ci4") != std::string::npos || mat[i].getFileNameNoExtension().find("ci8") != std::string::npos) { /* CI palette */
-                texOut << std::endl << labelize(fileOut + "_palette_" + std::to_string(i)) << std::endl;
+                texOut << std::endl << labelize(fileOut + "_palette_" + std::to_string(mat[i].index)) << std::endl;
                 texOut << ".incbin " << R"(")" << exportType << "/" << get_filename(fileOut) << "/" << mat[i].getFileNameNoExtension() << R"(.pal")" << std::endl;
             }
 

@@ -41,6 +41,7 @@ class DisplayList {
     std::string dlTypes[8] = {"_layer_0", "_layer_1", "_layer_2", "_layer_3", "_layer_4", "_layer_5", "_layer_6", "_layer_7"};
     u8 layer = 1;
     bool twoCycle = false;
+    bool first = true;
 
     INLINE bool WriteTri(s16 tri[], u8 size) {
         for (u8 i = 0; i < size; i++) {
@@ -49,6 +50,26 @@ class DisplayList {
             }
         }
         return true;
+    }
+
+
+    std::string storedCombiner;
+    /** Returns material properties. Only returns what is needed to reduce writing useless data. */
+    std::string GetMaterial(Material* mat, u16 currMat, bool* oldGeo, const bool first) {
+        if (first) {
+            storedCombiner = mat[currMat].getSetCombine(layer, twoCycle);
+            return "";
+        }
+
+        if (storedCombiner != mat[currMat].getSetCombine(layer, twoCycle)) {
+            std::cout << "wowie our combiners are different !!!" << std::endl;
+            std::cout << "lengths " << mat[currMat].getSetCombine(layer, twoCycle).length() << " " << storedCombiner.length() << std::endl;
+        } else {
+            std::cout << "wowie our combiners are the same !!!" << std::endl;
+        }
+
+        storedCombiner = mat[currMat].getSetCombine(layer, twoCycle);
+        return "";
     }
 
     public:
@@ -93,8 +114,9 @@ class DisplayList {
             if (vBuf[i].hasLayer(layer)) { /* don't load what we don't need */
                 if (vBuf[i].getLayeredVtxMat(layer) != currMat && vBuf[i].getLayeredVtxMat(layer) != MAT_NOT_LAYER) { /* load before vtx load if possible */
                     currMat = vBuf[i].getLayeredVtxMat(layer);
-                    gfxOut << "/* " << mat[currMat].getName() << " */" << std::endl
-                                    << mat[currMat].getMaterial(oldGeo, layer, twoCycle);
+                    gfxOut << "/* " << mat[currMat].getName() << " */" << std::endl;
+                    gfxOut << GetMaterial(mat, currMat, oldGeo, first);
+                    first = false;
                 }
 
                 gfxOut << dl_command("gsSPVertex", get_filename(fileOut) + "_vertex_" + std::to_string(i) + ", " + std::to_string(vBuf[i].loadSize) + ", 0") << std::endl;
@@ -103,8 +125,9 @@ class DisplayList {
                     if (vBuf[i].getVtxMat() != currMat && vBuf[i].getLayeredVtxMat(layer) != MAT_NOT_LAYER) {
                         currMat = vBuf[i].getLayeredVtxMat(layer);
                         bool resetVtxCache = mat[currMat].getLighting(oldGeo);
-                        gfxOut << "/* " << mat[currMat].getName() << " */" << std::endl
-                                        << mat[currMat].getMaterial(oldGeo, layer, twoCycle);
+                        gfxOut << "/* " << mat[currMat].getName() << " */" << std::endl;
+                        gfxOut << GetMaterial(mat, currMat, oldGeo, first);
+                        first = false;
 
                         if (resetVtxCache) {
                             gfxOut << dl_command("gsSPVertex", get_filename(fileOut) + "_vertex_" + std::to_string(i) + ", " + std::to_string(vBuf[i].loadSize) + ", 0") << std::endl;
@@ -184,7 +207,7 @@ class DisplayList {
                 break;
             }
 
-            gfxOut << "gsDPSetRenderMode " << renderMode1Cycle << "," << renderMode2Cycle << std::endl
+            gfxOut << "gsDPSetRenderMode " << renderMode1Cycle << ", " << renderMode2Cycle << std::endl
                    << "gsSPClearGeometryMode G_FOG" << std::endl;
         }
 
@@ -212,7 +235,10 @@ class DisplayList {
             gfxOut << dl_command("gsSPClearGeometryMode", "G_CULL_BACK") << std::endl;
         }
 
-        gfxOut << dl_command("gsSPEndDisplayList", "") << std::endl;
-        gfxOut << "};" << std::endl;
+        gfxOut << dl_command("gsSPEndDisplayList") << std::endl;
+
+        if (gExportC) {
+            gfxOut << "};" << std::endl;
+        }
     }
 };
