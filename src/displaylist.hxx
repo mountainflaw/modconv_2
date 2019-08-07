@@ -42,6 +42,7 @@ class DisplayList {
     u8 layer = 1;
     bool twoCycle = false;
     bool first = true;
+    std::string fOut;
 
     INLINE bool WriteTri(s16 tri[], u8 size) {
         for (u8 i = 0; i < size; i++) {
@@ -74,8 +75,19 @@ class DisplayList {
             mat[currMat].getTextureScaling()
         };
 
+        std::string lights = "";
+        if (mat[currMat].getLighting(oldGeo)) {
+            lights  = dl_command("gsSPNumLights", "NUMLIGHTS_1") + "\n";
+            lights += dl_command_ref("gsSPLight", get_filename(fOut) + "_diffuse_light, 1") + "\n";
+            lights += dl_command_ref("gsSPLight", get_filename(fOut) + "_ambient_light, 2") + "\n";
+        }
+
         for (u16 i = 0; i < 4; i++) {
             if (store[i] != load[i]) {
+                if (load[i] == "") {
+                    continue;
+                }
+
                 write[i] = load[i];
                 properties[i] = true;
             } else {
@@ -89,7 +101,7 @@ class DisplayList {
             ret += dl_command("gsDPPipeSync") + "\n";
         }
 
-        ret += write[GEO] + write[COMBINER] + write[TEXLOAD] + write[TEXSCALE];
+        ret += write[GEO] + lights + write[COMBINER] + write[TEXLOAD] + write[TEXSCALE];
 
         if (properties[TEXLOAD] || properties[TEXSCALE]) {
             ret += dl_command("gsDPTileSync") + "\n";
@@ -105,6 +117,8 @@ class DisplayList {
         bool oldGeo[5] = {false};
         std::fstream gfxOut;
         s16 currMat = -1; /* force update at start*/
+
+        fOut = fileOut;
 
         if (gExportC) {
             gfxOut.open(fileOut + "/model.inc.c", std::ofstream::out | std::ofstream::app);

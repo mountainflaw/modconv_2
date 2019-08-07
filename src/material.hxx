@@ -71,15 +71,7 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
      * enabling lighting in some situations.
      */
 
-    bool getLighting(const bool* oldGeo) {
-        for (u8 i = 0; i < GROUP_TAGS; i++) {
-            if (name.find(groupTags[i]) != std::string::npos) {
-                ourGeo[i] = true;
-            }
-        }
-
-        return !oldGeo[LIGHTING] && ourGeo[LIGHTING];
-    }
+    bool getLighting(const bool* oldGeo) { return !oldGeo[LIGHTING] && (name.find(groupTags[LIGHTING]) != std::string::npos); }
 
     /** Returns combiner settings (new) */
     std::string getSetCombine(const u8 layer, const bool twoCycle) {
@@ -301,15 +293,6 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
             }
         }
 
-        std::string lights = "";
-
-        if (ourGeo[LIGHTING]) {
-
-            lights = dl_command("gsSPNumLights", "NUMLIGHTS_1") + "\n";
-            lights += dl_command("gsSPLight", get_filename(fileOut) + "_diffuse_light, 1") + "\n";
-            lights += dl_command("gsSPLight", get_filename(fileOut) + "_ambient_light, 2") + "\n";
-        }
-
         /* copy over current geo to old geo */
         for (u8 i = 0; i < GROUP_TAGS; i++) {
             if (ourGeo[i]) {
@@ -317,7 +300,7 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
             }
         }
 
-        return setRet + NewlineIfTrue(setOring) + clearRet + NewlineIfTrue(clearOring) + lights;
+        return setRet + NewlineIfTrue(setOring) + clearRet + NewlineIfTrue(clearOring);
     }
 
     /* Env mapping requires huge scaling */
