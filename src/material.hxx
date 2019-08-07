@@ -36,6 +36,8 @@ typedef struct {
     u8 sizeLog2[2];
 } Texture;
 
+enum Texels { TEXEL0, TEXEL1 };
+
 /** Fast3D material class */
 class Material {
     private:
@@ -80,8 +82,34 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
 
     /** Returns combiner settings (new) */
     std::string getSetCombine(const u8 layer, const bool twoCycle) {
-        std::string test = "test";
-        return test;
+        std::string combiner[2];
+
+        /* combiner override */
+        if (name.find("$") != std::string::npos) {
+            u16 pos = 0;
+            pos[STARTPOS] = name.find("$") + 1;
+            for (u16 j = pos[STARTPOS]; j < name.length(); j++) {
+                if (name[j] == ' ') {
+                    break;
+                }
+                combiner[0] = name.substr(pos[STARTPOS], (j - pos[STARTPOS]) + 1);
+            }
+            pos = 0;
+            if (name.find("%") != std::string::npos) {
+                pos[STARTPOS] = name.find("%") + 1;
+                for (u16 j = pos[STARTPOS]; j < name.length(); j++) {
+                    if (name[j] == ' ') {
+                        break;
+                    }
+                    combiner[1] = name.substr(pos[STARTPOS], (j - pos[STARTPOS]) + 1);
+                }
+            } else { /* user did not specify cycle 2 */
+                combiner[1] = combiner[0];
+            }
+
+            return dl_command("gsDPSetCombine", combiner[0] + ", " + combiner[1]);
+        }
+
         if (name.find("#DIFFUSE") != std::string::npos) {
             goto untextured;
         }
