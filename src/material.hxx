@@ -41,10 +41,10 @@ enum Texels { TEXEL0, TEXEL1 };
 enum Cycles { CYCLE1, CYCLE2 };
 
 enum GeoModes {
-    GEO_LIGHTING = (0 >> 2),
-    GEO_BACKFACE = (1 >> 4),
-    GEO_ENVMAP   = (2 >> 6),
-    GEO_ENVMAP_L = (3 >> 8)
+    GEO_LIGHTING = (0 << 2),
+    GEO_BACKFACE = (1 << 4),
+    GEO_ENVMAP   = (2 << 6),
+    GEO_ENVMAP_L = (3 << 8)
 };
 
 #define CURRENT_GEO (i << (i * 2))
