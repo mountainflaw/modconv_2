@@ -120,8 +120,6 @@ std::string groupTags[GROUP_TAGS] = { "#LIGHTING", "#BACKFACE", "#ENVMAP", "#LIN
                 combiner[CYCLE2] = combiner[CYCLE1];
             }
 
-
-            std::cout << dl_command("gsDPSetCombine", combiner[CYCLE1] + ", " + combiner[CYCLE2]) << std::endl;
             return dl_command("gsDPSetCombine", combiner[CYCLE1] + ", " + combiner[CYCLE2]) + "\n";
         }
 
@@ -273,17 +271,13 @@ std::string groupTags[GROUP_TAGS] = { "#LIGHTING", "#BACKFACE", "#ENVMAP", "#LIN
         for (u8 i = 0; i < GROUP_TAGS; i++) {
             if (name.find(groupTags[i]) != std::string::npos) {
                 geometryFlags |= CURRENT_GEO;
-                std::cout << "geometry enabled: " << geoModes[i] << std::endl;
             }
         }
-
-        std::cout << "new geometry mode " << std::to_string(geometryFlags) << std::endl;
 
         for (u8 i = 0; i < GROUP_TAGS; i++) {
             if ((geometryFlags & CURRENT_GEO) && !(*geometryCurrent & CURRENT_GEO)) { /* Set geometry mode */
                 if (i == 1) { /* Setting backface culling clears the geometry mode for it */
                     if (!clearOR) {
-                        std::cout << "CLEARING BACKFACE" << std::endl;
                         clearStr += geoModes[i];
                         clearOR = true;
                     } else { /* OR */
@@ -301,7 +295,6 @@ std::string groupTags[GROUP_TAGS] = { "#LIGHTING", "#BACKFACE", "#ENVMAP", "#LIN
 
             if (!(geometryFlags & CURRENT_GEO) && (*geometryCurrent & CURRENT_GEO)) { /* Clear geometry mode */
                 if (i == 1) { /* Setting backface culling clears the geometry mode for it */
-                        std::cout << "ENABLING BACKFACE" << std::endl;
                     if (!setOR) {
                         setStr += geoModes[i];
                         setOR = true;
