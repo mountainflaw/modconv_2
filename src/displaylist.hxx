@@ -27,7 +27,6 @@
  */
 
 #include "modconv.hxx"
-enum GeoModes { ENVMAP, LIN_ENVMAP, LIGHTING, SHADE, BACKFACE};
 
 /*
  * Display list class
@@ -35,7 +34,9 @@ enum GeoModes { ENVMAP, LIN_ENVMAP, LIGHTING, SHADE, BACKFACE};
  */
 
 #define MAT_NOT_LAYER -2
-#define PROPERTIES 5
+#define PROPERTIES 4
+
+extern u32 geometryState;
 
 class DisplayList {
     private:
@@ -57,21 +58,19 @@ class DisplayList {
     /** Returns delta material settings. */
     std::string store[PROPERTIES];
     std::string GetMaterial(Material* mat, u16 currMat, bool* oldGeo, const bool first) {
-        enum Properties { GEO, ENV, COMBINER, TEXLOAD, TEXSCALE };
+        enum Properties { ENV, COMBINER, TEXLOAD, TEXSCALE };
         bool properties[PROPERTIES] = {0};
         if (first) {
-            store[GEO] = mat[currMat].getGeometryMode(oldGeo);
             store[ENV] = mat[currMat].getEnvColor();
             store[COMBINER] = mat[currMat].getSetCombine(layer, twoCycle);
             store[TEXLOAD] = mat[currMat].getTextureLoad();
             store[TEXSCALE] = mat[currMat].getTextureScaling();
 
-            return dl_command("gsDPPipeSync") + "\n" + store[GEO] + store[ENV] + store[COMBINER] + store[TEXLOAD] + store[TEXSCALE] + dl_command("gsDPTileSync") + "\n";
+            return dl_command("gsDPPipeSync") + "\n" + mat[currMat].getGeometryMode(&geometryState) + store[ENV] + store[COMBINER] + store[TEXLOAD] + store[TEXSCALE] + dl_command("gsDPTileSync") + "\n";
         }
 
         std::string write[PROPERTIES];
         std::string load[PROPERTIES] = {
-            mat[currMat].getGeometryMode(oldGeo),
             mat[currMat].getEnvColor(),
             mat[currMat].getSetCombine(layer, twoCycle),
             mat[currMat].getTextureLoad(),
@@ -79,15 +78,15 @@ class DisplayList {
         };
 
         std::string lights = "";
-        if (mat[currMat].getLighting(oldGeo)) {
+        /*if (mat[currMat].getLighting(oldGeo)) {
             lights  = dl_command("gsSPNumLights", "NUMLIGHTS_1") + "\n";
             lights += dl_command_ref("gsSPLight", get_filename(fOut) + "_diffuse_light, 1") + "\n";
             lights += dl_command_ref("gsSPLight", get_filename(fOut) + "_ambient_light, 2") + "\n";
-        }
+        }*/
 
-        std::cout << mat[currMat].getName() << std::endl;
+        std::cout << "stored geometry mode: " << std::to_string(geometryState) << std::endl;
+
         for (u16 i = 0; i < PROPERTIES; i++) {
-            std::cout << load[i];
             if (store[i] != load[i]) {
                 if (load[i] == "") { /* sometimes material properties return nothing if they're redundant/not needed */
                     write[i] = "";
@@ -100,16 +99,15 @@ class DisplayList {
             } else {
                 write[i] = "";
             }
-            std::cout << std::endl;
         }
 
         std::string ret = "";
 
-        if (properties[GEO] || properties[ENV] || properties[COMBINER] || properties[TEXLOAD] || properties[TEXSCALE]) {
+        if (properties[ENV] || properties[COMBINER] || properties[TEXLOAD] || properties[TEXSCALE]) {
             ret += dl_command("gsDPPipeSync") + "\n";
         }
 
-        ret += write[GEO] + lights + write[ENV] + write[COMBINER] + write[TEXLOAD] + write[TEXSCALE];
+        ret += mat[currMat].getGeometryMode(&geometryState) + lights + write[ENV] + write[COMBINER] + write[TEXLOAD] + write[TEXSCALE];
 
         if (properties[TEXLOAD] || properties[TEXSCALE]) {
             ret += dl_command("gsDPTileSync") + "\n";
@@ -211,7 +209,7 @@ class DisplayList {
                 }
             }
         }
-        bool clearOring = false;
+        //bool clearOring = false;
         /* Reset display list settings */
         gfxOut << dl_command("gsSPTexture", "-1, -1, 0, 0, 0") << std::endl
                << dl_command("gsDPPipeSync", "") << std::endl
@@ -272,7 +270,7 @@ class DisplayList {
 
         /* Disable group tags */
 
-        if (oldGeo[ENVMAP]) {
+        /*if (oldGeo[ENVMAP]) {
             gfxOut << "gsSPClearGeometryMode G_TEXTURE_GEN";
             clearOring = true;
         }
@@ -292,7 +290,7 @@ class DisplayList {
 
         if (oldGeo[BACKFACE]) {
             gfxOut << dl_command("gsSPClearGeometryMode", "G_CULL_BACK") << std::endl;
-        }
+        }*/
 
         gfxOut << dl_command("gsSPEndDisplayList") << std::endl;
 

@@ -55,6 +55,8 @@ bool setLayer[8] = { false };
 
 u8 diffuse[6] = {0xFF, 0xFF, 0xFF, 0x28, 0x28, 0x28}, ambient[3] = {0x66, 0x66, 0x66};
 
+u32 geometryState = 0;
+
 bool fog = false;
 u16 fogSettings[6]; /* rgba near far */
 

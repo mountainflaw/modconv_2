@@ -40,6 +40,15 @@ typedef struct {
 enum Texels { TEXEL0, TEXEL1 };
 enum Cycles { CYCLE1, CYCLE2 };
 
+enum GeoModes {
+    GEO_LIGHTING = (0 >> 2),
+    GEO_BACKFACE = (1 >> 4),
+    GEO_ENVMAP   = (2 >> 6),
+    GEO_ENVMAP_L = (3 >> 8)
+};
+
+#define CURRENT_GEO (i << (i * 2))
+
 /** Fast3D material class */
 class Material {
     private:
@@ -53,13 +62,12 @@ class Material {
         else { return ""; }
     }
 
-#define GROUP_TAGS 5
-bool ourGeo[GROUP_TAGS] = {0x00};
-std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#SHADE", "#BACKFACE" },
-    geoModes[GROUP_TAGS] = { "G_TEXTURE_GEN", "G_TEXTURE_GEN_LINEAR", "G_LIGHTING", "G_SHADE", "G_CULL_BACK" };
+#define GROUP_TAGS 4
+u32 geometryFlags = 0;
+std::string groupTags[GROUP_TAGS] = { "#LIGHTING", "#BACKFACE", "#ENVMAP", "#LIN_ENVMAP" },
+            geoModes[GROUP_TAGS]  = { "G_LIGHTING", "G_CULL_BACK", "G_TEXTURE_GEN", "G_TEXTURE_GEN_LINEAR" };
 
     public:
-    enum GeoModes { ENVMAP, LIN_ENVMAP, LIGHTING, SHADE, BACKFACE};
     bool useless = false, textured = false;
     u8 diffuse[3];
     INLINE void setName(const std::string &n) { name = n; }
@@ -73,7 +81,10 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
      * enabling lighting in some situations.
      */
 
-    bool getLighting(const bool* oldGeo) { return !oldGeo[LIGHTING] && (name.find(groupTags[LIGHTING]) != std::string::npos); }
+    bool getLighting(const bool* oldGeo) {
+        //return !oldGeo[LIGHTING] && (name.find(groupTags[LIGHTING]) != std::string::npos);
+        return true;
+    }
 
     std::string getEnvColor() {
         if (name.find("#DIFFUSE") != std::string::npos) {
@@ -255,71 +266,76 @@ std::string groupTags[GROUP_TAGS] = { "#ENVMAP", "#LIN_ENVMAP", "#LIGHTING", "#S
         return ret;
     }
 
-    std::string getGeometryMode(bool* oldGeo) {
-        std::string setRet = "", clearRet = "";
-        bool clearOring = false, setOring = false;
+    std::string getGeometryMode(u32* geometryCurrent) {
+        bool setOR = false, clearOR = false;
+        std::string setStr = "", clearStr = "";
+
         for (u8 i = 0; i < GROUP_TAGS; i++) {
             if (name.find(groupTags[i]) != std::string::npos) {
-                ourGeo[i] = true;
+                geometryFlags |= CURRENT_GEO;
+                std::cout << "geometry enabled: " << geoModes[i] << std::endl;
             }
         }
+
+        std::cout << "new geometry mode " << std::to_string(geometryFlags) << std::endl;
 
         for (u8 i = 0; i < GROUP_TAGS; i++) {
-            if ((ourGeo[i] && !oldGeo[i]) || (!oldGeo[i] && ourGeo[i])) { /* set */
-                if (setOring && i != BACKFACE) {
-                    setOring = true;
-                    setRet += " | " + geoModes[i];
-                } else if (!setOring && i != BACKFACE) {
-                    setOring = true;
-                    setRet = "gsSPSetGeometryMode " + geoModes[i];
-                }
-
-                /* !! The #BACKFACE group tag DISABLES backface culling !!*/
-
-                else if (clearOring && i == BACKFACE) {
-                    clearOring = true;
-                    clearRet += " | " + geoModes[i];
-                } else if (!clearOring && i == BACKFACE) {
-                    clearOring = true;
-                    clearRet = "gsSPClearGeometryMode " + geoModes[i];
+            if ((geometryFlags & CURRENT_GEO) && !(*geometryCurrent & CURRENT_GEO)) { /* Set geometry mode */
+                if (i == 1) { /* Setting backface culling clears the geometry mode for it */
+                    if (!clearOR) {
+                        std::cout << "CLEARING BACKFACE" << std::endl;
+                        clearStr += geoModes[i];
+                        clearOR = true;
+                    } else { /* OR */
+                        clearStr += " | " + geoModes[i];
+                    }
+                } else { /* Not backface culling */
+                    if (!setOR) {
+                        setStr += geoModes[i];
+                        setOR = true;
+                    } else { /* OR */
+                        setStr += " | " + geoModes[i];
+                    }
                 }
             }
 
-            if ((!ourGeo[i] && oldGeo[i]) || (oldGeo[i] && !ourGeo[i])) { /* clear */
-                if (clearOring && i != BACKFACE) {
-                    clearOring = true;
-                    clearRet += " | " + geoModes[i];
-                } else if (!clearOring && i != BACKFACE) {
-                    clearOring = true;
-                    clearRet = "gsSPClearGeometryMode " + geoModes[i];
-                }
-
-                /* !! The #BACKFACE group tag DISABLES backface culling !!*/
-
-                else if (setOring && i == BACKFACE) {
-                    setOring = true;
-                    setRet += " | " + geoModes[i];
-                } else if (!setOring && i == BACKFACE) {
-                    setOring = true;
-                    setRet = "gsSPSetGeometryMode " + geoModes[i];
+            if (!(geometryFlags & CURRENT_GEO) && (*geometryCurrent & CURRENT_GEO)) { /* Clear geometry mode */
+                if (i == 1) { /* Setting backface culling clears the geometry mode for it */
+                        std::cout << "ENABLING BACKFACE" << std::endl;
+                    if (!setOR) {
+                        setStr += geoModes[i];
+                        setOR = true;
+                    } else { /* OR */
+                        setStr += " | " + geoModes[i];
+                    }
+                } else { /* Not backface culling */
+                    if (!clearOR) {
+                        clearStr += geoModes[i];
+                        clearOR = true;
+                    } else { /* OR */
+                        clearStr += " | " + geoModes[i];
+                    }
                 }
             }
         }
 
-        /* copy over current geo to old geo */
-        for (u8 i = 0; i < GROUP_TAGS; i++) {
-            if (ourGeo[i]) {
-                oldGeo[i] = ourGeo[i];
-            }
+        if (setOR) {
+            setStr = dl_command("gsSPSetGeometryMode", setStr) + "\n";
         }
 
-        return setRet + NewlineIfTrue(setOring) + clearRet + NewlineIfTrue(clearOring);
+        if (clearOR) {
+            clearStr = dl_command("gsSPClearGeometryMode", clearStr) + "\n";
+        }
+
+        *geometryCurrent = geometryFlags;
+        return setStr + clearStr;
     }
 
     /* Env mapping requires huge scaling */
     std::string getTextureScaling() {
         std::string textureArgs;
         if (name.find("#ENVMAP") != std::string::npos) { /* env mapping */
+            /* Nintendo seems to do 62 * size in SM64... */
             return dl_command("gsSPTexture", std::to_string(tex.size[AXIS_X] * 62) + ", " + std::to_string(tex.size[AXIS_Y] * 62) + ", 0, 0, 1") + "\n";
         }
         return dl_command("gsSPTexture", "-1, -1, 0, 0, 1") + "\n";
