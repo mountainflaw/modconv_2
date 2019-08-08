@@ -121,6 +121,7 @@ class DisplayList {
         bool oldGeo[5] = {false};
         std::fstream gfxOut;
         s16 currMat = -1; /* force update at start*/
+        std::string renderMode1Cycle, renderMode2Cycle;
 
         fOut = fileOut;
 
@@ -145,13 +146,21 @@ class DisplayList {
         if (fog) {
             twoCycle = true; /* so G_CYC_2CYCLE is disabled */
 
-            if (layer > 1) { /* transparency */
-                gfxOut << dl_command("gsDPSetRenderMode", "G_RM_FOG_SHADE_A, G_RM_AA_ZB_XLU_SURF2") << std::endl;
-            } else { /* 0 and 1 */
-                gfxOut << dl_command("gsDPSetRenderMode", "G_RM_FOG_SHADE_A, G_RM_AA_ZB_OPA_SURF2") << std::endl;
+            renderMode1Cycle = "G_RM_FOG_SHADE_A";
+
+            switch (layer) { /* Reset layering settings */
+                case 0: renderMode2Cycle = "G_RM_ZB_OPA_SURF2";     break;
+                case 1: renderMode2Cycle = "G_RM_AA_ZB_OPA_SURF2";  break;
+                case 2: renderMode2Cycle = "G_RM_AA_ZB_OPA_DECAL2"; break;
+                case 3: renderMode2Cycle = "G_RM_AA_ZB_OPA_INTER2"; break;
+                case 4: renderMode2Cycle = "G_RM_AA_ZB_TEX_EDGE2";  break;
+                case 5: renderMode2Cycle = "G_RM_AA_ZB_XLU_SURF2";  break;
+                case 6: renderMode2Cycle = "G_RM_AA_ZB_XLU_DECAL2"; break;
+                case 7: renderMode2Cycle = "G_RM_AA_ZB_XLU_INTER2"; break;
             }
 
-            gfxOut << dl_command("gsSPSetGeometryMode", "G_FOG") << std::endl
+            gfxOut << dl_command("gsDPSetRenderMode", renderMode1Cycle + ", " + renderMode2Cycle) << std::endl
+                   << dl_command("gsSPSetGeometryMode", "G_FOG") << std::endl
                    << dl_command("gsSPFogPosition", std::to_string(fogSettings[4]) + ", " + std::to_string(fogSettings[5])) << std::endl
                    << dl_command("gsDPSetFogColor", std::to_string(fogSettings[0]) + ", " + std::to_string(fogSettings[1]) + ", " + std::to_string(fogSettings[2]) + ", " + std::to_string(fogSettings[3]))
                    << std::endl;
@@ -211,8 +220,6 @@ class DisplayList {
         }
 
         if (fog) {
-            std::string renderMode1Cycle, renderMode2Cycle;
-
             switch (layer) { /* Reset layering settings */
                 case 0:
                 renderMode1Cycle = "G_RM_ZB_OPA_SURF";
