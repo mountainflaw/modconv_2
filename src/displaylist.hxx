@@ -85,18 +85,22 @@ class DisplayList {
             lights += dl_command_ref("gsSPLight", get_filename(fOut) + "_ambient_light, 2") + "\n";
         }
 
+        std::cout << mat[currMat].getName() << std::endl;
         for (u16 i = 0; i < PROPERTIES; i++) {
             std::cout << load[i];
             if (store[i] != load[i]) {
                 if (load[i] == "") { /* sometimes material properties return nothing if they're redundant/not needed */
+                    write[i] = "";
                     continue;
                 }
 
+                store[i] = load[i];
                 write[i] = load[i];
                 properties[i] = true;
             } else {
                 write[i] = "";
             }
+            std::cout << std::endl;
         }
 
         std::string ret = "";
