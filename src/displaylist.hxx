@@ -167,6 +167,51 @@ class DisplayList {
                    << std::endl;
         }
 
+        if (gGeneric && !fog) {
+            switch (layer) {
+                case 0:
+                renderMode1Cycle = "G_RM_ZB_OPA_SURF";
+                renderMode2Cycle = "G_RM_ZB_OPA_SURF2";
+                break;
+
+                case 1:
+                renderMode1Cycle = "G_RM_AA_ZB_OPA_SURF";
+                renderMode2Cycle = "G_RM_AA_ZB_OPA_SURF2";
+                break;
+
+                case 2:
+                renderMode1Cycle = "G_RM_AA_ZB_OPA_DECAL";
+                renderMode2Cycle = "G_RM_AA_ZB_OPA_DECAL2";
+                break;
+
+                case 3:
+                renderMode1Cycle = "G_RM_AA_ZB_OPA_INTER";
+                renderMode2Cycle = "G_RM_AA_ZB_OPA_INTER2";
+                break;
+
+                case 4:
+                renderMode1Cycle = "G_RM_AA_ZB_TEX_EDGE";
+                renderMode2Cycle = "G_RM_AA_ZB_TEX_EDGE2";
+                break;
+
+                case 5:
+                renderMode1Cycle = "G_RM_AA_ZB_XLU_SURF";
+                renderMode2Cycle = "G_RM_AA_ZB_XLU_SURF2";
+                break;
+
+                case 6:
+                renderMode1Cycle = "G_RM_AA_ZB_XLU_DECAL";
+                renderMode2Cycle = "G_RM_AA_ZB_XLU_DECAL2";
+                break;
+
+                case 7:
+                renderMode1Cycle = "G_RM_AA_ZB_XLU_INTER";
+                renderMode2Cycle = "G_RM_AA_ZB_XLU_INTER2";
+                break;
+            }
+                gfxOut << dl_command("gsDPSetRenderMode", renderMode1Cycle + ", " + renderMode2Cycle) << std::endl;
+        }
+
         for (u16 i = 0; i < vBuffers; i++) {
             vBuf[i].vtxCount = 0; /* reset this from the last layer */
             if (vBuf[i].hasLayer(layer)) { /* don't load what we don't need */
