@@ -31,23 +31,24 @@
 extern const std::string format[FORMATS];
 std::string hex_string(u8);
 
-typedef struct {
+struct Texture {
     std::string path;
     u8 size[2];
     u8 sizeLog2[2];
-} Texture;
+};
 
 enum Texels { TEXEL0, TEXEL1 };
 enum Cycles { CYCLE1, CYCLE2 };
 
-enum GeoModes {
-    GEO_LIGHTING = (0 << 2),
-    GEO_BACKFACE = (1 << 4),
-    GEO_ENVMAP   = (2 << 6),
-    GEO_ENVMAP_L = (3 << 8)
+enum GeoFlags {
+    GEO_LIGHTING,
+    GEO_BACKFACE,
+    GEO_ENVMAP,
+    GEO_ENVMAP_L
 };
 
-#define CURRENT_GEO (i << (i * 2))
+#define CURRENT_GEO (1 << i)
+#define GET_GEO(x)  (1 << x)
 
 /** Fast3D material class */
 class Material {
@@ -81,9 +82,8 @@ std::string groupTags[GROUP_TAGS] = { "#LIGHTING", "#BACKFACE", "#ENVMAP", "#LIN
      * enabling lighting in some situations.
      */
 
-    bool getLighting(const bool* oldGeo) {
-        //return !oldGeo[LIGHTING] && (name.find(groupTags[LIGHTING]) != std::string::npos);
-        return true;
+    bool getLighting(u32* g) {
+        return !(*g & (1 << GEO_LIGHTING)) && (name.find(groupTags[GEO_LIGHTING]) != std::string::npos);
     }
 
     std::string getEnvColor() {
@@ -271,6 +271,7 @@ std::string groupTags[GROUP_TAGS] = { "#LIGHTING", "#BACKFACE", "#ENVMAP", "#LIN
         for (u8 i = 0; i < GROUP_TAGS; i++) {
             if (name.find(groupTags[i]) != std::string::npos) {
                 geometryFlags |= CURRENT_GEO;
+                std::cout << (u32)CURRENT_GEO << std::endl;
             }
         }
 
@@ -332,6 +333,20 @@ std::string groupTags[GROUP_TAGS] = { "#LIGHTING", "#BACKFACE", "#ENVMAP", "#LIN
             return dl_command("gsSPTexture", std::to_string(tex.size[AXIS_X] * 62) + ", " + std::to_string(tex.size[AXIS_Y] * 62) + ", 0, 0, 1") + "\n";
         }
         return dl_command("gsSPTexture", "-1, -1, 0, 0, 1") + "\n";
+    }
+
+    std::string getTextureFilter() {
+        std::string filter = "G_TF_BILERP";
+
+        if (name.find("#NEAREST") != std::string::npos) {
+            filter = "G_TF_POINT";
+        }
+
+        if (name.find("#AVERAGE") != std::string::npos) {
+            filter = "G_TF_AVERAGE";
+        }
+
+        return dl_command("gsDPSetTextureFiler", filter) + "\n";
     }
 
     void setPath(const std::string &p) {

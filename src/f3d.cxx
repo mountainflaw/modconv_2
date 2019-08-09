@@ -359,9 +359,9 @@ static void write_vtx(const std::string fileOut, const std::string &path, Vertex
 
     for (u16 i = 0; i < vBuffers; i++) {
         if (gExportC) {
-            vtxOut << std::endl << "Vertex " << get_filename(fileOut) << "_vertex_" << i << "[" << (u16)vBuf[i].loadSize << "] = {" << std::endl;
+            vtxOut << std::endl << "Vertex " << get_filename(fileOut) << "_vertex_" << i << "[" << (u16)vBuf[i].loadSize << "] = { /* " << (u16)vBuf[i].loadSize << " vertices out of " << (u16)vBuf[i].bufferSize << " */" << std::endl;
         } else { /* asm */
-            vtxOut << std::endl << labelize(get_filename(fileOut) + "_vertex_" + std::to_string(i)) << std::endl;
+            vtxOut << std::endl << labelize(get_filename(fileOut) + "_vertex_" + std::to_string(i)) << " /* " << (u16)vBuf[i].loadSize << " vertices out of " << (u16)vBuf[i].bufferSize << " */" << std::endl;
         }
         for (u16 j = 0; j < vBuf[i].bufferSize; j++) {
             Vertex vtx = vBuf[i].getVtx();
