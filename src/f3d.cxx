@@ -363,6 +363,9 @@ static void write_vtx(const std::string fileOut, const std::string &path, Vertex
         } else { /* asm */
             vtxOut << std::endl << labelize(get_filename(fileOut) + "_vertex_" + std::to_string(i)) << " /* " << (u16)vBuf[i].loadSize << " vertices out of " << (u16)vBuf[i].bufferSize << " */" << std::endl;
         }
+
+        extern_data(fileOut, "extern Vtx* " + get_filename(fileOut) + "_vertex_" + std::to_string(i) + "[" + std::to_string((u16)vBuf[i].loadSize) + "];");
+
         for (u16 j = 0; j < vBuf[i].bufferSize; j++) {
             Vertex vtx = vBuf[i].getVtx();
             if (!vtx.useless) {
