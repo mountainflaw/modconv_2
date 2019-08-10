@@ -32,17 +32,17 @@
 /* Globals */
 static u32 vertex = 0, internalVtx = 0, writeSize = 0;
 
-typedef struct {
+struct CollisionVtx {
     s16 pos[3];
     u32 list;
     u16 material;
     bool useless;
-} CollisionVtx;
+};
 
-typedef struct {
+struct CollisionMat {
     u16 tri;
     std::string surf;
-} CollisionMat;
+};
 
 static void configure_materials(const aiScene* scene, CollisionMat* mat) {
     aiString aiName;

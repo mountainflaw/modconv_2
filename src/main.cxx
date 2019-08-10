@@ -62,7 +62,7 @@ INLINE void info_message(const std::string &message)
 { std::cout << print_bold("INFO: ") << message << std::endl; }
 
 void print_help(const std::string &name) {
-    std::cout << print_bold("- MODCONV 3.0 HELP -") << std::endl
+    std::cout << print_bold("- MODCONV 3.5 HELP -") << std::endl
               << std::endl
               << print_bold("SYNOPSIS: ") << std::endl
               << name << " <parameters> <model>" << std::endl
@@ -143,7 +143,7 @@ f32 scaling_hack() {
 }
 
 int main(int argc, char* argv[]) {
-    std::cout << print_bold("- MODCONV 3.0 BY RED -") << std::endl;
+    std::cout << print_bold("- MODCONV 3.5 BY RED -") << std::endl;
 #ifdef BUILD_REDSKIN
     info_message("Redskin enabled build");
 #endif
