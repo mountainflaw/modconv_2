@@ -37,25 +37,16 @@
 #define PROPERTIES 5
 enum Properties { ENV, COMBINER, TEXFILTER, TEXLOAD, TEXSCALE };
 extern u32 geometryState;
+extern const std::string dlTypes[8];
 
 class DisplayList {
     private:
-    std::string dlTypes[8] = {"force", "opaque", "opaque_decal", "opaque_inter", "alpha", "transparent", "transparent_decal", "transparent_inter"};
     u8 layer = 1;
     bool twoCycle = false;
     bool first = true;
     std::string fOut;
 
-    INLINE bool WriteTri(s16 tri[], u8 size) {
-        for (u8 i = 0; i < size; i++) {
-            if (tri[i] == -1) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    std::string renderModes[8][2] = {
+    const std::string renderModes[8][2] = {
         {"G_RM_ZB_OPA_SURF", "G_RM_ZB_OPA_SURF2"},
         {"G_RM_AA_ZB_OPA_SURF", "G_RM_AA_ZB_OPA_SURF2"},
         {"G_RM_AA_ZB_OPA_DECAL", "G_RM_AA_ZB_OPA_DECAL2"},
@@ -65,6 +56,15 @@ class DisplayList {
         {"G_RM_AA_ZB_XLU_DECAL", "G_RM_AA_ZB_XLU_DECAL2"},
         {"G_RM_AA_ZB_XLU_INTER", "G_RM_AA_ZB_XLU_INTER2"}
     };
+
+    INLINE bool WriteTri(s16 tri[], u8 size) {
+        for (u8 i = 0; i < size; i++) {
+            if (tri[i] == -1) {
+                return false;
+            }
+        }
+        return true;
+    }
 
     std::string GetRenderMode() {
         return dl_command("gsDPSetRenderMode", renderModes[layer][CYCLE1] + ", " + renderModes[layer][CYCLE2]) + "\n";

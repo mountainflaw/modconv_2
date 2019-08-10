@@ -62,6 +62,28 @@ u16 fogSettings[6]; /* rgba near far */
 
 const std::string format[FORMATS] = { ".rgba16.png", ".rgba32.png", ".ci4.png", ".ci8.png", ".ia4.png", ".ia8.png", ".i4.png", ".i8.png" };
 
+const std::string dlTypes[8] = {
+    "force",
+    "opaque",
+    "opaque_decal",
+    "opaque_inter",
+    "alpha",
+    "transparent",
+    "transparent_decal",
+    "transparent_inter"
+};
+
+const std::string layerTypes[8] = {
+    "LAYER_FORCE",
+    "LAYER_OPAQUE",
+    "LAYER_OPAQUE_DECAL",
+    "LAYER_OPAQUE_INTER",
+    "LAYER_ALPHA",
+    "LAYER_TRANSPARENT",
+    "LAYER_TRANSPARENT_DECAL",
+    "LAYER_TRANSPARENT_INTER"
+};
+
 INLINE std::string dl_command(const std::string &cmd, const std::string &arg) {
     if (gExportC) {
         return "    " + cmd + "(" + arg + "),";
@@ -558,6 +580,67 @@ static INLINE void write_display_list_obj(const std::string &fileOut, VertexBuff
     }
 }
 
+static INLINE std::string dl_tab(bool level) {
+    if (level) {
+        return "                    ";
+    }
+    return "                ";
+}
+static void write_geometry_layout(const std::string &fileOut, bool level) {
+    std::fstream geoOut;
+    reset_file(fileOut + "/geo.s");
+    geoOut.open(fileOut + "/geo.s", std::ofstream::out | std::ofstream::app);
+
+
+    geoOut << std::endl << "glabel " << get_filename(fileOut) << "_geo" << std::endl;
+
+    if (level) {
+        geoOut << "    geo_node_screen_area 10, SCREEN_WIDTH/2, SCREEN_HEIGHT/2, SCREEN_WIDTH/2, SCREEN_HEIGHT/2" << std::endl
+               << "    geo_open_node" << std::endl
+               << "        geo_zbuffer 0" << std::endl
+               << "        geo_open_node" << std::endl
+               << "            geo_node_ortho 100" << std::endl
+               << "            geo_open_node" << std::endl
+               << "                geo_background BACKGROUND_OCEAN_SKY, geo_skybox_main" << std::endl
+               << "            geo_close_node" << std::endl
+               << "        geo_close_node" << std::endl
+               << "        geo_zbuffer 1" << std::endl
+               << "        geo_open_node" << std::endl
+               << "            geo_camera_frustum 45, 100, 30000, geo_camera_fov" << std::endl
+               << "            geo_open_node" << std::endl
+               << "                geo_camera 1, 0, 2000, 6000, 3072, 0, -4608, geo_camera_preset_and_pos" << std::endl
+               << "                geo_open_node" << std::endl;
+    } else { /* actors */
+        geoOut << "    geo_shadow SHADOW_CIRCLE_4_VERTS, 0xC8, 60" << std::endl
+               << "        geo_open_node" << std::endl
+               << "            geo_scale 0x00, 16384" << std::endl
+               << "            geo_open_node" << std::endl;
+    }
+
+    for (u8 i = 0; i < 8; i++) { /* Insert display lists */
+        if (setLayer[i]) {
+            geoOut << dl_tab(level) << "geo_display_list " << layerTypes[i] << " " << get_filename(fileOut) << "_dl_" << dlTypes[i] << std::endl;
+        }
+    }
+    if (level) {
+        geoOut << "                    geo_render_obj" << std::endl
+               << "                    geo_asm 0, geo_envfx_main" << std::endl
+               << "                geo_close_node" << std::endl
+               << "            geo_close_node" << std::endl
+               << "        geo_close_node" << std::endl
+               << "        geo_zbuffer 0" << std::endl
+               << "        geo_open_node" << std::endl
+               << "            geo_asm 0, Geo18_802CD1E8" << std::endl
+               << "        geo_close_node" << std::endl
+               << "    geo_close_node" << std::endl
+               << "    geo_end" << std::endl;
+    } else {
+        geoOut << "            geo_close_node" << std::endl
+               << "        geo_close_node" << std::endl
+               << "    geo_end" << std::endl;
+    }
+}
+
 /** Main function for the F3D build process. */
 void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8 microcode, bool level) {
     Assimp::Importer importer;
@@ -599,4 +682,5 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
     DisplayList dl[layers];
     set_layers(dl);
     write_display_list_obj(fileOut, vBuf, dl, mat);
+    write_geometry_layout(fileOut, level);
 }
