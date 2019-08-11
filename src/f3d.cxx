@@ -108,9 +108,12 @@ INLINE std::string dl_command_ref(const std::string &cmd, const std::string &arg
 void inspect_vtx(aiNode* node, const aiScene* scene) {
     for (u16 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        vert += mesh->mNumFaces * 3;
-        if (mesh->HasBones()) {
-            bone += mesh->mNumBones;
+        if (mesh->HasPositions() && mesh->HasFaces()) {
+            for (u32 j = 0; j < mesh->mNumFaces; j++) {
+                if (mesh->mFaces[j].mNumIndices == 3) {
+                    vert += 3;
+                }
+            }
         }
     }
 
@@ -243,8 +246,6 @@ void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
             }
 
             for (u8 k = 0; k < 3; k++) {
-                u32 currVtx = mesh->mFaces[j].mIndices[k];
-
                 if (vBuffers == 1) { /* if we only have one buffer, set it to the size of vert so we don't overflow */
                     vBuf[i].bufferSize = vert;
                 }
@@ -258,69 +259,73 @@ void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                     }
                 }
 
-                s16 pos[3];
+                if (mesh->mFaces[j].mNumIndices == 3 && mesh->HasFaces() && mesh->HasPositions()) {
+                    u32 currVtx = mesh->mFaces[j].mIndices[k];
 
-                pos[AXIS_X] = (s16)(((mesh->mVertices[currVtx].x) * scale) * scaling_hack());
-                pos[AXIS_Y] = (s16)(((mesh->mVertices[currVtx].y) * scale) * scaling_hack());
-                pos[AXIS_Z] = (s16)(((mesh->mVertices[currVtx].z) * scale) * scaling_hack());
+                    s16 pos[3];
 
-                s16 rgba[4] = {0xff, 0xff, 0xff, 0xff};
+                    pos[AXIS_X] = (s16)(((mesh->mVertices[currVtx].x) * scale) * scaling_hack());
+                    pos[AXIS_Y] = (s16)(((mesh->mVertices[currVtx].y) * scale) * scaling_hack());
+                    pos[AXIS_Z] = (s16)(((mesh->mVertices[currVtx].z) * scale) * scaling_hack());
 
-                if (mesh->HasVertexColors(0)) { /* Get around segfault. */
-                    rgba[C_RED] = mesh->mColors[0][currVtx].r * 0xff;
-                    rgba[C_GRN] = mesh->mColors[0][currVtx].g * 0xff;
-                    rgba[C_BLU] = mesh->mColors[0][currVtx].b * 0xff;
-                    rgba[C_APH] = mesh->mColors[0][currVtx].a * 0xff;
-                }
+                    s16 rgba[4] = {0xff, 0xff, 0xff, 0xff};
 
-                aiString aiName;
-                scene->mMaterials[mesh->mMaterialIndex]->Get(AI_MATKEY_NAME, aiName);
-                std::string nameStr = aiName.data;
+                    if (mesh->HasVertexColors(0)) { /* Get around segfault. */
+                        rgba[C_RED] = mesh->mColors[0][currVtx].r * 0xff;
+                        rgba[C_GRN] = mesh->mColors[0][currVtx].g * 0xff;
+                        rgba[C_BLU] = mesh->mColors[0][currVtx].b * 0xff;
+                        rgba[C_APH] = mesh->mColors[0][currVtx].a * 0xff;
+                    }
 
-                /*
-                 * Add normals based lighting (#SHADE)
-                 * or vertex color based off of normals (#NORMCOLOR)
-                 */
+                    aiString aiName;
+                    scene->mMaterials[mesh->mMaterialIndex]->Get(AI_MATKEY_NAME, aiName);
+                    std::string nameStr = aiName.data;
 
-                if (scene->HasMaterials() && mesh->HasNormals() && (nameStr.find("#LIGHTING") != std::string::npos
-                            || nameStr.find("#NORMCOLOR") != std::string::npos || !mat[mesh->mMaterialIndex].textured)) {
+                    /*
+                     * Add normals based lighting (#SHADE)
+                     * or vertex color based off of normals (#NORMCOLOR)
+                     */
 
-                    rgba[C_RED] = mesh->mNormals[currVtx].x * 127;
-                    rgba[C_GRN] = mesh->mNormals[currVtx].y * 127;
-                    rgba[C_BLU] = mesh->mNormals[currVtx].z * 127;
+                    if (scene->HasMaterials() && mesh->HasNormals() && (nameStr.find("#LIGHTING") != std::string::npos
+                                || nameStr.find("#NORMCOLOR") != std::string::npos || !mat[mesh->mMaterialIndex].textured)) {
 
-                    if (mesh->HasVertexColors(0)) { /* Get around potential segfault. */
-                        if (nameStr.find("#REDALPHA") != std::string::npos) {
-                            rgba[C_APH] = mesh->mColors[0][currVtx].r * 0xff; /* stomatol wanted this to bake lights */
-                        } else {
-                            rgba[C_APH] = mesh->mColors[0][currVtx].a * 0xff;
+                        rgba[C_RED] = mesh->mNormals[currVtx].x * 127;
+                        rgba[C_GRN] = mesh->mNormals[currVtx].y * 127;
+                        rgba[C_BLU] = mesh->mNormals[currVtx].z * 127;
+
+                        if (mesh->HasVertexColors(0)) { /* Get around potential segfault. */
+                            if (nameStr.find("#REDALPHA") != std::string::npos) {
+                                rgba[C_APH] = mesh->mColors[0][currVtx].r * 0xff; /* stomatol wanted this to bake lights */
+                            } else {
+                                rgba[C_APH] = mesh->mColors[0][currVtx].a * 0xff;
+                            }
                         }
                     }
-                }
 
-                /* Figure out what layer vtx belongs to */
-                u8 layer = 1;
+                    /* Figure out what layer vtx belongs to */
+                    u8 layer = 1;
 
-                if (scene->HasMaterials()) {
-                    std::string layerTags[8] = { "#LAYER_0", "#LAYER_1", "#LAYER_2", "#LAYER_3", "#LAYER_4", "#LAYER_5", "#LAYER_6", "#LAYER_7" };
+                    if (scene->HasMaterials()) {
+                        std::string layerTags[8] = { "#LAYER_0", "#LAYER_1", "#LAYER_2", "#LAYER_3", "#LAYER_4", "#LAYER_5", "#LAYER_6", "#LAYER_7" };
 
-                    for (u8 i = 0; i < 8; i++) {
-                        if (nameStr.find(layerTags[i]) != std::string::npos) {
-                            layer = i;
-                            setLayer[i] = true;
-                            break;
-                        } else {
-                            setLayer[1] = true;
+                        for (u8 i = 0; i < 8; i++) {
+                            if (nameStr.find(layerTags[i]) != std::string::npos) {
+                                layer = i;
+                                setLayer[i] = true;
+                                break;
+                            } else {
+                                setLayer[1] = true;
+                            }
                         }
+                    } else {
+                        setLayer[1] = true;
                     }
-                } else {
-                    setLayer[1] = true;
-                }
 
-                vBuf[vBuffer].addVtx(pos[AXIS_X], pos[AXIS_Y], pos[AXIS_Z],
-                        (s16)uv[k][AXIS_X], (s16)uv[k][AXIS_Y],
-                        rgba[C_RED], rgba[C_GRN], rgba[C_BLU], rgba[C_APH], mesh->mMaterialIndex, layer);
-                vert2++;
+                    vBuf[vBuffer].addVtx(pos[AXIS_X], pos[AXIS_Y], pos[AXIS_Z],
+                            (s16)uv[k][AXIS_X], (s16)uv[k][AXIS_Y],
+                            rgba[C_RED], rgba[C_GRN], rgba[C_BLU], rgba[C_APH], mesh->mMaterialIndex, layer);
+                    vert2++;
+                }
             }
         }
     }
