@@ -278,7 +278,6 @@ std::string groupTags[GROUP_TAGS] = { "#LIGHTING", "#BACKFACE", "#ENVMAP", "#LIN
         for (u8 i = 0; i < GROUP_TAGS; i++) {
             if (name.find(groupTags[i]) != std::string::npos) {
                 geometryFlags |= CURRENT_GEO;
-                std::cout << (u32)CURRENT_GEO << std::endl;
             }
         }
 
