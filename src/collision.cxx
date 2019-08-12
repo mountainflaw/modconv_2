@@ -40,8 +40,10 @@ struct CollisionVtx {
 };
 
 struct CollisionMat {
+    bool isSpecial;
     u16 tri;
     std::string surf;
+    std::string special;
 };
 
 static void configure_materials(const aiScene* scene, CollisionMat* mat) {
@@ -62,6 +64,26 @@ static void configure_materials(const aiScene* scene, CollisionMat* mat) {
          * set, the ending is either the end of the string
          * or until the first instance of a space.
          */
+
+        /* Special triangles */
+
+        if (nameStr.find("~") != std::string::npos) {
+            mat[i].isSpecial = true;
+            pos[STARTPOS] = nameStr.find("~") + 1;
+            for (u16 j = pos[STARTPOS]; j < nameStr.length(); j++) {
+                if (nameStr[j] == ' ') {
+                    break;
+                }
+                mat[i].special = nameStr.substr(pos[STARTPOS], (j - pos[STARTPOS]) + 1);
+            }
+            info_message("Special: " + nameStr + " -> " + mat[i].special);
+        } else {
+            mat[i].isSpecial = false;
+        }
+
+        pos[STARTPOS] = 0;
+
+        /* Surface ID */
 
         if (nameStr.find("!") != std::string::npos) {
             pos[STARTPOS] = nameStr.find("!") + 1;
@@ -174,21 +196,23 @@ static INLINE u32 get_vtx_index(const CollisionVtx* vtx, const u32 pos) {
 }
 
 static void write_tri(const std::string &fileOut, const CollisionVtx* vtx, const CollisionMat* mat) {
-    u32 i = 0;
     u16 currSurf = 0;
 
     std::fstream colOut;
     colOut.open(fileOut + "/collision.s", std::iostream::out | std::iostream::app);
 
-    while (i < vertex) {
+    for (u32 i = 0; i < vertex; i += 3) {
         if (vtx[i].material != currSurf || i == 0) {
             colOut << std::endl;
             currSurf = vtx[i].material;
             colOut << "colTriInit " << mat[vtx[i].material].surf << ", " << mat[vtx[i].material].tri << std::endl;
         }
 
-        colOut << "colTri " << get_vtx_index(vtx, i) << ", " << get_vtx_index(vtx, i + 1) << ", " << get_vtx_index(vtx, i + 2) << std::endl;
-        i += 3;
+        if (mat[vtx[i].material].isSpecial) {
+            colOut << "colTriSpecial " << get_vtx_index(vtx, i) << ", " << get_vtx_index(vtx, i + 1) << ", " << get_vtx_index(vtx, i + 2) << ", " << mat[vtx[i].material].special << std::endl;
+        } else {
+            colOut << "colTri " << get_vtx_index(vtx, i) << ", " << get_vtx_index(vtx, i + 1) << ", " << get_vtx_index(vtx, i + 2) << std::endl;
+        }
     }
     colOut << "colTriStop" << std::endl
            << "colEnd"     << std::endl;
