@@ -312,7 +312,6 @@ void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                             if (nameStr.find(layerTags[l]) != std::string::npos) {
                                 layer = l;
                                 setLayer[l] = true;
-                                break;
                             }
                         }
 
@@ -579,6 +578,7 @@ static INLINE void write_display_list_obj(const std::string &fileOut, VertexBuff
     for (u8 i = 0; i < layers; i++) {
         vBuf[i].vtxCount = 0;
         dl[i].writeDisplayList(fileOut, vBuf, vBuffers, mat);
+        geometryState = 0; /* Reset geometry state */
     }
 }
 
@@ -626,7 +626,7 @@ static void write_geometry_layout(const std::string &fileOut, bool level) {
     }
     if (level) {
         geoOut << "                    geo_render_obj" << std::endl
-               << "                    geo_asm 0, geo_envfx_main" << std::endl
+               << "                    geo_asm 0, geo_enfvx_main" << std::endl
                << "                geo_close_node" << std::endl
                << "            geo_close_node" << std::endl
                << "        geo_close_node" << std::endl
