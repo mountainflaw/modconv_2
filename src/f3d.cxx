@@ -306,18 +306,20 @@ void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                     u8 layer = 1;
 
                     if (scene->HasMaterials()) {
-                        std::string layerTags[8] = { "#LAYER_0", "#LAYER_1", "#LAYER_2", "#LAYER_3", "#LAYER_4", "#LAYER_5", "#LAYER_6", "#LAYER_7" };
+                        const std::string layerTags[8] = { "#LAYER_0", "#LAYER_1", "#LAYER_2", "#LAYER_3", "#LAYER_4", "#LAYER_5", "#LAYER_6", "#LAYER_7" };
 
-                        for (u8 i = 0; i < 8; i++) {
-                            if (nameStr.find(layerTags[i]) != std::string::npos) {
-                                layer = i;
-                                setLayer[i] = true;
+                        for (u8 l = 0; l < 8; l++) {
+                            if (nameStr.find(layerTags[l]) != std::string::npos) {
+                                layer = l;
+                                setLayer[l] = true;
                                 break;
-                            } else {
-                                setLayer[1] = true;
                             }
                         }
-                    } else {
+
+                        if (layer == 1) { /* default layer if none set */
+                            setLayer[1] = true;
+                        }
+                    } else { /* ditto, but if there are no materials */
                         setLayer[1] = true;
                     }
 
@@ -560,11 +562,6 @@ static INLINE void set_layers_amt() {
         if (setLayer[i]) {
             layers++;
         }
-    }
-
-    if (layers == 0) { /* default to layer 1 if no layer is specified */
-        setLayer[0] = true;
-        layers = 1;
     }
 }
 
