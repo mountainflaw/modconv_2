@@ -81,7 +81,11 @@ static void configure_materials(const aiScene* scene, CollisionMat* mat) {
 static void inspect_vtx(aiNode* node, const aiScene* scene, CollisionMat* mat) {
     for (u16 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        vertex += mesh->mNumFaces * 3;
+        for (u32 j = 0; j < mesh->mNumFaces; j++) {
+            if (mesh->HasPositions() && mesh->HasFaces() && mesh->mFaces[j].mNumIndices == 3) { /* Don't allow lines and points to be added. */
+                vertex += 3;
+            }
+        }
         mat[mesh->mMaterialIndex].tri += mesh->mNumFaces;
     }
 
@@ -97,15 +101,17 @@ static void setup_vtx(const std::string &file, aiNode* node, const aiScene* scen
         /* We go by faces, so we don't add loose geometry to our output. */
         for (u32 j = 0; j < mesh->mNumFaces; j++) {
             for (u8 k = 0; k < 3; k++) {
-                u32 currVtx = mesh->mFaces[j].mIndices[k];
-                vtx[internalVtx].pos[AXIS_X] = (s16)(((mesh->mVertices[currVtx].x) * scale) * scaling_hack());
-                vtx[internalVtx].pos[AXIS_Y] = (s16)(((mesh->mVertices[currVtx].y) * scale) * scaling_hack());
-                vtx[internalVtx].pos[AXIS_Z] = (s16)(((mesh->mVertices[currVtx].z) * scale) * scaling_hack());
+                if (mesh->HasPositions() && mesh->HasFaces() && mesh->mFaces[j].mNumIndices == 3) { /* Prevent potential segfault */
+                    u32 currVtx = mesh->mFaces[j].mIndices[k];
+                    vtx[internalVtx].pos[AXIS_X] = (s16)(((mesh->mVertices[currVtx].x) * scale) * scaling_hack());
+                    vtx[internalVtx].pos[AXIS_Y] = (s16)(((mesh->mVertices[currVtx].y) * scale) * scaling_hack());
+                    vtx[internalVtx].pos[AXIS_Z] = (s16)(((mesh->mVertices[currVtx].z) * scale) * scaling_hack());
 
-                vtx[internalVtx].useless = false;
-                vtx[internalVtx].list = internalVtx;
-                vtx[internalVtx].material = mesh->mMaterialIndex;
-                internalVtx++;
+                    vtx[internalVtx].useless = false;
+                    vtx[internalVtx].list = internalVtx;
+                    vtx[internalVtx].material = mesh->mMaterialIndex;
+                    internalVtx++;
+                }
             }
         }
     }
