@@ -259,7 +259,7 @@ void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                     }
                 }
 
-                if (mesh->mFaces[j].mNumIndices == 3 && mesh->HasFaces() && mesh->HasPositions()) {
+                if (if mesh->HasPositions() && mesh->HasFaces() && mesh->mFaces[j].mNumIndices == 3) {
                     u32 currVtx = mesh->mFaces[j].mIndices[k];
 
                     s16 pos[3];
