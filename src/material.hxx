@@ -352,7 +352,7 @@ std::string groupTags[GROUP_TAGS] = { "#LIGHTING", "#BACKFACE", "#ENVMAP", "#LIN
             filter = "G_TF_AVERAGE";
         }
 
-        return dl_command("gsDPSetTextureFiler", filter) + "\n";
+        return dl_command("gsDPSetTextureFilter", filter) + "\n";
     }
 
     void setPath(const std::string &p) {
