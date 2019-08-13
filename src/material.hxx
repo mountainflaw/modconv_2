@@ -83,7 +83,7 @@ std::string groupTags[GROUP_TAGS] = { "#LIGHTING", "#BACKFACE", "#ENVMAP", "#LIN
      */
 
     bool getLighting(u32* g) {
-        return !(*g & (1 << GEO_LIGHTING)) && (name.find(groupTags[GEO_LIGHTING]) != std::string::npos);
+        return !(*g & GET_GEO(GEO_LIGHTING)) && (name.find(groupTags[GEO_LIGHTING]) != std::string::npos);
     }
 
     std::string getEnvColor() {
