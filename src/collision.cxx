@@ -31,7 +31,7 @@
 
 /* Enums */
 
-enum { B_LOWER, B_UPPER };
+enum { WATERBOX_WATER, WATERBOX_GAS=50 };
 
 /* Structs */
 
@@ -50,6 +50,7 @@ struct CollisionMat {
 };
 
 struct CollisionWaterBox {
+    u8 type;
     s16 x1;
     s16 z1;
     s16 x2;
@@ -125,13 +126,13 @@ static void configure_materials(const aiScene* scene, CollisionMat* mat) {
  * Adds material entry to waterbox vector.
  */
 
-static INLINE void add_waterbox_material(u8 m) {
+static INLINE void add_waterbox_material(u8 type, u8 m) {
     for (u8 i = 0; i < waterBox.size(); i++) {
         if (m == waterBox[i].material) { /* Don't add more than what we need */
             return;
         }
     }
-    waterBox.push_back({0, 0, 0, 0, 0, m});
+    waterBox.push_back({type, 0, 0, 0, 0, 0, m});
 }
 
 /**
@@ -151,11 +152,15 @@ static void inspect_vtx(const aiNode* node, const aiScene* scene, CollisionMat* 
         }
 
         for (u32 j = 0; j < mesh->mNumFaces; j++) {
-            if (mesh->HasPositions() && mesh->HasFaces() && mesh->mFaces[j].mNumIndices == 3 && nameStr.find("@WATER") == std::string::npos) { /* Don't allow lines and points to be added. */
+            if (mesh->HasPositions() && mesh->HasFaces() && mesh->mFaces[j].mNumIndices == 3
+                    && nameStr.find("@WATER") == std::string::npos && nameStr.find("@GAS") == std::string::npos) { /* Don't allow lines and points to be added. */
                 vertex += 3;
             } else if (nameStr.find("@WATER") != std::string::npos && waterBox.size() < 255) {
-                add_waterbox_material(mesh->mMaterialIndex);
+                add_waterbox_material(WATERBOX_WATER, mesh->mMaterialIndex);
+            } else if (nameStr.find("@GAS") != std::string::npos && waterBox.size() < 255) {
+                add_waterbox_material(WATERBOX_GAS, mesh->mMaterialIndex);
             }
+
         }
         mat[mesh->mMaterialIndex].tri += mesh->mNumFaces;
     }
@@ -184,7 +189,7 @@ static void setup_vtx(const std::string &file, aiNode* node, const aiScene* scen
         /* We go by faces, so we don't add loose geometry to our output. */
         for (u32 j = 0; j < mesh->mNumFaces; j++) {
             for (u8 k = 0; k < 3; k++) {
-                if (mesh->HasPositions() && mesh->HasFaces() && mesh->mFaces[j].mNumIndices == 3 && nameStr.find("@WATER") == std::string::npos) { /* Prevent potential segfault */
+                if (mesh->HasPositions() && mesh->HasFaces() && mesh->mFaces[j].mNumIndices == 3 && nameStr.find("@WATER") == std::string::npos && nameStr.find("@GAS") == std::string::npos) { /* Prevent potential segfault */
                     u32 currVtx = mesh->mFaces[j].mIndices[k];
                     vtx[internalVtx].pos[AXIS_X] = (s16)(((mesh->mVertices[currVtx].x) * scale) * scaling_hack());
                     vtx[internalVtx].pos[AXIS_Y] = (s16)(((mesh->mVertices[currVtx].y) * scale) * scaling_hack());
@@ -353,11 +358,18 @@ static void write_tri(const std::string &fileOut, const CollisionVtx* vtx, const
 
     colOut << "colTriStop" << std::endl;
 
+    /* Add waterboxes */
+
     if (waterBox.size() > 0) {
         colOut << "colWaterBoxInit " << waterBox.size() << std::endl;
         for (u8 i = 0; i < waterBox.size(); i++) {
-            colOut << "colWaterBox " << waterBox[i].x1 << ", " << waterBox[i].z1 << ", "
-                   << waterBox[i].x2 << ", " << waterBox[i].z2 << ", " << waterBox[i].y << std::endl;
+            colOut << "colWaterBox " << std::right << std::setw(2)
+                   << (u16)waterBox[i].type << ", " << std::right << std::setw(6)
+                   << waterBox[i].x1 << ", " << std::right << std::setw(6)
+                   << waterBox[i].z1 << ", " << std::right << std::setw(6)
+                   << waterBox[i].x2 << ", " << std::right << std::setw(6)
+                   << waterBox[i].z2 << ", " << std::right << std::setw(6)
+                   << waterBox[i].y << std::endl;
         }
     }
 
