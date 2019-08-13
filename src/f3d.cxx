@@ -397,19 +397,20 @@ static void write_vtx(const std::string fileOut, const std::string &path, Vertex
         for (u16 j = 0; j < vBuf[i].bufferSize; j++) {
             Vertex vtx = vBuf[i].getVtx();
             if (!vtx.useless) {
-                vtxOut << vtxDelimiterStart << vtx.pos[AXIS_X] << ", "
-                       << vtx.pos[AXIS_Y] << ", "
-                       << vtx.pos[AXIS_Z] << ", "
-                       << vtx.st[AXIS_X]  << ", "
-                       << vtx.st[AXIS_Y]  << ", ";
+                vtxOut << vtxDelimiterStart << std::right << std::setw(6)
+                       << vtx.pos[AXIS_X] << ", " << std::right << std::setw(6)
+                       << vtx.pos[AXIS_Y] << ", " << std::right << std::setw(6)
+                       << vtx.pos[AXIS_Z] << ", " << std::right << std::setw(6)
+                       << vtx.st[AXIS_X]  << ", " << std::right << std::setw(6)
+                       << vtx.st[AXIS_Y]  << ", " << std::right << std::setw(6);
 
                 if (gExportC) { /* flag (unused) */
-                    vtxOut << "0x00, ";
+                    vtxOut << "0x00, "  << std::right << std::setw(4);
                 }
 
-                vtxOut << hex_string(vtx.col[C_RED])  << ", "
-                       << hex_string(vtx.col[C_GRN])  << ", "
-                       << hex_string(vtx.col[C_BLU])  << ", "
+                vtxOut << hex_string(vtx.col[C_RED])  << ", " << std::right << std::setw(4)
+                       << hex_string(vtx.col[C_GRN])  << ", " << std::right << std::setw(4)
+                       << hex_string(vtx.col[C_BLU])  << ", " << std::right << std::setw(4)
                        << hex_string(vtx.col[C_APH])  << vtxDelimiterEnd;
             }
         }
