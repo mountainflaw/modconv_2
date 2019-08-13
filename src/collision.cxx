@@ -29,8 +29,11 @@
 /* This file handles creating collision data out of a model imported with ASSIMP. */
 #include "modconv.hxx"
 
-/* Globals */
-static u32 vertex = 0, internalVtx = 0, writeSize = 0;
+/* Enums */
+
+enum { B_LOWER, B_UPPER };
+
+/* Structs */
 
 struct CollisionVtx {
     s16 pos[3];
@@ -45,6 +48,24 @@ struct CollisionMat {
     std::string surf;
     std::string special;
 };
+
+struct CollisionWaterBox {
+    s16 x1;
+    s16 z1;
+    s16 x2;
+    s16 z2;
+    s16 y;
+    u16 material;
+};
+
+/* Statics */
+
+static u32 vertex = 0, internalVtx = 0, writeSize = 0;
+static std::vector<CollisionWaterBox> waterBox;
+
+/**
+ * Configure material and surface properties.
+ */
 
 static void configure_materials(const aiScene* scene, CollisionMat* mat) {
     aiString aiName;
@@ -100,12 +121,40 @@ static void configure_materials(const aiScene* scene, CollisionMat* mat) {
     }
 }
 
-static void inspect_vtx(aiNode* node, const aiScene* scene, CollisionMat* mat) {
+/**
+ * Adds material entry to waterbox vector.
+ */
+
+static INLINE void add_waterbox_material(u8 m) {
+    for (u8 i = 0; i < waterBox.size(); i++) {
+        if (m == waterBox[i].material) { /* Don't add more than what we need */
+            return;
+        }
+    }
+    waterBox.push_back({0, 0, 0, 0, 0, m});
+}
+
+/**
+ * Calculate amount of vertices, triangles per material, and waterboxes.
+ */
+
+static void inspect_vtx(const aiNode* node, const aiScene* scene, CollisionMat* mat) {
+    std::string nameStr = "";
+
     for (u16 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+
+        if (scene->HasMaterials()) {
+            aiString aiName;
+            scene->mMaterials[mesh->mMaterialIndex]->Get(AI_MATKEY_NAME, aiName);
+            nameStr = aiName.data;
+        }
+
         for (u32 j = 0; j < mesh->mNumFaces; j++) {
-            if (mesh->HasPositions() && mesh->HasFaces() && mesh->mFaces[j].mNumIndices == 3) { /* Don't allow lines and points to be added. */
+            if (mesh->HasPositions() && mesh->HasFaces() && mesh->mFaces[j].mNumIndices == 3 && nameStr.find("@WATER") == std::string::npos) { /* Don't allow lines and points to be added. */
                 vertex += 3;
+            } else if (nameStr.find("@WATER") != std::string::npos && waterBox.size() < 255) {
+                add_waterbox_material(mesh->mMaterialIndex);
             }
         }
         mat[mesh->mMaterialIndex].tri += mesh->mNumFaces;
@@ -116,14 +165,26 @@ static void inspect_vtx(aiNode* node, const aiScene* scene, CollisionMat* mat) {
     }
 }
 
+/**
+ * Add non waterbox vertices to vertex list.
+ */
+
 static void setup_vtx(const std::string &file, aiNode* node, const aiScene* scene, CollisionVtx* vtx, const s16 scale) {
+    std::string nameStr = "";
+
     for (u16 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+
+        if (scene->HasMaterials()) {
+            aiString aiName;
+            scene->mMaterials[mesh->mMaterialIndex]->Get(AI_MATKEY_NAME, aiName);
+            nameStr = aiName.data;
+        }
 
         /* We go by faces, so we don't add loose geometry to our output. */
         for (u32 j = 0; j < mesh->mNumFaces; j++) {
             for (u8 k = 0; k < 3; k++) {
-                if (mesh->HasPositions() && mesh->HasFaces() && mesh->mFaces[j].mNumIndices == 3) { /* Prevent potential segfault */
+                if (mesh->HasPositions() && mesh->HasFaces() && mesh->mFaces[j].mNumIndices == 3 && nameStr.find("@WATER") == std::string::npos) { /* Prevent potential segfault */
                     u32 currVtx = mesh->mFaces[j].mIndices[k];
                     vtx[internalVtx].pos[AXIS_X] = (s16)(((mesh->mVertices[currVtx].x) * scale) * scaling_hack());
                     vtx[internalVtx].pos[AXIS_Y] = (s16)(((mesh->mVertices[currVtx].y) * scale) * scaling_hack());
@@ -143,12 +204,20 @@ static void setup_vtx(const std::string &file, aiNode* node, const aiScene* scen
     }
 }
 
+/**
+ * Compare two vertices with leniency factor.
+ */
+
 static INLINE bool cprVtx(const CollisionVtx* vtx, const u32 i, const u32 j) {
     return abs(vtx[i].pos[AXIS_X] - vtx[j].pos[AXIS_X]) <= leniencyFactor &&
            abs(vtx[i].pos[AXIS_Y] - vtx[j].pos[AXIS_Y]) <= leniencyFactor &&
            abs(vtx[i].pos[AXIS_Z] - vtx[j].pos[AXIS_Z]) <= leniencyFactor;
 
 }
+
+/**
+ * Remove redundant vertices.
+ */
 
 static void clean_vtx(CollisionVtx* vtx) {
     /* Stage 1 - Mark redundant vertices */
@@ -170,6 +239,10 @@ static void clean_vtx(CollisionVtx* vtx) {
     }
 }
 
+/**
+ * Write optimized vertex data.
+ */
+
 static void write_vtx(const std::string &fileOut, const CollisionVtx* vtx) {
     std::fstream colOut;
     colOut.open(fileOut + "/collision.s", std::iostream::out | std::iostream::app);
@@ -187,6 +260,10 @@ static void write_vtx(const std::string &fileOut, const CollisionVtx* vtx) {
     }
 }
 
+/**
+ * Retrieves a collision vertex from optimized list.
+ */
+
 static INLINE u32 get_vtx_index(const CollisionVtx* vtx, const u32 pos) {
     if (vtx[pos].useless) { /* optimized out */
         return vtx[vtx[pos].list].list;
@@ -194,6 +271,57 @@ static INLINE u32 get_vtx_index(const CollisionVtx* vtx, const u32 pos) {
         return vtx[pos].list;
     }
 }
+
+/**
+ * Compares two waterbox materials.
+ */
+
+static INLINE bool waterbox_sort(const CollisionWaterBox &a, const CollisionWaterBox &b) {
+    return a.y > b.y;
+}
+
+/**
+ * Creates waterbox bounding box.
+ */
+
+static void configure_waterbox(const aiScene* scene, const aiNode* node, s16 scale, CollisionWaterBox waterBox) {
+    for (u16 i = 0; i < node->mNumMeshes; i++) {
+        aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+        if (waterBox.material == mesh->mMaterialIndex) {
+            for (u32 j = 0; j < mesh->mNumFaces; j++) {
+                for (u8 k = 0; k < 3; k++) {
+                    if ((s16)((mesh->mVertices[mesh->mFaces[j].mIndices[k]].x * scale) * scaling_hack()) > waterBox.x1) {
+                        waterBox.x1 = (s16)((mesh->mVertices[mesh->mFaces[j].mIndices[k]].x * scale) * scaling_hack());
+                    }
+
+                    if ((s16)((mesh->mVertices[mesh->mFaces[j].mIndices[k]].x * scale) * scaling_hack()) < waterBox.x2) {
+                        waterBox.x2 = (s16)((mesh->mVertices[mesh->mFaces[j].mIndices[k]].x * scale) * scaling_hack());
+                    }
+
+                    if ((s16)((mesh->mVertices[mesh->mFaces[j].mIndices[k]].z * scale) * scaling_hack()) > waterBox.z1) {
+                        waterBox.z1 = (s16)((mesh->mVertices[mesh->mFaces[j].mIndices[k]].z * scale) * scaling_hack());
+                    }
+
+                    if ((s16)((mesh->mVertices[mesh->mFaces[j].mIndices[k]].z * scale) * scaling_hack()) < waterBox.z2) {
+                        waterBox.z2 = (s16)((mesh->mVertices[mesh->mFaces[j].mIndices[k]].z * scale) * scaling_hack());
+                    }
+
+                    if ((s16)((mesh->mVertices[mesh->mFaces[j].mIndices[k]].y * scale) * scaling_hack()) > waterBox.y) {
+                        waterBox.y = (s16)((mesh->mVertices[mesh->mFaces[j].mIndices[k]].x * scale) * scaling_hack());
+                    }
+                }
+            }
+        }
+    }
+
+    for (u16 i = 0; i < node->mNumChildren; i++) {
+        configure_waterbox(scene, node->mChildren[i], scale, waterBox);
+    }
+}
+
+/**
+ * Write collision data to disk.
+ */
 
 static void write_tri(const std::string &fileOut, const CollisionVtx* vtx, const CollisionMat* mat) {
     u16 currSurf = 0;
@@ -214,9 +342,23 @@ static void write_tri(const std::string &fileOut, const CollisionVtx* vtx, const
             colOut << "colTri " << get_vtx_index(vtx, i) << ", " << get_vtx_index(vtx, i + 1) << ", " << get_vtx_index(vtx, i + 2) << std::endl;
         }
     }
-    colOut << "colTriStop" << std::endl
-           << "colEnd"     << std::endl;
+
+    colOut << "colTriStop" << std::endl;
+
+    if (waterBox.size() > 0) {
+        colOut << "colWaterBoxInit " << waterBox.size() << std::endl;
+        for (u8 i = 0; i < waterBox.size(); i++) {
+            colOut << "colWaterBox " << waterBox[i].x1 << ", " << waterBox[i].z1 << ", "
+                   << waterBox[i].x2 << ", " << waterBox[i].z2 << "," << waterBox[i].y << std::endl;
+        }
+    }
+
+    colOut << "colEnd" << std::endl;
 }
+
+/**
+ * Main collision converter function.
+ */
 
 void collision_converter_main(const std::string &file, const std::string &fileOut, s16 scale) {
     Assimp::Importer importer;
@@ -234,10 +376,19 @@ void collision_converter_main(const std::string &file, const std::string &fileOu
     configure_materials(scene, mat);
 
     /* Count vtx amount, setup vtx and cleanup output */
+
     inspect_vtx(scene->mRootNode, scene, mat);
     CollisionVtx vtx[vertex];
     setup_vtx(file, scene->mRootNode, scene, vtx, scale);
     clean_vtx(vtx);
+
+    /* Configure waterboxes */
+
+    for (u8 i = 0; i < waterBox.size(); i++) {
+        configure_waterbox(scene, scene->mRootNode, scale, waterBox[i]);
+    }
+
+    std::sort(waterBox.begin(), waterBox.end(), waterbox_sort);
 
     /* Write data */
     write_vtx(fileOut, vtx);
