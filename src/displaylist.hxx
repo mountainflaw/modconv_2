@@ -78,6 +78,8 @@ class DisplayList {
     std::string store[PROPERTIES];
     std::string GetMaterial(Material* mat, u16 currMat, const bool first) {
         bool properties[PROPERTIES] = {0};
+        std::string lights = "";
+
         if (first) {
             store[ENV] = mat[currMat].getEnvColor();
             store[COMBINER] = mat[currMat].getSetCombine(layer, twoCycle);
@@ -85,7 +87,19 @@ class DisplayList {
             store[TEXLOAD] = mat[currMat].getTextureLoad();
             store[TEXSCALE] = mat[currMat].getTextureScaling();
 
-            return dl_command("gsDPPipeSync") + "\n" + mat[currMat].getGeometryMode(&geometryState) + store[ENV] + store[COMBINER] + store[TEXFILTER] + store[TEXLOAD] + store[TEXSCALE] + dl_command("gsDPTileSync") + "\n";
+            if (mat[currMat].getLighting(&geometryState)) {
+                lights  = dl_command("gsSPNumLights", "NUMLIGHTS_1") + "\n";
+                lights += dl_command_ref("gsSPLight", get_filename(fOut) + "_diffuse_light, 1") + "\n";
+                lights += dl_command_ref("gsSPLight", get_filename(fOut) + "_ambient_light, 2") + "\n";
+            }
+
+            return dl_command("gsDPPipeSync") + "\n" + mat[currMat].getGeometryMode(&geometryState) + lights + store[ENV] + store[COMBINER] + store[TEXFILTER] + store[TEXLOAD] + store[TEXSCALE] + dl_command("gsDPTileSync") + "\n";
+        }
+
+        if (mat[currMat].getLighting(&geometryState)) {
+            lights  = dl_command("gsSPNumLights", "NUMLIGHTS_1") + "\n";
+            lights += dl_command_ref("gsSPLight", get_filename(fOut) + "_diffuse_light, 1") + "\n";
+            lights += dl_command_ref("gsSPLight", get_filename(fOut) + "_ambient_light, 2") + "\n";
         }
 
         std::string write[PROPERTIES];
@@ -96,13 +110,6 @@ class DisplayList {
             mat[currMat].getTextureLoad(),
             mat[currMat].getTextureScaling()
         };
-
-        std::string lights = "";
-        if (mat[currMat].getLighting(&geometryState)) {
-            lights  = dl_command("gsSPNumLights", "NUMLIGHTS_1") + "\n";
-            lights += dl_command_ref("gsSPLight", get_filename(fOut) + "_diffuse_light, 1") + "\n";
-            lights += dl_command_ref("gsSPLight", get_filename(fOut) + "_ambient_light, 2") + "\n";
-        }
 
         for (u16 i = 0; i < PROPERTIES; i++) {
             if (store[i] != load[i]) {
