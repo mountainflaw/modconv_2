@@ -252,8 +252,9 @@ static void write_vtx(const std::string &fileOut, const CollisionVtx* vtx) {
     colOut << "colVertexInit " << writeSize << std::endl;
     for (u32 i = 0; i < vertex; i++) {
         if (vtx[i].useless == false) {
-            colOut << "colVertex " << vtx[i].pos[AXIS_X] << ", "
-                                   << vtx[i].pos[AXIS_Y] << ", "
+            colOut << "colVertex " << std::right << std::setw(6)
+                                   << vtx[i].pos[AXIS_X] << ", " << std::right << std::setw(6)
+                                   << vtx[i].pos[AXIS_Y] << ", " << std::right << std::setw(6)
                                    << vtx[i].pos[AXIS_Z] << std::endl;
 
         }
@@ -337,9 +338,16 @@ static void write_tri(const std::string &fileOut, const CollisionVtx* vtx, const
         }
 
         if (mat[vtx[i].material].isSpecial) {
-            colOut << "colTriSpecial " << get_vtx_index(vtx, i) << ", " << get_vtx_index(vtx, i + 1) << ", " << get_vtx_index(vtx, i + 2) << ", " << mat[vtx[i].material].special << std::endl;
+            colOut << "colTriSpecial " << std::right << std::setw(6)
+                                       << get_vtx_index(vtx, i) << ", " << std::right << std::setw(6)
+                                       << get_vtx_index(vtx, i + 1) << ", " << std::right << std::setw(6)
+                                       << get_vtx_index(vtx, i + 2) << ", " << std::right << std::setw(6)
+                                       << mat[vtx[i].material].special << std::endl;
         } else {
-            colOut << "colTri " << get_vtx_index(vtx, i) << ", " << get_vtx_index(vtx, i + 1) << ", " << get_vtx_index(vtx, i + 2) << std::endl;
+            colOut << "colTri " << std::right << std::setw(6)
+                                << get_vtx_index(vtx, i) << ", " << std::right << std::setw(6)
+                                << get_vtx_index(vtx, i + 1) << ", " << std::right << std::setw(6)
+                                << get_vtx_index(vtx, i + 2) << std::endl;
         }
     }
 
