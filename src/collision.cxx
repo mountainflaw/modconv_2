@@ -284,7 +284,7 @@ static INLINE bool waterbox_sort(const CollisionWaterBox &a, const CollisionWate
  * Creates waterbox bounding box.
  */
 
-static void configure_waterbox(const aiScene* scene, const aiNode* node, s16 scale, CollisionWaterBox waterBox) {
+static void configure_waterbox(const aiScene* scene, const aiNode* node, s16 scale, CollisionWaterBox &waterBox) {
     for (u16 i = 0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
         if (waterBox.material == mesh->mMaterialIndex) {
@@ -307,7 +307,7 @@ static void configure_waterbox(const aiScene* scene, const aiNode* node, s16 sca
                     }
 
                     if ((s16)((mesh->mVertices[mesh->mFaces[j].mIndices[k]].y * scale) * scaling_hack()) > waterBox.y) {
-                        waterBox.y = (s16)((mesh->mVertices[mesh->mFaces[j].mIndices[k]].x * scale) * scaling_hack());
+                        waterBox.y = (s16)((mesh->mVertices[mesh->mFaces[j].mIndices[k]].y * scale) * scaling_hack());
                     }
                 }
             }
@@ -349,7 +349,7 @@ static void write_tri(const std::string &fileOut, const CollisionVtx* vtx, const
         colOut << "colWaterBoxInit " << waterBox.size() << std::endl;
         for (u8 i = 0; i < waterBox.size(); i++) {
             colOut << "colWaterBox " << waterBox[i].x1 << ", " << waterBox[i].z1 << ", "
-                   << waterBox[i].x2 << ", " << waterBox[i].z2 << "," << waterBox[i].y << std::endl;
+                   << waterBox[i].x2 << ", " << waterBox[i].z2 << ", " << waterBox[i].y << std::endl;
         }
     }
 
