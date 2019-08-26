@@ -240,7 +240,7 @@ class DisplayList {
         /* Reset display list settings */
         gfxOut << dl_command("gsSPTexture", "-1, -1, 0, 0, 0") << std::endl
                << dl_command("gsDPPipeSync") << std::endl
-               << dl_command("gsDPSetCombineMode", "G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE, G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE") << std::endl;
+               << dl_command("gsDPSetCombineModeLERP", "G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE, G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE") << std::endl;
 
         if (!(geometryState & GET_GEO(GEO_LIGHTING))) { /* We don't need to re-enable this if it's already set. */
             gfxOut << dl_command("gsSPSetGeometryMode", "G_LIGHTING") << std::endl;

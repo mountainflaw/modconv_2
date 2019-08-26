@@ -116,7 +116,7 @@ static void configure_materials(const aiScene* scene, CollisionMat* mat) {
                 mat[i].surf = nameStr.substr(pos[STARTPOS], (j - pos[STARTPOS]) + 1);
             }
         } else {
-            mat[i].surf = "SURF_ENV_DEFAULT";
+            mat[i].surf = "SURFACE_DEFAULT";
         }
         info_message("Material to surface: " + nameStr + " -> " + mat[i].surf);
     }
