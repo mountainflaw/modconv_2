@@ -88,7 +88,11 @@ std::string groupTags[GROUP_TAGS] = { "#LIGHTING", "#BACKFACE", "#ENVMAP", "#LIN
 
     std::string getEnvColor() {
         if (name.find("#DIFFUSE") != std::string::npos) {
-            return dl_command("gsDPSetEnvColor", "0x00, 0x00 " + hex_string(diffuse[C_RED]) + ", " + hex_string(diffuse[C_GRN]) + ", " + hex_string(diffuse[C_BLU])) + "\n";
+            if (!gExportC) {
+                return dl_command("gsDPSetEnvColor", hex_string(diffuse[C_RED]) + ", " + hex_string(diffuse[C_GRN]) + ", " + hex_string(diffuse[C_BLU])) + "\n";
+            } else {
+                return dl_command("gsDPSetEnvColor", "0x00, 0x00, " + hex_string(diffuse[C_RED]) + ", " + hex_string(diffuse[C_GRN]) + ", " + hex_string(diffuse[C_BLU]) + ", 0xff") + "\n";
+            }
         }
         return "";
     }
