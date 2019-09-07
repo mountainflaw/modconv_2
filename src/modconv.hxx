@@ -35,11 +35,11 @@
 #include <iostream>
 #include <fstream>
 
-#include <iostream>
 #include <iomanip>
 #include <string>
-#include <fstream>
 #include <cstdlib>
+#include <type_traits>
+#include <regex>
 
 #include <math.h>
 
@@ -75,6 +75,8 @@ typedef volatile s64 vs64;
 
 typedef float  f32;
 typedef double f64;
+
+typedef float  TReal;
 
 /* From cxd4-rsp */
 
@@ -118,6 +120,7 @@ typedef double f64;
 #define OUTPUT_REDSKIN   77
 #define OUTPUT_COLLISION 88
 #define OUTPUT_GODDARD   99
+#define OUTPUT_ANIMATION 100
 
 /********************************************************************************
  * ENUMS                                                                        *
@@ -141,6 +144,7 @@ std::string labelize(const std::string &label);
 void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8 microcode, bool level);
 void collision_converter_main(const std::string &file, const std::string &fileOut, s16 scale);
 void goddard_main(const std::string &file, const std::string &fileOut, const s16 scale);
+void animconv_main(const std::string &file, const std::string &fileOut);
 
 #ifdef BUILD_REDSKIN
 void redskin_main(const std::string &file, const std::string &fileOut, const std::string &animName, const s16 scale, const u8 microcode);

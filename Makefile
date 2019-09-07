@@ -1,7 +1,7 @@
 #modconv_2 Makefile
 
 #Compiler
-CC = g++
+CC = g++-8
 
 #Source directories
 BASEDIR = ./
@@ -20,7 +20,7 @@ BUILDS = release debug debug_all debug_optimizer debug_output
 #Build Configuration
 ####################
 #Target files
-SRCFILES = $(SRCDIR)main.cxx $(SRCDIR)f3d.cxx $(SRCDIR)collision.cxx $(SRCDIR)file.cxx
+SRCFILES = $(SRCDIR)main.cxx $(SRCDIR)f3d.cxx $(SRCDIR)collision.cxx $(SRCDIR)animconv.cxx $(SRCDIR)file.cxx
 DEPFILES = $(DEPSDIR)lodepng.cpp
 
 #Compiler flags
@@ -49,10 +49,10 @@ compile: $(SRCFILES)
 	$(CC) $(CFLAGS) $(FORCEFLAGS) $(SRCFILES) $(DEPFILES) -o $(OUTPUTPATH) $(LIBS)
 
 clean:
-	rm -r $(OUTPUTDIR) &> /dev/null
+	rm -r $(OUTPUTDIR) > /dev/null
 
 createdir:
-	mkdir $(OUTPUTDIR) &> /dev/null
+	mkdir $(OUTPUTDIR) > /dev/null
 
 #Print help menu
 help:

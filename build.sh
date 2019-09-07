@@ -9,7 +9,7 @@ libs="-lassimp -lstdc++fs"
 flags="-O3"
 forceflags="-Wall -Werror -std=c++17 -Wno-unused-function"
 defines=""
-files="src/main.cxx src/f3d.cxx src/collision.cxx src/file.cxx"
+files="src/main.cxx src/f3d.cxx src/collision.cxx src/animconv.cxx src/file.cxx"
 output="build/modconv2"
 
 # project info
@@ -48,7 +48,7 @@ function compile () {
     rm *.o &> /dev/null
     rm -r build &> /dev/null
     mkdir build &> /dev/null
-    g++ $flags $forceflags $files $files2 $deps -o $output $libs $defines
+    g++-8 $flags $forceflags $files $files2 $deps -o $output $libs $defines
     if [ $? == 0 ]; then
         echo "[✓] Build succeeded!"
     else
