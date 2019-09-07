@@ -38,10 +38,6 @@ u8 leniencyFactor = 1;
 
 u8 output = OUTPUT_F3D;
 
-#ifdef BUILD_REDSKIN
-std::string animName;
-#endif
-
 INLINE std::string print_bold(const std::string &s) {
 #ifdef _WIN32
     return s;
@@ -55,7 +51,7 @@ INLINE void error_message(const std::string &message) {
     exit(1);
 }
 
-INLINE void warn_message(const std::string &message)
+void warn_message(const std::string &message)
 { std::cout << print_bold("WARNING: ") << message << std::endl; }
 
 INLINE void info_message(const std::string &message)
@@ -77,9 +73,6 @@ void print_help(const std::string &name) {
               << "  - rej       - Optimize for Fast3DEX Rej (64 vtx)" << std::endl
               << "  - collision - Export collision mesh" << std::endl
               << "  - goddard   - Export Mario head mesh" << std::endl
-#ifdef BUILD_REDSKIN
-              << "  - redskin   - Export in Redskin format" << std::endl
-#endif
               << "--uvflip - Flip the UV mask Y axis" << std::endl
               << "--glabel - Use global labels instead of local labels" << std::endl
               << "  - Allows for editing data in C" << std::endl
@@ -144,9 +137,6 @@ f32 scaling_hack() {
 
 int main(int argc, char* argv[]) {
     std::cout << print_bold("- MODCONV 3.5 BY RED -") << std::endl;
-#ifdef BUILD_REDSKIN
-    info_message("Redskin enabled build");
-#endif
     std::string filePath = argv[argc - 1],
                 fileOut  = "model";
     s16 scale            = DEFAULT_SCALE;
@@ -183,18 +173,7 @@ int main(int argc, char* argv[]) {
             else if (flw.compare("rej") == 0) {       output = OUTPUT_REJ; }
             else if (flw.compare("goddard") == 0) {   output = OUTPUT_GODDARD; }
             else if (flw.compare("collision") == 0) { output = OUTPUT_COLLISION; }
-
-#ifdef BUILD_REDSKIN
-            else if (flw.compare("redskin") == 0) {
-                output = OUTPUT_REDSKIN;
-                if (i + 3 >= argc) {
-                    error_message("Redskin output requires animation name.");
-                } else {
-                    animName = argv[i + 2];
-                }
-            }
-#endif
-
+            else if (flw.compare("animation") == 0) { output = OUTPUT_ANIMATION; }
             else { error_message("Invalid output type."); }
             info_message("Type: " + flw);
         }
@@ -303,13 +282,11 @@ int main(int argc, char* argv[]) {
 
         //case OUTPUT_GODDARD:
         //goddard_main(filePath, fileOut, scale);
-        break;
+        //break;
 
-#ifdef BUILD_REDSKIN
-        case OUTPUT_REDSKIN:
-        redskin_main(filePath, fileOut, animName, scale, 30);
+        case OUTPUT_ANIMATION:
+        animconv_main(filePath, fileOut);
         break;
-#endif
     }
 
     info_message("Finished!");
