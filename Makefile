@@ -49,11 +49,7 @@ compile: $(SRCFILES)
 	$(CC) $(CFLAGS) $(FORCEFLAGS) $(SRCFILES) $(DEPFILES) -o $(OUTPUTPATH) $(LIBS)
 
 clean:
-<<<<<<< HEAD
 	rm -r $(OUTPUTDIR) > /dev/null || true
-=======
-	rm -r $(OUTPUTDIR) > /dev/null
->>>>>>> 6b0dbdd03e24f736f00d8220b926890239b6c240
 
 createdir:
 	mkdir $(OUTPUTDIR) > /dev/null
