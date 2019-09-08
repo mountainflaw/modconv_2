@@ -1,7 +1,7 @@
 #modconv_2 Makefile
 
 #Compiler
-CC = g++-8
+CC = g++
 
 #Source directories
 BASEDIR = ./
