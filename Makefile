@@ -49,7 +49,7 @@ compile: $(SRCFILES)
 	$(CC) $(CFLAGS) $(FORCEFLAGS) $(SRCFILES) $(DEPFILES) -o $(OUTPUTPATH) $(LIBS)
 
 clean:
-	rm -r $(OUTPUTDIR) > /dev/null
+	rm -r $(OUTPUTDIR) > /dev/null || true
 
 createdir:
 	mkdir $(OUTPUTDIR) > /dev/null
