@@ -121,14 +121,18 @@ void process_anim(std::string animName, const std::string fileOut, aiAnimation *
 
     animOut << animName << "_values:";
 
-    for (long unsigned int i = 0; i < 12 * (animValues.size() / 12 + 1); i++) {
+    for (long unsigned int i = 0; i < animValues.size(); i++) {
         if (i % 12 == 0) {
             animOut << std::endl << "    .hword ";
         } else {
             animOut << ", ";
         }
 
-        animOut << PADDED_HEX(i >= animValues.size() ? (s16) -1 : animValues[i], 4);
+        animOut << PADDED_HEX(animValues[i], 4);
+    }
+
+    if (animValues.size() % 2) {
+        animOut << ", " << PADDED_HEX((s16) -1, 4);
     }
 
     animOut << std::endl << std::endl << animName << "_index:";
