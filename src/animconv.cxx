@@ -1,3 +1,10 @@
+/**
+ * TODO:
+ * -Interpolation
+ * -Use assimp to get anim metadata instead of assuming flags=0x0000
+ * -suggest geo
+ */
+
 #include "modconv.hxx"
 
 #include "animconv.hxx"
