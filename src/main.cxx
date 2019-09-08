@@ -285,7 +285,7 @@ int main(int argc, char* argv[]) {
         //break;
 
         case OUTPUT_ANIMATION:
-        animconv_main(filePath, fileOut);
+        animconv_main(filePath, fileOut, level);
         break;
     }
 

@@ -61,22 +61,41 @@ template<typename TKey> void add_keyframes_to_value_idx_tables(TKey keys[], unsi
             push_back_key_prop(values, keys[i], key);
         }
 
-        // TODO: Optimize
-        animIndex.push_back(numKeys);
-        animIndex.push_back(animValues.size());
+        // If all values are the same, push 0x0001 entry
+        if (std::equal(values.begin() + 1, values.end(), values.begin())) {
+            animIndex.push_back(1);
 
-        animValues.insert(animValues.end(), values.begin(), values.end());
+            std::vector<s16>::iterator it = std::find(animValues.begin(), animValues.end(), values[0]);
+
+            if (it == animValues.end()) {
+                animIndex.push_back(animValues.size());
+                animValues.push_back(values[0]);
+            } else {
+                animIndex.push_back(std::distance(animValues.begin(), it));
+            }
+        } else {
+            animIndex.push_back(numKeys);
+            animIndex.push_back(animValues.size());
+
+            animValues.insert(animValues.end(), values.begin(), values.end());
+        }
     }
 }
 
-void process_anim(const std::string &fileOut, aiAnimation *anim, aiNode *rootNode) {
-    std::string animName = get_anim_name(anim);
+void process_anim(std::string animName, const std::string fileOut, aiAnimation *anim, aiNode *rootNode) {
+    std::string rawAnimName(anim->mName.C_Str());
+
+    info_message("Processing animation " + rawAnimName);
+
+    std::string filename = fileOut + "/" + animName + ".s";
+
+    reset_file(filename);
 
     std::fstream animOut;
-    animOut.open(fileOut + "/" + animName + ".s", std::ofstream::out | std::ofstream::app);
+    animOut.open(filename, std::ofstream::out | std::ofstream::app);
 
     if (anim->mTicksPerSecond != 30) {
-        warn_message("Animation is not 30 FPS (" + std::to_string(anim->mTicksPerSecond) + " FPS); this will result in slowed down or sped up animations.");
+        warn_message("Animation " + rawAnimName + " is not 30 FPS (" + std::to_string(anim->mTicksPerSecond) + " FPS); this will result in slowed down or sped up animations.");
     }
 
     std::vector<s16> animValues;
@@ -139,7 +158,7 @@ void process_anim(const std::string &fileOut, aiAnimation *anim, aiNode *rootNod
         << "    .hword " << PADDED_HEX(0, 4) << " # length (only used in mario anims)" << std::endl;
 }
 
-void animconv_main(const std::string &file, const std::string &fileOut) {
+void animconv_main(const std::string &file, const std::string &fileOut, bool level) {
     Assimp::Importer importer;
 
     const aiScene *scene = importer.ReadFile(file, aiProcess_ValidateDataStructure);
@@ -150,8 +169,32 @@ void animconv_main(const std::string &file, const std::string &fileOut) {
         error_message("Model has no animations.");
     }
 
+    std::vector<std::string> animNames;
+
     for (unsigned int i = 0; i < scene->mNumAnimations; i++) {
-        process_anim(fileOut, scene->mAnimations[i], scene->mRootNode);
+        aiAnimation *anim = scene->mAnimations[i];
+        std::string animName = get_anim_name(anim);
+
+        animNames.push_back(animName);
+
+        process_anim(animName, fileOut, anim, scene->mRootNode);
+    }
+
+    std::string headerFilename = fileOut + "/anims.s";
+
+    reset_file(headerFilename);
+
+    std::fstream animHeaderOut;
+    animHeaderOut.open(headerFilename, std::ofstream::out | std::ofstream::app);
+
+    for (long unsigned int i = 0; i < animNames.size(); i++) {
+        animHeaderOut << ".include \"" << (level ? "levels" : "actors") << "/" << fileOut << "/" << animNames[i] << ".s\"" << std::endl << std::endl;
+    }
+
+    animHeaderOut << "glabel " << fileOut << "_anims" << std::endl;
+
+    for (long unsigned int i = 0; i < animNames.size(); i++) {
+        animHeaderOut << "    .word " << animNames[i] << std::endl;
     }
 }
 
