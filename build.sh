@@ -48,7 +48,7 @@ function compile () {
     rm *.o &> /dev/null
     rm -r build &> /dev/null
     mkdir build &> /dev/null
-    g++-8 $flags $forceflags $files $files2 $deps -o $output $libs $defines
+    g++ $flags $forceflags $files $files2 $deps -o $output $libs $defines
     if [ $? == 0 ]; then
         echo "[✓] Build succeeded!"
     else
