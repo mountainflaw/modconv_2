@@ -27,10 +27,6 @@ std::string get_anim_name(aiAnimation *anim) {
     return "anim_" + std::regex_replace(rawName.C_Str(), rgx, "");
 }
 
-template<typename T> INLINE std::string padded_hex(T num) {
-    return std::to_string(num);
-}
-
 template<typename TReal> INLINE s16 sm64(TReal angle) {
     return (s16)(angle * 32768.0 / M_PI);
 }
