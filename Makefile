@@ -37,10 +37,6 @@ all: clean createdir compile
 
 release: all
 
-redskin: SRCFILES += $(SRCDIR)redskin/redskin.cxx
-redskin: CFLAGS = $(DEBUGFLAGS) -DBUILD_REDSKIN
-redskin: all
-
 debug: CFLAGS = $(DEBUGFLAGS)
 debug: all
 

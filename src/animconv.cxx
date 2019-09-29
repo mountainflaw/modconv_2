@@ -85,7 +85,7 @@ template<typename TKey> void add_keyframes_to_value_idx_tables(TKey keys[], unsi
     }
 }
 
-void process_anim(std::string animName, const std::string fileOut, aiAnimation *anim, aiNode *rootNode) {
+void process_anim(std::string animName, const std::string fileOut, aiAnimation *anim, const aiScene *scene) {
     std::string rawAnimName(anim->mName.C_Str());
 
     info_message("Processing animation " + rawAnimName);
@@ -100,6 +100,8 @@ void process_anim(std::string animName, const std::string fileOut, aiAnimation *
     if (anim->mTicksPerSecond != 30) {
         warn_message("Animation " + rawAnimName + " is not 30 FPS (" + std::to_string(anim->mTicksPerSecond) + " FPS); this will result in slowed down or sped up animations.");
     }
+
+    aiNode *rootNode = scene->mRootNode;
 
     std::vector<s16> animValues;
     std::vector<s16> animIndex;
@@ -119,10 +121,22 @@ void process_anim(std::string animName, const std::string fileOut, aiAnimation *
             add_keyframes_to_value_idx_tables(nodeAnim->mPositionKeys, nodeAnim->mNumPositionKeys, animValues, animIndex);
         }
 
-        add_keyframes_to_value_idx_tables(nodeAnim->mRotationKeys, nodeAnim->mNumRotationKeys, animValues, animIndex);
+        aiBone **bones = scene->mMeshes[0]->mBones; // only one mesh!
+        unsigned int numBones = scene->mMeshes[0]->mNumBones;
+        bool isBone = false;
+
+        for (unsigned int j = 0; j < numBones; j++) {
+            if (bones[j]->mName == nodeAnim->mNodeName) {
+                isBone = true;
+            }
+        }
+
+        if (isBone) {
+            add_keyframes_to_value_idx_tables(nodeAnim->mRotationKeys, nodeAnim->mNumRotationKeys, animValues, animIndex);
+        }
     }
 
-    animOut << animName << "_values:";
+    animOut << labelize(animName + "_values");
 
     for (long unsigned int i = 0; i < animValues.size(); i++) {
         if (i % 12 == 0) {
@@ -138,7 +152,7 @@ void process_anim(std::string animName, const std::string fileOut, aiAnimation *
         animOut << ", " << PADDED_HEX((s16) -1, 4);
     }
 
-    animOut << std::endl << std::endl << animName << "_index:";
+    animOut << std::endl << std::endl << labelize(animName + "_index");
 
     for (long unsigned int i = 0; i < animIndex.size(); i++) {
         if (i == 0 || (i >= 12 && i % 6 == 0)) {
@@ -153,7 +167,7 @@ void process_anim(std::string animName, const std::string fileOut, aiAnimation *
     animOut << std::endl << std::endl;
 
     animOut
-        << animName << ":" << std::endl
+        << labelize(animName) << std::endl
         << "    .hword " << PADDED_HEX(0, 4) << " # flags" << std::endl
         << "    .hword " << PADDED_HEX(0, 4) << " # unk02" << std::endl
         << "    .hword " << PADDED_HEX(0, 4) << " # starting frame" << std::endl
@@ -165,7 +179,7 @@ void process_anim(std::string animName, const std::string fileOut, aiAnimation *
         << "    .hword " << PADDED_HEX(0, 4) << " # length (only used in mario anims)" << std::endl;
 }
 
-void animconv_main(const std::string &file, const std::string &fileOut, bool level) {
+void animconv_main(const std::string &file, const std::string &fileOut, bool level, struct AnimconvParameters *params) {
     Assimp::Importer importer;
 
     const aiScene *scene = importer.ReadFile(file, aiProcess_ValidateDataStructure);
@@ -176,6 +190,12 @@ void animconv_main(const std::string &file, const std::string &fileOut, bool lev
         error_message("Model has no animations.");
     }
 
+    bool interpolate = params->interpolationFPS != ANIMCONV_PARAM_NO_INTERPOLATION;
+
+    info_message(std::string("Alpha sorting: ") + std::string(params->alphaSort ? "ON" : "OFF"));
+    info_message(std::string("Interpolation: ") + std::string(interpolate ? "ON" : "OFF"));
+    info_message(std::string("Target FPS:    ") + std::string(interpolate ? std::to_string(params->interpolationFPS) : "IRREL (-1.0)"));
+
     std::vector<std::string> animNames;
 
     for (unsigned int i = 0; i < scene->mNumAnimations; i++) {
@@ -184,7 +204,7 @@ void animconv_main(const std::string &file, const std::string &fileOut, bool lev
 
         animNames.push_back(animName);
 
-        process_anim(animName, fileOut, anim, scene->mRootNode);
+        process_anim(animName, fileOut, anim, scene);
     }
 
     std::string headerFilename = fileOut + "/anims.s";

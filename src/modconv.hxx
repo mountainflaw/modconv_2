@@ -104,7 +104,7 @@ typedef float  TReal;
 #define DEFAULT_SCALE 350
 /* Main GFX outputs */
 
-/* 
+/*
  * These serve two purposes:
  * 1.) They inform the program what type of output to use and how to use it.
  * 2.) They define the vertex buffer limits for the graphics microcodes.
@@ -117,10 +117,22 @@ typedef float  TReal;
 
 /* Other outputs */
 
-#define OUTPUT_REDSKIN   77
 #define OUTPUT_COLLISION 88
 #define OUTPUT_GODDARD   99
 #define OUTPUT_ANIMATION 100
+
+/* Other defines */
+
+#define ANIMCONV_PARAM_NO_INTERPOLATION -1.0
+
+/********************************************************************************
+ * STRUCTS                                                                      *
+ ********************************************************************************/
+
+struct AnimconvParameters {
+    bool alphaSort;
+    double interpolationFPS;
+};
 
 /********************************************************************************
  * ENUMS                                                                        *
@@ -144,11 +156,7 @@ std::string labelize(const std::string &label);
 void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8 microcode, bool level);
 void collision_converter_main(const std::string &file, const std::string &fileOut, s16 scale);
 void goddard_main(const std::string &file, const std::string &fileOut, const s16 scale);
-void animconv_main(const std::string &file, const std::string &fileOut, bool level);
-
-#ifdef BUILD_REDSKIN
-void redskin_main(const std::string &file, const std::string &fileOut, const std::string &animName, const s16 scale, const u8 microcode);
-#endif
+void animconv_main(const std::string &file, const std::string &fileOut, bool level, struct AnimconvParameters *params);
 
 void extern_data(const std::string &fileOut, const std::string &a);
 f32 scaling_hack();

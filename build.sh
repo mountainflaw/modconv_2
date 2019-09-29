@@ -66,13 +66,6 @@ if [[ $1 == "release" ]]; then
     exit 0
 fi
 
-if [[ $1 == "redskin" ]]; then
-    flags="-g -fsanitize=address,undefined -DBUILD_REDSKIN"
-    files2="redskin/redskin.cxx"
-    compile
-    exit 0
-fi
-
 # fallback
 
 if [[ $1 == "" ]]; then
