@@ -58,6 +58,16 @@ template<> void push_back_key_prop<aiQuatKey>(std::vector<s16> &vec, aiQuatKey k
 
 template<typename TKey> void add_keyframes_to_value_idx_tables(TKey keys[], unsigned int numKeys, std::vector<s16> &animValues, std::vector<s16> &animIndex, int oldDuration, int newDuration, struct AnimconvParameters *params) {
     for (int key = 0; key < 3; key++) {
+        if (numKeys > 1 && !params->interpolate) {
+            for (unsigned int i = 0; i < numKeys - 1; i++) {
+                double timeStep = keys[i + 1].mTime - keys[i].mTime;
+
+                if (timeStep != 1) {
+                    error_message("Keyframes are not continuous (distance between key " + std::string((i) + " and key " + std::string(i + 1) + " was " + std::string(timeStep) + ". Do not use --keyframes without interpolating in the modelling engine.");
+                }
+            }
+        }
+
         std::vector<s16> keyframes;
 
         for (unsigned int i = 0; i < numKeys; i++) {
@@ -141,7 +151,7 @@ void process_anim(std::string animName, const std::string fileOut, aiAnimation *
         (((int) params->interpolationFPS % (int) animFPS) == 0) ||
         (((int) animFPS % (int) params->interpolationFPS) == 0))
     ) {
-        warn_message("Animation " + rawAnimName + " is " + std::to_string(animFPS) + " FPS, which is not divisible or divided by the target interpolation FPS " + std::to_string(params->interpolationFPS) + ". This may result in rounding errors or other unintended side effects.");
+        warn_message("Animation " + rawAnimName + " is " + std::to_string(animFPS) + " FPS, which is not divisible or divided by the target interpolation FPS " + std::to_string(params->interpolationFPS) + ". This may result in rounding errors or other unintended side effects. This warning can usually be ignored, but if you're experiencing minor chopping or animations cutting out early, try re-exporting at the final FPS. Use --keyframes when doing so.");
     }
 
     aiNode *rootNode = scene->mRootNode;
@@ -157,8 +167,22 @@ void process_anim(std::string animName, const std::string fileOut, aiAnimation *
 
     int newDuration = (int) duration_d;
 
+    std::vector<const aiNodeAnim*> nodes;
+
     for (unsigned int i = 0; i < anim->mNumChannels; i++) {
-        const aiNodeAnim *nodeAnim = anim->mChannels[i];
+        nodes.push_back(anim->mChannels[i]);
+    }
+
+    if (params->alphaSort) {
+        std::sort(nodes.begin(), nodes.end(), [](const aiNodeAnim *a, const aiNodeAnim *b) {
+            return strcmp(a->mNodeName.C_Str(), b->mNodeName.C_Str()) < 0;
+        });
+    }
+
+    for (unsigned int i = 0; i < nodes.size(); i++) {
+        const aiNodeAnim *nodeAnim = nodes[i];
+
+        info_message("Visiting node " + std::string(nodeAnim->mNodeName.C_Str()));
 
         bool isAnimRoot = false;
 
@@ -184,6 +208,10 @@ void process_anim(std::string animName, const std::string fileOut, aiAnimation *
 
         if (isBone) {
             add_keyframes_to_value_idx_tables(nodeAnim->mRotationKeys, nodeAnim->mNumRotationKeys, animValues, animIndex, (int) anim->mDuration, newDuration, params);
+        }
+
+        if (!(isAnimRoot || isBone)) {
+            info_message("Node excluded");
         }
     }
 
