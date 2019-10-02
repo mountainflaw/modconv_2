@@ -121,17 +121,14 @@ typedef float  TReal;
 #define OUTPUT_GODDARD   99
 #define OUTPUT_ANIMATION 100
 
-/* Other defines */
-
-#define ANIMCONV_PARAM_NO_INTERPOLATION -1.0
-
 /********************************************************************************
  * STRUCTS                                                                      *
  ********************************************************************************/
 
 struct AnimconvParameters {
     bool alphaSort;
-    double interpolationFPS;
+    bool interpolate;
+    int interpolationFPS;
 };
 
 /********************************************************************************

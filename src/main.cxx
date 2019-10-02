@@ -36,7 +36,7 @@ bool gGeneric = false;
 u8 leniencyFactor = 1;
 /* std::string glabelData; */
 
-AnimconvParameters animconvParams = {false, 30.0};
+AnimconvParameters animconvParams = {false, true, 30};
 
 u8 output = OUTPUT_F3D;
 
@@ -254,7 +254,7 @@ int main(int argc, char* argv[]) {
         }
 
         if (arg.compare("--keyframes") == 0) {
-            animconvParams.interpolationFPS = ANIMCONV_PARAM_NO_INTERPOLATION;
+            animconvParams.interpolate = false;
         }
 
         if (arg.compare("--help") == 0) {

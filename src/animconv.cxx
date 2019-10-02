@@ -56,12 +56,45 @@ template<> void push_back_key_prop<aiQuatKey>(std::vector<s16> &vec, aiQuatKey k
     vec.push_back((s16) rot[prop]);
 }
 
-template<typename TKey> void add_keyframes_to_value_idx_tables(TKey keys[], unsigned int numKeys, std::vector<s16> &animValues, std::vector<s16> &animIndex) {
+template<typename TKey> void add_keyframes_to_value_idx_tables(TKey keys[], unsigned int numKeys, std::vector<s16> &animValues, std::vector<s16> &animIndex, int oldDuration, int newDuration, struct AnimconvParameters *params) {
     for (int key = 0; key < 3; key++) {
-        std::vector<s16> values;
+        std::vector<s16> keyframes;
 
         for (unsigned int i = 0; i < numKeys; i++) {
-            push_back_key_prop(values, keys[i], key);
+            push_back_key_prop(keyframes, keys[i], key);
+        }
+
+        std::vector<s16> values;
+
+        if (params->interpolate) {
+            for (int i = 0; i < newDuration; i++) {
+                if (numKeys == 1) {
+                    values.push_back(keyframes[0]);
+                } else {
+                    double speedup = (double) newDuration / (double) oldDuration;
+
+                    unsigned int j;
+
+                    double t0;
+                    double t1;
+
+                    for (j = 0; j < numKeys - 1; j++) {
+                        t0 = keys[j].mTime * speedup;
+                        t1 = keys[j + 1].mTime * speedup;
+
+                        if (t1 > i) {
+                            break;
+                        }
+                    }
+
+                    // Linear interpolation
+                    double ratio = (i - t0) / (t1 - t0);
+
+                    values.push_back(keyframes[j] * (1 - ratio) + keyframes[j + 1] * ratio);
+                }
+            }
+        } else {
+            values = keyframes;
         }
 
         // If all values are the same, push 0x0001 entry
@@ -77,7 +110,7 @@ template<typename TKey> void add_keyframes_to_value_idx_tables(TKey keys[], unsi
                 animIndex.push_back(std::distance(animValues.begin(), it));
             }
         } else {
-            animIndex.push_back(numKeys);
+            animIndex.push_back(values.size());
             animIndex.push_back(animValues.size());
 
             animValues.insert(animValues.end(), values.begin(), values.end());
@@ -85,7 +118,7 @@ template<typename TKey> void add_keyframes_to_value_idx_tables(TKey keys[], unsi
     }
 }
 
-void process_anim(std::string animName, const std::string fileOut, aiAnimation *anim, const aiScene *scene) {
+void process_anim(std::string animName, const std::string fileOut, aiAnimation *anim, const aiScene *scene, struct AnimconvParameters *params) {
     std::string rawAnimName(anim->mName.C_Str());
 
     info_message("Processing animation " + rawAnimName);
@@ -97,14 +130,32 @@ void process_anim(std::string animName, const std::string fileOut, aiAnimation *
     std::fstream animOut;
     animOut.open(filename, std::ofstream::out | std::ofstream::app);
 
-    if (anim->mTicksPerSecond != 30) {
-        warn_message("Animation " + rawAnimName + " is not 30 FPS (" + std::to_string(anim->mTicksPerSecond) + " FPS); this will result in slowed down or sped up animations.");
+    double animFPS = anim->mTicksPerSecond;
+
+    if (!params->interpolate && animFPS != 30) {
+        warn_message("Animation " + rawAnimName + " is not 30 FPS (" + std::to_string(animFPS) + " FPS). Not interpolating will result in slowed down or sped up animations.");
+    }
+
+    if (params->interpolate && !(
+        (anim->mTicksPerSecond != (int) animFPS) ||
+        (((int) params->interpolationFPS % (int) animFPS) == 0) ||
+        (((int) animFPS % (int) params->interpolationFPS) == 0))
+    ) {
+        warn_message("Animation " + rawAnimName + " is " + std::to_string(animFPS) + " FPS, which is not divisible or divided by the target interpolation FPS " + std::to_string(params->interpolationFPS) + ". This may result in rounding errors or other unintended side effects.");
     }
 
     aiNode *rootNode = scene->mRootNode;
 
     std::vector<s16> animValues;
     std::vector<s16> animIndex;
+
+    double duration_d = anim->mDuration;
+
+    if (params->interpolate) {
+        duration_d *= params->interpolationFPS / animFPS;
+    }
+
+    int newDuration = (int) duration_d;
 
     for (unsigned int i = 0; i < anim->mNumChannels; i++) {
         const aiNodeAnim *nodeAnim = anim->mChannels[i];
@@ -118,7 +169,7 @@ void process_anim(std::string animName, const std::string fileOut, aiAnimation *
         }
 
         if (isAnimRoot) {
-            add_keyframes_to_value_idx_tables(nodeAnim->mPositionKeys, nodeAnim->mNumPositionKeys, animValues, animIndex);
+            add_keyframes_to_value_idx_tables(nodeAnim->mPositionKeys, nodeAnim->mNumPositionKeys, animValues, animIndex, (int) anim->mDuration, newDuration, params);
         }
 
         aiBone **bones = scene->mMeshes[0]->mBones; // only one mesh!
@@ -132,7 +183,7 @@ void process_anim(std::string animName, const std::string fileOut, aiAnimation *
         }
 
         if (isBone) {
-            add_keyframes_to_value_idx_tables(nodeAnim->mRotationKeys, nodeAnim->mNumRotationKeys, animValues, animIndex);
+            add_keyframes_to_value_idx_tables(nodeAnim->mRotationKeys, nodeAnim->mNumRotationKeys, animValues, animIndex, (int) anim->mDuration, newDuration, params);
         }
     }
 
@@ -172,7 +223,7 @@ void process_anim(std::string animName, const std::string fileOut, aiAnimation *
         << "    .hword " << PADDED_HEX(0, 4) << " # unk02" << std::endl
         << "    .hword " << PADDED_HEX(0, 4) << " # starting frame" << std::endl
         << "    .hword " << PADDED_HEX(0, 4) << " # loop starting frame" << std::endl
-        << "    .hword " << PADDED_HEX(anim->mDuration, 4) << " # loop length" << std::endl
+        << "    .hword " << PADDED_HEX(newDuration, 4) << " # loop length" << std::endl
         << "    .hword " << PADDED_HEX(0, 4) << " # unused0A" << std::endl
         << "    .word " << animName << "_values" << std::endl
         << "    .word " << animName << "_index" << std::endl
@@ -190,11 +241,11 @@ void animconv_main(const std::string &file, const std::string &fileOut, bool lev
         error_message("Model has no animations.");
     }
 
-    bool interpolate = params->interpolationFPS != ANIMCONV_PARAM_NO_INTERPOLATION;
-
     info_message(std::string("Alpha sorting: ") + std::string(params->alphaSort ? "ON" : "OFF"));
-    info_message(std::string("Interpolation: ") + std::string(interpolate ? "ON" : "OFF"));
-    info_message(std::string("Target FPS:    ") + std::string(interpolate ? std::to_string(params->interpolationFPS) : "IRREL (-1.0)"));
+    info_message(std::string("Interpolation: ") + std::string(params->interpolate ? "ON" : "OFF"));
+    if (params->interpolate) {
+        info_message(std::string("Target FPS:    ") + std::to_string(params->interpolationFPS));
+    }
 
     std::vector<std::string> animNames;
 
@@ -204,7 +255,7 @@ void animconv_main(const std::string &file, const std::string &fileOut, bool lev
 
         animNames.push_back(animName);
 
-        process_anim(animName, fileOut, anim, scene);
+        process_anim(animName, fileOut, anim, scene, params);
     }
 
     std::string headerFilename = fileOut + "/anims.s";
