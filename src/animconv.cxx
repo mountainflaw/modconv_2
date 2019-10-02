@@ -63,7 +63,7 @@ template<typename TKey> void add_keyframes_to_value_idx_tables(TKey keys[], unsi
                 double timeStep = keys[i + 1].mTime - keys[i].mTime;
 
                 if (timeStep != 1) {
-                    error_message("Keyframes are not continuous (distance between key " + std::string((i) + " and key " + std::string(i + 1) + " was " + std::string(timeStep) + ". Do not use --keyframes without interpolating in the modelling engine.");
+                    error_message("Keyframes are not continuous (distance between key " + std::string(i) + " and key " + std::string(i + 1) + " was " + std::string(timeStep) + ". Do not use --keyframes without interpolating in the modelling engine.");
                 }
             }
         }
