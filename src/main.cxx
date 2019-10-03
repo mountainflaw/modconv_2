@@ -36,6 +36,8 @@ bool gGeneric = false;
 u8 leniencyFactor = 1;
 /* std::string glabelData; */
 
+AnimconvParameters animconvParams = {false, true, 30};
+
 u8 output = OUTPUT_F3D;
 
 INLINE std::string print_bold(const std::string &s) {
@@ -73,6 +75,10 @@ void print_help(const std::string &name) {
               << "  - rej       - Optimize for Fast3DEX Rej (64 vtx)" << std::endl
               << "  - collision - Export collision mesh" << std::endl
               << "  - goddard   - Export Mario head mesh" << std::endl
+              << "  - animation - Export animations" << std::endl
+              << "    - --alphasort         - Sort nodes alphabetically" << std::endl
+              << "    - --targetfps <fps>   - Interpolate to <fps> instead of 30 FPS" << std::endl
+              << "    - --keyframes         - Write keyframes instead of interpolating between them" << std::endl
               << "--uvflip - Flip the UV mask Y axis" << std::endl
               << "--glabel - Use global labels instead of local labels" << std::endl
               << "  - Allows for editing data in C" << std::endl
@@ -239,6 +245,18 @@ int main(int argc, char* argv[]) {
             gGeneric = true;
         }
 
+        if (arg.compare("--alphasort") == 0) {
+            animconvParams.alphaSort = true;
+        }
+
+        if (arg.compare("--targetfps") == 0) {
+            animconvParams.interpolationFPS = std::stoi(flw);
+        }
+
+        if (arg.compare("--keyframes") == 0) {
+            animconvParams.interpolate = false;
+        }
+
         if (arg.compare("--help") == 0) {
             print_help(argv[0]);
             exit(0);
@@ -285,7 +303,7 @@ int main(int argc, char* argv[]) {
         //break;
 
         case OUTPUT_ANIMATION:
-        animconv_main(filePath, fileOut, level);
+        animconv_main(filePath, fileOut, level, &animconvParams);
         break;
     }
 
