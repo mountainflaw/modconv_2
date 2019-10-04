@@ -196,23 +196,7 @@ void process_anim(std::string animName, const std::string fileOut, aiAnimation *
             add_keyframes_to_value_idx_tables(nodeAnim->mPositionKeys, nodeAnim->mNumPositionKeys, animValues, animIndex, (int) anim->mDuration, newDuration, params);
         }
 
-        aiBone **bones = scene->mMeshes[0]->mBones; // only one mesh!
-        unsigned int numBones = scene->mMeshes[0]->mNumBones;
-        bool isBone = false;
-
-        for (unsigned int j = 0; j < numBones; j++) {
-            if (bones[j]->mName == nodeAnim->mNodeName) {
-                isBone = true;
-            }
-        }
-
-        if (isBone) {
-            add_keyframes_to_value_idx_tables(nodeAnim->mRotationKeys, nodeAnim->mNumRotationKeys, animValues, animIndex, (int) anim->mDuration, newDuration, params);
-        }
-
-        if (!(isAnimRoot || isBone)) {
-            info_message("Node excluded");
-        }
+        add_keyframes_to_value_idx_tables(nodeAnim->mRotationKeys, nodeAnim->mNumRotationKeys, animValues, animIndex, (int) anim->mDuration, newDuration, params);
     }
 
     animOut << labelize(animName + "_values");
