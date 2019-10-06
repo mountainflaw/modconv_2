@@ -53,6 +53,8 @@ u16 vBuffers = 0,
 u8  layers   = 0;
 bool setLayer[8] = { false };
 
+static CullRegion cullBox;
+
 u8 diffuse[6] = {0xFF, 0xFF, 0xFF, 0x28, 0x28, 0x28}, ambient[3] = {0x66, 0x66, 0x66};
 
 u32 geometryState = 0;
@@ -183,7 +185,7 @@ namespace uvutil {
      * this in Super Mario 64 ROM Manager.
      */
 
-    static void reset_uv(s32 uv[3][2], u16 w, u16 h) {
+    static void reset_uv(s32 uv[3][2], u16 w, u16 h, bool nearest) {
         u16 jump = w * 0x40;
         u8 sortUv[2][2] = {{sort_u_last(uv), sort_v_last(uv)}, {sort_u_first(uv), sort_v_first(uv)}};
 
@@ -219,6 +221,16 @@ namespace uvutil {
             uv[1][AXIS_Y] *= -1;
             uv[2][AXIS_Y] *= -1;
         }
+
+        if (!nearest) {
+            uv[0][AXIS_X] -= 32;
+            uv[1][AXIS_X] -= 32;
+            uv[2][AXIS_X] -= 32;
+
+            uv[0][AXIS_Y] -= 32;
+            uv[1][AXIS_Y] -= 32;
+            uv[2][AXIS_Y] -= 32;
+        }
     }
 }
 
@@ -242,7 +254,7 @@ void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                 uv[1][AXIS_Y] = mesh->mTextureCoords[0][mesh->mFaces[j].mIndices[1]].y * 32 * mat[mesh->mMaterialIndex].getDimension(AXIS_Y);
                 uv[2][AXIS_Y] = mesh->mTextureCoords[0][mesh->mFaces[j].mIndices[2]].y * 32 * mat[mesh->mMaterialIndex].getDimension(AXIS_Y);
 
-                uvutil::reset_uv(uv, mat[mesh->mMaterialIndex].getDimension(AXIS_X), mat[mesh->mMaterialIndex].getDimension(AXIS_Y));
+                uvutil::reset_uv(uv, mat[mesh->mMaterialIndex].getDimension(AXIS_X), mat[mesh->mMaterialIndex].getDimension(AXIS_Y), mat[mesh->mMaterialIndex].isNearest());
             }
 
             for (u8 k = 0; k < 3; k++) {
@@ -267,6 +279,20 @@ void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                     pos[AXIS_X] = (s16)(((mesh->mVertices[currVtx].x) * scale) * scaling_hack());
                     pos[AXIS_Y] = (s16)(((mesh->mVertices[currVtx].y) * scale) * scaling_hack());
                     pos[AXIS_Z] = (s16)(((mesh->mVertices[currVtx].z) * scale) * scaling_hack());
+
+                    if (pos[AXIS_X] > cullBox.x0) { /* generate bounding box */
+                        cullBox.x0 = pos[AXIS_X];
+                    } else if (pos[AXIS_X] < cullBox.x1) {
+                        cullBox.x1 = pos[AXIS_X];
+                    } else if (pos[AXIS_Z] > cullBox.z0) {
+                        cullBox.z0 = pos[AXIS_Z];
+                    } else if (pos[AXIS_Z] < cullBox.z1) {
+                        cullBox.z1 = pos[AXIS_Z];
+                    } else if (pos[AXIS_Y] > cullBox.y0) {
+                        cullBox.y0 = pos[AXIS_Y];
+                    } else if (pos[AXIS_Y] < cullBox.y1) {
+                        cullBox.y1 = pos[AXIS_Y];
+                    }
 
                     s16 rgba[4] = {0xff, 0xff, 0xff, 0xff};
 
@@ -417,6 +443,9 @@ static void write_vtx(const std::string fileOut, const std::string &path, Vertex
                 if (gExportC) {
                     vtxOut << "};" << std::endl;
                 }
+    }
+    if (gCullDlist) {
+        vtxOut << labelize(get_filename(fileOut) + "_culling_vertex") << std::endl;
     }
 }
 
@@ -649,7 +678,7 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
     Assimp::Importer importer;
 
     /* We don't use ASSIMP's built in tristripping because of the vertex buffer. */
-    const aiScene* scene = importer.ReadFile(file, aiProcess_ValidateDataStructure | aiProcess_Triangulate | aiProcess_PreTransformVertices | aiProcess_GenUVCoords);
+    const aiScene* scene = importer.ReadFile(file, aiProcess_ValidateDataStructure | aiProcess_Triangulate | aiProcess_PreTransformVertices);
 
     if (gExportC) {
         reset_file(fileOut + "/model.inc.c");
@@ -667,6 +696,11 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
 
     info_message("Vertices " + std::to_string(vert));
     info_message("Triangles " + std::to_string(vert / 3));
+
+
+    if (gCullDlist &&gCullDlist &&  vert < 3) {
+        error_message("Cannot use culldl on single triangle models!");
+    }
 
     VertexBuffer vBuf[vBuffers];
     cycle_vbuffers(vBuf, BUFFER, microcode);
