@@ -1,6 +1,5 @@
 /**
  * TODO:
- * -Interpolation
  * -Use assimp to get anim metadata instead of assuming flags=0x0000
  * -suggest geo
  */
@@ -20,11 +19,11 @@
     << std::hex \
     << (n)
 
-std::string get_anim_name(aiAnimation *anim) {
+std::string get_anim_name(aiAnimation *anim, const std::string &fileOut) {
     aiString rawName = anim->mName;
     std::regex rgx ("[^A-Za-z0-9_]");
 
-    return "anim_" + std::regex_replace(rawName.C_Str(), rgx, "");
+    return std::regex_replace(fileOut.c_str(), rgx, "") + "_anim_" + std::regex_replace(rawName.C_Str(), rgx, "");
 }
 
 template<typename TReal> INLINE s16 sm64(TReal angle) {
@@ -232,14 +231,61 @@ void process_anim(std::string animName, const std::string fileOut, aiAnimation *
     animOut
         << labelize(animName) << std::endl
         << "    .hword " << PADDED_HEX(0, 4) << " # flags" << std::endl
-        << "    .hword " << PADDED_HEX(0, 4) << " # unk02" << std::endl
+        << "    .hword " << PADDED_HEX(0, 4) << " # 02" << std::endl
         << "    .hword " << PADDED_HEX(0, 4) << " # starting frame" << std::endl
         << "    .hword " << PADDED_HEX(0, 4) << " # loop starting frame" << std::endl
         << "    .hword " << PADDED_HEX(newDuration, 4) << " # loop length" << std::endl
         << "    .hword " << PADDED_HEX(0, 4) << " # unused0A" << std::endl
         << "    .word " << animName << "_values" << std::endl
         << "    .word " << animName << "_index" << std::endl
-        << "    .hword " << PADDED_HEX(0, 4) << " # length (only used in mario anims)" << std::endl;
+        << "    .hword " << PADDED_HEX(0, 4) << " # length (unused)" << std::endl;
+}
+
+std::vector<std::string> tokenize_mips_data(std::string data) {
+    std::vector<std::string> tokens;
+    std::string cur;
+
+    for (unsigned int i = 0; i < data.size(); i++) {
+        if (cur == "#") {
+            cur = "";
+
+            while (i < data.size() && data[i++] != '\n');
+            i--;
+        }
+
+        if (isspace(data[i])) {
+            if (cur != "") {
+                tokens.push_back(cur);
+                cur = "";
+            }
+
+            while (i < data.size() && isspace(data[i++]));
+            i--;
+        }
+
+        if (i < data.size()) {
+            cur += data[i];
+        }
+    }
+
+    if (cur.size()) {
+        tokens.push_back(cur);
+    }
+
+    return tokens;
+}
+
+int get_pointer_offset(std::vector<struct MipsDataPointer> pointers, std::string ptrname) {
+    return std::find_if(pointers.begin(), pointers.end(), [&ptrname](const MipsDataPointer &ptr) {
+        return ptr.name == ptrname;
+    })->offset;
+}
+
+void export_anim(std::vector<s16> data, std::vector<struct MipsDataPointer> pointers, std::string animName) {
+    std::cout << animName << std::endl;
+    std::cout << get_pointer_offset(pointers, animName) << std::endl;
+    std::cout << data[get_pointer_offset(pointers, animName)] << std::endl;
+    std::cout << "-----" << std::endl;
 }
 
 void animconv_main(const std::string &file, const std::string &fileOut, bool level, struct AnimconvParameters *params) {
@@ -247,44 +293,114 @@ void animconv_main(const std::string &file, const std::string &fileOut, bool lev
 
     const aiScene *scene = importer.ReadFile(file, aiProcess_ValidateDataStructure);
 
-    reset_directory(fileOut);
+    if (params->animExport) {
+        std::ifstream input;
+        input.open(file, std::ifstream::in);
 
-    if (!scene->HasAnimations() || scene->mNumAnimations == 0) {
-        error_message("Model has no animations.");
-    }
+        if (!input.is_open()) {
+            error_message("Could not open file " + file);
+        }
 
-    info_message(std::string("Alpha sorting: ") + std::string(params->alphaSort ? "ON" : "OFF"));
-    info_message(std::string("Interpolation: ") + std::string(params->interpolate ? "ON" : "OFF"));
-    if (params->interpolate) {
-        info_message(std::string("Target FPS:    ") + std::to_string(params->interpolationFPS));
-    }
+        std::string data;
+        std::string line;
 
-    std::vector<std::string> animNames;
+        while (getline(input, line)) {
+            data += line + "\n";
+        }
 
-    for (unsigned int i = 0; i < scene->mNumAnimations; i++) {
-        aiAnimation *anim = scene->mAnimations[i];
-        std::string animName = get_anim_name(anim);
+        input.close();
 
-        animNames.push_back(animName);
+        std::vector<std::string> tokens = tokenize_mips_data(data);
 
-        process_anim(animName, fileOut, anim, scene, params);
-    }
+        std::vector<std::string>::reverse_iterator it = std::find(tokens.rbegin(), tokens.rend(), "glabel");
 
-    std::string headerFilename = fileOut + "/anims.s";
+        if (it == tokens.rend()) {
+            error_message("No animation glabel found. Stopping.");
+        }
 
-    reset_file(headerFilename);
+        long unsigned int i = tokens.size() - std::distance(tokens.rbegin(), it);
 
-    std::fstream animHeaderOut;
-    animHeaderOut.open(headerFilename, std::ofstream::out | std::ofstream::app);
+        info_message("Attempting to export " + tokens[i] + ". If this is not animation data, please make sure your file only contains animation data.");
 
-    for (long unsigned int i = 0; i < animNames.size(); i++) {
-        animHeaderOut << ".include \"" << (level ? "levels" : "actors") << "/" << fileOut << "/" << animNames[i] << ".s\"" << std::endl << std::endl;
-    }
+        std::vector<s16> rawData;
+        std::vector<struct MipsDataPointer> pointers;
 
-    animHeaderOut << "glabel " << fileOut << "_anims" << std::endl;
+        for (long unsigned int j = 0; j < tokens.size(); j++) {
+            if (tokens[j] == ".hword") {
+                continue;
+            }
 
-    for (long unsigned int i = 0; i < animNames.size(); i++) {
-        animHeaderOut << "    .word " << animNames[i] << std::endl;
+            bool isLabel = j > 0 && tokens[j - 1] == "glabel";
+            std::string label = tokens[j];
+
+            if (label[label.size() - 1] == ':') {
+                isLabel = true;
+                label = label.substr(0, label.size() - 1);
+            }
+
+            if (isLabel) {
+                pointers.push_back({
+                    label,
+                    rawData.size()
+                });
+
+                continue;
+            }
+
+            if (isdigit(tokens[j][0])) {
+                rawData.push_back(std::stoi(tokens[j], 0, 0));
+            }
+        }
+
+        i += 2;
+
+        while (i < tokens.size() && tokens[i - 1] == ".word") {
+            export_anim(rawData, pointers, tokens[i]);
+
+            i += 2;
+        }
+    } else {
+        reset_directory(fileOut);
+
+        if (!scene->HasAnimations() || scene->mNumAnimations == 0) {
+            error_message("Model has no animations.");
+        }
+
+        info_message(std::string("Alpha sorting: ") + std::string(params->alphaSort ? "ON" : "OFF"));
+        info_message(std::string("Interpolation: ") + std::string(params->interpolate ? "ON" : "OFF"));
+        if (params->interpolate) {
+            info_message(std::string("Target FPS:    ") + std::to_string(params->interpolationFPS));
+        }
+
+        std::vector<std::string> animNames;
+
+        for (unsigned int i = 0; i < scene->mNumAnimations; i++) {
+            aiAnimation *anim = scene->mAnimations[i];
+            std::string animName = get_anim_name(anim, fileOut);
+
+            animNames.push_back(animName);
+
+            process_anim(animName, fileOut, anim, scene, params);
+        }
+
+        std::string headerFilename = fileOut + "/anims.s";
+
+        reset_file(headerFilename);
+
+        std::fstream animHeaderOut;
+        animHeaderOut.open(headerFilename, std::ofstream::out | std::ofstream::app);
+
+        for (long unsigned int i = 0; i < animNames.size(); i++) {
+            animHeaderOut << ".include \"" << (level ? "levels" : "actors") << "/" << fileOut << "/" << animNames[i] << ".s\"" << std::endl << std::endl;
+        }
+
+        animHeaderOut << "glabel " << fileOut << "_anims" << std::endl;
+
+        for (long unsigned int i = 0; i < animNames.size(); i++) {
+            animHeaderOut << "    .word " << animNames[i] << std::endl;
+        }
+
+        animHeaderOut.close();
     }
 }
 

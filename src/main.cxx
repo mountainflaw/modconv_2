@@ -36,7 +36,7 @@ bool gGeneric = false;
 u8 leniencyFactor = 1;
 /* std::string glabelData; */
 
-AnimconvParameters animconvParams = {false, true, 30};
+AnimconvParameters animconvParams = {false, false, true, 30};
 
 u8 output = OUTPUT_F3D;
 
@@ -79,6 +79,7 @@ void print_help(const std::string &name) {
               << "    - --alphasort         - Sort nodes alphabetically" << std::endl
               << "    - --targetfps <fps>   - Interpolate to <fps> instead of 30 FPS" << std::endl
               << "    - --keyframes         - Write keyframes instead of interpolating between them" << std::endl
+              << "    - --export <anim>     - Add the given SM64 animation into the input model, and export as .dae" << std::endl
               << "--uvflip - Flip the UV mask Y axis" << std::endl
               << "--glabel - Use global labels instead of local labels" << std::endl
               << "  - Allows for editing data in C" << std::endl
@@ -147,6 +148,7 @@ int main(int argc, char* argv[]) {
                 fileOut  = "model";
     s16 scale            = DEFAULT_SCALE;
     bool level           = false;
+    int dirOrExport     = 0;
 
     if (argc < 2) {
         print_help(argv[0]);
@@ -166,6 +168,7 @@ int main(int argc, char* argv[]) {
         if (arg.compare("--dir") == 0) {
             //std::cout << "DBG - Output is " << flw << std::endl;
             fileOut = flw;
+            dirOrExport++;
         }
 
         if (arg.compare("--scale") == 0) {
@@ -257,6 +260,12 @@ int main(int argc, char* argv[]) {
             animconvParams.interpolate = false;
         }
 
+        if (arg.compare("--export") == 0) {
+            animconvParams.animExport = true;
+            fileOut = flw;
+            dirOrExport++;
+        }
+
         if (arg.compare("--help") == 0) {
             print_help(argv[0]);
             exit(0);
@@ -270,6 +279,10 @@ int main(int argc, char* argv[]) {
 
     if (!(file_exists(filePath))) {
         error_message(filePath + " does not exist.");
+    }
+
+    if (dirOrExport > 1) {
+        error_message("Do not use --dir with --export.");
     }
 
     //std::cout << "DBG - Args: " << argc << std::endl;
