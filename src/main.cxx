@@ -33,6 +33,7 @@ bool scalingHack = true;
 bool gUvFlip = false;
 bool gExportC = false;
 bool gGeneric = false;
+bool gCullDlist = false;
 u8 leniencyFactor = 1;
 /* std::string glabelData; */
 
@@ -246,6 +247,10 @@ int main(int argc, char* argv[]) {
 
         if (arg.compare("--generic") == 0) {
             gGeneric = true;
+        }
+
+        if (arg.compare("--cull-dl") == 0) {
+            gCullDlist = true;
         }
 
         if (arg.compare("--alphasort") == 0) {

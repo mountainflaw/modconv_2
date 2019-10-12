@@ -371,4 +371,6 @@ std::string groupTags[GROUP_TAGS] = { "#LIGHTING", "#BACKFACE", "#ENVMAP", "#LIN
         std::string toReturn = get_filename(tex.path);
         return toReturn.substr(0, toReturn.length() - 4); /* <- Hack */
     }
+
+    bool isNearest() { return (name.find("#NEAREST") != std::string::npos); }
 };
