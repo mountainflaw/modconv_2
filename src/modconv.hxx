@@ -164,8 +164,6 @@ std::string dl_command(const std::string &cmd, const std::string &arg);
 std::string dl_command_ref(const std::string &cmd, const std::string &arg);
 std::string dl_command(const std::string &cmd);
 
-std::vector<u8> sparse(std::fstream &file);
-
 extern u8 diffuse[6];
 extern u8 ambient[3];
 
