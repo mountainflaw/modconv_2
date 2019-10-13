@@ -275,17 +275,38 @@ std::vector<std::string> tokenize_mips_data(std::string data) {
     return tokens;
 }
 
-int get_pointer_offset(std::vector<struct MipsDataPointer> pointers, std::string ptrname) {
+std::vector<struct MipsDataPointer>::iterator find_pointer(std::vector<struct MipsDataPointer> &pointers, std::string ptrname) {
     return std::find_if(pointers.begin(), pointers.end(), [&ptrname](const MipsDataPointer &ptr) {
         return ptr.name == ptrname;
-    })->offset;
+    });
 }
 
-void export_anim(std::vector<s16> data, std::vector<struct MipsDataPointer> pointers, std::string animName) {
-    std::cout << animName << std::endl;
-    std::cout << get_pointer_offset(pointers, animName) << std::endl;
-    std::cout << data[get_pointer_offset(pointers, animName)] << std::endl;
-    std::cout << "-----" << std::endl;
+int get_pointer_offset(std::vector<struct MipsDataPointer> &pointers, std::string ptrname) {
+    return find_pointer(pointers, ptrname)->offset;
+}
+
+void export_anim(std::vector<s16> &data, std::vector<struct MipsDataPointer> &pointers, std::string animName) {
+    info_message("Exporting " + animName);
+
+    s16 *rawData = data.data();
+
+    s16 *headerPtr = rawData + get_pointer_offset(pointers, animName);
+    struct AnimHeader header = {
+        headerPtr[0],
+        headerPtr[1],
+        headerPtr[2],
+        headerPtr[3],
+        headerPtr[4],
+        headerPtr[5],
+        headerPtr[6],
+        headerPtr[7],
+        headerPtr[8]
+    };
+
+    s16 *values = rawData + header.values;
+    s16 *index = rawData + header.index;
+
+    
 }
 
 void animconv_main(const std::string &file, const std::string &fileOut, bool level, struct AnimconvParameters *params) {
@@ -343,11 +364,9 @@ void animconv_main(const std::string &file, const std::string &fileOut, bool lev
                     label,
                     rawData.size()
                 });
-
-                continue;
-            }
-
-            if (isdigit(tokens[j][0])) {
+            } else if (find_pointer(pointers, tokens[j]) != pointers.end()) {
+                rawData.push_back(get_pointer_offset(pointers, tokens[j]));
+            } else if (isdigit(tokens[j][0])) {
                 rawData.push_back(std::stoi(tokens[j], 0, 0));
             }
         }

@@ -41,6 +41,7 @@
 #include <type_traits>
 #include <cctype>
 #include <regex>
+#include <algorithm>
 
 #include <math.h>
 
