@@ -285,7 +285,7 @@ int get_pointer_offset(std::vector<struct MipsDataPointer> &pointers, std::strin
     return find_pointer(pointers, ptrname)->offset;
 }
 
-void export_anim(std::vector<s16> &data, std::vector<struct MipsDataPointer> &pointers, std::string animName) {
+void export_anim(const aiScene *scene, std::vector<s16> &data, std::vector<struct MipsDataPointer> &pointers, std::string animName) {
     info_message("Exporting " + animName);
 
     s16 *rawData = data.data();
@@ -374,7 +374,7 @@ void animconv_main(const std::string &file, const std::string &fileOut, bool lev
         i += 2;
 
         while (i < tokens.size() && tokens[i - 1] == ".word") {
-            export_anim(rawData, pointers, tokens[i]);
+            export_anim(scene, rawData, pointers, tokens[i]);
 
             i += 2;
         }
