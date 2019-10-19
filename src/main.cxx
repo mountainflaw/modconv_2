@@ -293,7 +293,9 @@ int main(int argc, char* argv[]) {
     //std::cout << "DBG - Args: " << argc << std::endl;
     info_message("Starting...");
 
-    reset_directory(fileOut);
+    if (!animconvParams.animExport) {
+        reset_directory(fileOut);
+    }
 
     if (glabel) {
         info_message("C header will be exported as " + print_bold(fileOut + "/" + fileOut + ".h") + ".");

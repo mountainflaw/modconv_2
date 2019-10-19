@@ -48,6 +48,7 @@
 #include <filesystem>
 
 #include <assimp/Importer.hpp>
+#include <assimp/Exporter.hpp>
 #include <assimp/mesh.h>
 #include <assimp/scene.h>
 #include <assimp/material.h>

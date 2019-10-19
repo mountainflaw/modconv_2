@@ -298,13 +298,10 @@ void export_anim(const aiScene *scene, std::vector<s16> &data, std::vector<struc
         headerPtr[3],
         headerPtr[4],
         headerPtr[5],
-        headerPtr[6],
-        headerPtr[7],
+        rawData + headerPtr[6],
+        rawData + headerPtr[7],
         headerPtr[8]
     };
-
-    s16 *values = rawData + header.values;
-    s16 *index = rawData + header.index;
 
     
 }
@@ -316,7 +313,7 @@ void animconv_main(const std::string &file, const std::string &fileOut, bool lev
 
     if (params->animExport) {
         std::ifstream input;
-        input.open(file, std::ifstream::in);
+        input.open(fileOut, std::ifstream::in);
 
         if (!input.is_open()) {
             error_message("Could not open file " + file);
@@ -378,9 +375,11 @@ void animconv_main(const std::string &file, const std::string &fileOut, bool lev
 
             i += 2;
         }
-    } else {
-        reset_directory(fileOut);
 
+        Assimp::Exporter exporter;
+
+        exporter.Export(scene, "fbx", "EXP-" + file + ".fbx", aiProcess_ValidateDataStructure);
+    } else {
         if (!scene->HasAnimations() || scene->mNumAnimations == 0) {
             error_message("Model has no animations.");
         }

@@ -13,6 +13,6 @@ struct AnimHeader {
     s16 *values;
     s16 *index;
     s16 unusedLength;
-}
+};
 
 void animconv_main(const std::string &file, const std::string &fileOut, bool level, struct AnimconvParams *params);

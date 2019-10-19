@@ -7,7 +7,7 @@
 deps="deps/lodepng.cpp"
 libs="-lassimp -lstdc++fs"
 flags="-O3"
-forceflags="-Wall -Werror -std=c++17 -Wno-unused-function"
+forceflags="-Wall -std=c++17 -Wno-unused-function"
 defines=""
 files="src/main.cxx src/f3d.cxx src/collision.cxx src/animconv.cxx src/file.cxx"
 output="build/modconv2"
