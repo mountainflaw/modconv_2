@@ -476,10 +476,10 @@ static INLINE std::string get_tex_incbin(const std::string &incbin) {
 static void write_textures(const std::string &fileOut, Material *mat, const aiScene* scene, bool level) {
     std::fstream texOut;
     if (level) {
-        reset_file(fileOut + "/texture.s");
-        texOut.open(fileOut + "/texture.s", std::ofstream::out | std::ofstream::app);
+        reset_file(fileOut + "/texture.inc.c");
+        texOut.open(fileOut + "/texture.inc.c", std::ofstream::out | std::ofstream::app);
     } else { /* generating an actor */
-        texOut.open(fileOut + "/model.s", std::ofstream::out | std::ofstream::app);
+        texOut.open(fileOut + "/model.inc.c", std::ofstream::out | std::ofstream::app);
     }
 
 
