@@ -31,7 +31,6 @@
 bool glabel = false;
 bool scalingHack = true;
 bool gUvFlip = false;
-bool gExportC = false;
 bool gGeneric = false;
 bool gCullDlist = false;
 u8 leniencyFactor = 1;
@@ -104,7 +103,6 @@ void print_help(const std::string &name) {
               << "--noscalehack - Disable the scaling hack (disables multiplying scale by 0.01)" << std::endl
               << "--leniencyfactor - Sets the triangle optimization leniency factor. Defaults to 1." << std::endl
               << "--generic     - Export display list in generic format (contains rendermode sets)" << std::endl
-              << "--export-c    - Exports display list data in C format instead of gas format." << std::endl
               << "--help   - Bring up this menu and quit" << std::endl
               << std::endl
               << print_bold("TIPS: ") << std::endl
@@ -117,11 +115,10 @@ void print_help(const std::string &name) {
 
 /** Used to generate assembler labels so we can easily use glabel mode. */
 std::string labelize(const std::string &label) {
-    if (glabel) {
-        return "glabel " + label;
-    } else { /* Regular labels (default behavior) */
-        return label + ":";
+    if (!glabel) {
+        return "static";
     }
+    return "";
 }
 
 void extern_data(const std::string &fileOut, const std::string &a) {
@@ -236,10 +233,6 @@ int main(int argc, char* argv[]) {
 
         if (arg.compare("--noscalehack") == 0) {
             scalingHack = false;
-        }
-
-        if (arg.compare("--export-c") == 0) {
-            gExportC = true;
         }
 
         if (arg.compare("--generic") == 0) {

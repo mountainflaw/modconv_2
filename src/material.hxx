@@ -88,11 +88,7 @@ std::string groupTags[GROUP_TAGS] = { "#LIGHTING", "#BACKFACE", "#ENVMAP", "#LIN
 
     std::string getEnvColor() {
         if (name.find("#DIFFUSE") != std::string::npos) {
-            if (!gExportC) {
-                return dl_command("gsDPSetEnvColor", hex_string(diffuse[C_RED]) + ", " + hex_string(diffuse[C_GRN]) + ", " + hex_string(diffuse[C_BLU])) + "\n";
-            } else {
-                return dl_command("gsDPSetEnvColor", "0x00, 0x00, " + hex_string(diffuse[C_RED]) + ", " + hex_string(diffuse[C_GRN]) + ", " + hex_string(diffuse[C_BLU]) + ", 0xff") + "\n";
-            }
+            return dl_command("gsDPSetEnvColor", "0x00, 0x00, " + hex_string(diffuse[C_RED]) + ", " + hex_string(diffuse[C_GRN]) + ", " + hex_string(diffuse[C_BLU]) + ", 0xff") + "\n";
         }
         return "";
     }
@@ -128,13 +124,8 @@ std::string groupTags[GROUP_TAGS] = { "#LIGHTING", "#BACKFACE", "#ENVMAP", "#LIN
             return dl_command("gsDPSetCombineMode", combiner[CYCLE1] + ", " + combiner[CYCLE2]) + "\n";
         }
 
-        if (name.find("#DIFFUSE") != std::string::npos) { /* Custom fallback material. */
-            std::string ret;
-            if (twoCycle) {
-                return dl_command("gsDPSetCombineModeLERP", "G_CCMUX_SHADE, G_CCMUX_0, G_CCMUX_ENVIRONMENT, G_CCMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE, G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_COMBINED, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_COMBINED") + "\n";
-            } else { /* 1 cycle */
-                return dl_command("gsDPSetCombineModeLERP", "G_CCMUX_SHADE, G_CCMUX_0, G_CCMUX_ENVIRONMENT, G_CCMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE, G_CCMUX_SHADE, G_CCMUX_0, G_CCMUX_ENVIRONMENT, G_CCMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE") + "\n";
-            }
+        if (name.find("#DIFFUSE") != std::string::npos) { /* Option to force diffuse. */
+            goto diffuse;
         }
 
         if (twoCycle && textured) { /* 2 cycle */
@@ -143,14 +134,14 @@ std::string groupTags[GROUP_TAGS] = { "#LIGHTING", "#BACKFACE", "#ENVMAP", "#LIN
                 case 1:
                 case 2:
                 case 3:
-                return dl_command("gsDPSetCombineModeLERP", "G_CCMUX_TEXEL0, G_CCMUX_0, G_CCMUX_SHADE, G_CCMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE, G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_COMBINED, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_COMBINED") + "\n";
+                return dl_command("gsDPSetCombineMode", "G_CC_SHADE, G_CC_COMBINED") + "\n";
                 break;
 
                 case 4: /* alpha */
                 case 5: /* transparent */
                 case 6:
                 case 7:
-                return dl_command("gsDPSetCombineModeLERP", "G_CCMUX_TEXEL0, G_CCMUX_0, G_CCMUX_SHADE, G_CCMUX_0, G_ACMUX_TEXEL0, G_ACMUX_0, G_ACMUX_SHADE, G_ACMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_COMBINED, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_COMBINED") + "\n";
+                return dl_command("gsDPSetCombineMode", "G_CC_SHADE, G_CC_COMBINED") + "\n";
                 break;
             }
         } else if (!twoCycle && textured) { /* 1 cycle */
@@ -159,22 +150,23 @@ std::string groupTags[GROUP_TAGS] = { "#LIGHTING", "#BACKFACE", "#ENVMAP", "#LIN
                 case 1:
                 case 2:
                 case 3:
-                return dl_command("gsDPSetCombineModeLERP", "G_CCMUX_TEXEL0, G_CCMUX_0, G_CCMUX_SHADE, G_CCMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE, G_CCMUX_TEXEL0, G_CCMUX_0, G_CCMUX_SHADE, G_CCMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE") + "\n";
+                return dl_command("gsDPSetCombineMode", "G_CC_MODULATERGB, G_CC_MODULATERGB") + "\n";
                 break;
 
                 case 4: /* alpha */
                 case 5: /* transparent */
                 case 6:
                 case 7:
-                return dl_command("gsDPSetCombineModeLERP", "G_CCMUX_TEXEL0, G_CCMUX_0, G_CCMUX_SHADE, G_CCMUX_0, G_ACMUX_TEXEL0, G_ACMUX_0, G_ACMUX_SHADE, G_ACMUX_0, G_CCMUX_TEXEL0, G_CCMUX_0, G_CCMUX_SHADE, G_CCMUX_0, G_ACMUX_TEXEL0, G_ACMUX_0, G_ACMUX_SHADE, G_ACMUX_0") + "\n";
+                return dl_command("gsDPSetCombineMode", "G_CC_MODULATERGBA, G_CC_MODULATERGBA") + "\n";
                 break;
             }
         }
+diffuse:
         /* diffuse fallback */
         if (twoCycle) {
-            return dl_command("gsDPSetCombineModeLERP", "G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE, G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_COMBINED, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_COMBINED") + "\n";
+            return dl_command("gsDPSetCombineMode", "G_CC_SHADE, G_CC_COMBINED") + "\n";
         } else { /* 1 cycle */
-            return dl_command("gsDPSetCombineModeLERP", "G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE, G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE") + "\n";
+            return dl_command("gsDPSetCombineMode", "G_CC_SHADE, G_CC_SHADE") + "\n";
         }
     }
 
@@ -262,9 +254,9 @@ std::string groupTags[GROUP_TAGS] = { "#LIGHTING", "#BACKFACE", "#ENVMAP", "#LIN
         }
 
         if (tex4b) { /* Thank you SGI, very cool! */
-            ret += dl_command("gsDPLoadTextureBlock_4b", fileOut + "_texture_" + std::to_string(index) + ", " + texLoadType + std::to_string(tex.size[AXIS_X]) + ", " + std::to_string(tex.size[AXIS_Y]) + ", 0, G_TX_WRAP | " + texFlagU + ",  G_TX_WRAP | " + texFlagV + ", " + std::to_string(tex.sizeLog2[AXIS_X]) + ", " + std::to_string(tex.sizeLog2[AXIS_Y]) + ", G_TX_NOLOD, G_TX_NOLOD") + "\n";
+            ret += dl_command_ref("gsDPLoadTextureBlock_4b", fileOut + "_texture_" + std::to_string(index) + ", " + texLoadType + std::to_string(tex.size[AXIS_X]) + ", " + std::to_string(tex.size[AXIS_Y]) + ", 0, G_TX_WRAP | " + texFlagU + ",  G_TX_WRAP | " + texFlagV + ", " + std::to_string(tex.sizeLog2[AXIS_X]) + ", " + std::to_string(tex.sizeLog2[AXIS_Y]) + ", G_TX_NOLOD, G_TX_NOLOD") + "\n";
         } else {
-            ret += dl_command("gsDPLoadTextureBlock", fileOut + "_texture_" + std::to_string(index) + ", " + texLoadType + texLoadSize + std::to_string(tex.size[AXIS_X]) + ", " + std::to_string(tex.size[AXIS_Y]) + ", 0, G_TX_WRAP | " + texFlagU + ",  G_TX_WRAP | " + texFlagV + ", " + std::to_string(tex.sizeLog2[AXIS_X]) + ", " + std::to_string(tex.sizeLog2[AXIS_Y]) + ", G_TX_NOLOD, G_TX_NOLOD") + "\n";
+            ret += dl_command_ref("gsDPLoadTextureBlock", fileOut + "_texture_" + std::to_string(index) + ", " + texLoadType + texLoadSize + std::to_string(tex.size[AXIS_X]) + ", " + std::to_string(tex.size[AXIS_Y]) + ", 0, G_TX_WRAP | " + texFlagU + ",  G_TX_WRAP | " + texFlagV + ", " + std::to_string(tex.sizeLog2[AXIS_X]) + ", " + std::to_string(tex.sizeLog2[AXIS_Y]) + ", G_TX_NOLOD, G_TX_NOLOD") + "\n";
         }
         return ret;
     }

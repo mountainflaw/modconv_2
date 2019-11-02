@@ -165,7 +165,6 @@ std::string dl_command(const std::string &cmd);
 extern u8 diffuse[6];
 extern u8 ambient[3];
 
-extern bool gExportC;
 extern bool gGeneric;
 extern bool gUvFlip;
 extern bool fog;

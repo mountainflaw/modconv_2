@@ -150,15 +150,9 @@ class DisplayList {
 
         fOut = fileOut;
 
-        if (gExportC) {
-            gfxOut.open(fileOut + "/model.inc.c", std::ofstream::out | std::ofstream::app);
-            gfxOut << std::endl << "/* Render order: " << (u16)layer << " */";
-            gfxOut << std::endl << "Gfx " << fileOut + "_dl_" + dlTypes[layer] << "[] = {" << std::endl;
-        } else {
-            gfxOut.open(fileOut + "/model.s", std::ofstream::out | std::ofstream::app);
-            gfxOut << std::endl << "/* Render order: " << (u16)layer << " */" << std::endl;
-            gfxOut << std::endl << "glabel " << fileOut + "_dl_" + dlTypes[layer] << std::endl;
-        }
+        gfxOut.open(fileOut + "/model.inc.c", std::ofstream::out | std::ofstream::app);
+        gfxOut << std::endl << "/* Render order: " << (u16)layer << " */";
+        gfxOut << std::endl << "Gfx " << fileOut + "_dl_" + dlTypes[layer] << "[] = {" << std::endl;
 
         gfxOut << dl_command("gsSPClearGeometryMode", "G_LIGHTING") << std::endl;
 
@@ -189,11 +183,7 @@ class DisplayList {
                 if (vBuf[i].getLayeredVtxMat(layer) != currMat && vBuf[i].getLayeredVtxMat(layer) != MAT_NOT_LAYER) { /* load before vtx load if possible */
                     currMat = vBuf[i].getLayeredVtxMat(layer);
 
-                    if (gExportC) {
-                        gfxOut << "    /* " << mat[currMat].getName() << " */" << std::endl;
-                    } else {
-                        gfxOut << "/* " << mat[currMat].getName() << " */" << std::endl;
-                    }
+                    gfxOut << "    /* " << mat[currMat].getName() << " */" << std::endl;
 
                     gfxOut << GetMaterial(mat, currMat, first);
                     first = false;
@@ -206,12 +196,7 @@ class DisplayList {
                         currMat = vBuf[i].getLayeredVtxMat(layer);
                         bool resetVtxCache = mat[currMat].getLighting(&geometryState);
 
-                        if (gExportC) {
-                            gfxOut << "    /* " << mat[currMat].getName() << " */" << std::endl;
-                        } else {
-                            gfxOut << "/* " << mat[currMat].getName() << " */" << std::endl;
-                        }
-
+                        gfxOut << "    /* " << mat[currMat].getName() << " */" << std::endl;
                         gfxOut << GetMaterial(mat, currMat, first);
                         first = false;
 
@@ -240,7 +225,7 @@ class DisplayList {
         /* Reset display list settings */
         gfxOut << dl_command("gsSPTexture", "-1, -1, 0, 0, 0") << std::endl
                << dl_command("gsDPPipeSync") << std::endl
-               << dl_command("gsDPSetCombineModeLERP", "G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE, G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE") << std::endl;
+               << dl_command("gsDPSetCombineMode", "G_CC_SHADE, G_CC_SHADE") << std::endl;
 
         gfxOut << dl_command("gsSPSetGeometryMode", "G_LIGHTING") << std::endl;
         gfxOut << dl_command("gsDPSetTextureLUT", "G_TT_NONE") << std::endl;
@@ -271,8 +256,6 @@ class DisplayList {
 
         gfxOut << dl_command("gsSPEndDisplayList") << std::endl;
 
-        if (gExportC) {
-            gfxOut << "};" << std::endl;
-        }
+        gfxOut << "};" << std::endl;
     }
 };
