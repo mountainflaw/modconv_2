@@ -326,9 +326,9 @@ diffuse:
         std::string textureArgs;
         if (name.find("#ENVMAP") != std::string::npos) { /* env mapping */
             /* Nintendo seems to do 62 * size in SM64... */
-            return dl_command("gsSPTexture", std::to_string(tex.size[AXIS_X] * 62) + ", " + std::to_string(tex.size[AXIS_Y] * 62) + ", 0, 0, 1") + "\n";
+            return dl_command("gsSPTexture", std::to_string(tex.size[AXIS_X] * 62) + ", " + std::to_string(tex.size[AXIS_Y] * 62) + ", 0, 0, G_ON") + "\n";
         }
-        return dl_command("gsSPTexture", "-1, -1, 0, 0, 1") + "\n";
+        return dl_command("gsSPTexture", "0xFFFF, 0xFFFF, 0, 0, G_ON") + "\n";
     }
 
     std::string getTextureFilter() {
@@ -336,9 +336,7 @@ diffuse:
 
         if (name.find("#NEAREST") != std::string::npos) {
             filter = "G_TF_POINT";
-        }
-
-        if (name.find("#AVERAGE") != std::string::npos) {
+        } else if (name.find("#AVERAGE") != std::string::npos) {
             filter = "G_TF_AVERAGE";
         }
 

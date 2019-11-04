@@ -168,5 +168,6 @@ extern u8 ambient[3];
 extern bool gGeneric;
 extern bool gUvFlip;
 extern bool fog;
+extern bool glabel;
 extern u16 fogSettings[6];
 extern u8 leniencyFactor;

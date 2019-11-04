@@ -60,7 +60,7 @@ INLINE void info_message(const std::string &message)
 { std::cout << print_bold("INFO: ") << message << std::endl; }
 
 void print_help(const std::string &name) {
-    std::cout << print_bold("- MODCONV 3.5 HELP -") << std::endl
+    std::cout << print_bold("- MODCONV 3.7 HELP -") << std::endl
               << std::endl
               << print_bold("SYNOPSIS: ") << std::endl
               << name << " <parameters> <model>" << std::endl

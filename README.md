@@ -1,4 +1,4 @@
-# modconv 3.0
+# modconv 3.7
 
 This project aims to provide a usable model converter suitable for creating custom content compatible with the decompilation of Super Mario 64.
 

@@ -141,6 +141,13 @@ class DisplayList {
         return ret;
     }
 
+    INLINE std::string is_const() {
+        if (!glabel) {
+            return "const ";
+        }
+        return "";
+    }
+
     public:
     INLINE void setLayer(u8 l) { layer = l; }
 
@@ -152,7 +159,7 @@ class DisplayList {
 
         gfxOut.open(fileOut + "/model.inc.c", std::ofstream::out | std::ofstream::app);
         gfxOut << std::endl << "/* Render order: " << (u16)layer << " */";
-        gfxOut << std::endl << "Gfx " << fileOut + "_dl_" + dlTypes[layer] << "[] = {" << std::endl;
+        gfxOut << std::endl << is_const() << "Gfx " << fileOut + "_dl_" + dlTypes[layer] << "[] = {" << std::endl;
 
         gfxOut << dl_command("gsSPClearGeometryMode", "G_LIGHTING") << std::endl;
 
@@ -223,12 +230,17 @@ class DisplayList {
         }
         //bool clearOring = false;
         /* Reset display list settings */
-        gfxOut << dl_command("gsSPTexture", "-1, -1, 0, 0, 0") << std::endl
+        gfxOut << dl_command("gsSPTexture", "0xFFFF, 0xFFFF, 0, 0, G_OFF") << std::endl
                << dl_command("gsDPPipeSync") << std::endl
                << dl_command("gsDPSetCombineMode", "G_CC_SHADE, G_CC_SHADE") << std::endl;
 
         gfxOut << dl_command("gsSPSetGeometryMode", "G_LIGHTING") << std::endl;
         gfxOut << dl_command("gsDPSetTextureLUT", "G_TT_NONE") << std::endl;
+
+
+        if (store[TEXFILTER] != "G_TF_BILERP\n") {
+            std::cout << "texfilter doesn't match :(\n";
+        }
 
         if (twoCycle) { /* Return back to 1 cycle */
             gfxOut << "gsDPSetCycleType G_CYC_1CYCLE" << std::endl;
