@@ -140,7 +140,7 @@ f32 scaling_hack() {
 }
 
 int main(int argc, char* argv[]) {
-    std::cout << print_bold("- MODCONV 3.5 BY RED -") << std::endl;
+    std::cout << print_bold("- MODCONV 3.7 BY RED -") << std::endl;
     std::string filePath = argv[argc - 1],
                 fileOut  = "model";
     s16 scale            = DEFAULT_SCALE;
