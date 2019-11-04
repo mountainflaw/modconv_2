@@ -116,7 +116,7 @@ void print_help(const std::string &name) {
 /** Used to generate assembler labels so we can easily use glabel mode. */
 std::string labelize(const std::string &label) {
     if (!glabel) {
-        return "static";
+        return "static const " + label;
     }
     return "";
 }

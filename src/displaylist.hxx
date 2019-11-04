@@ -205,7 +205,7 @@ class DisplayList {
                         }
                     }
 
-                    if (vBuf[i].canLayeredTri2(layer) && vBuf[i].bufferSize > 15) { /* Don't tri2 on stock F3D */
+                    if (vBuf[i].canLayeredTri2(layer)) {
                         s16 triTwo[6] = { vBuf[i].getLayeredVtxIndex(layer), vBuf[i].getLayeredVtxIndex(layer), vBuf[i].getLayeredVtxIndex(layer),
                                           vBuf[i].getLayeredVtxIndex(layer), vBuf[i].getLayeredVtxIndex(layer), vBuf[i].getLayeredVtxIndex(layer) };
                         if (WriteTri(triTwo, 6)) {

@@ -390,9 +390,9 @@ static void write_vtx(const std::string fileOut, const std::string &path, Vertex
     vtxOut.open(fileOut + "/model.inc.c", std::ofstream::out | std::ofstream::app);
 
     for (u16 i = 0; i < vBuffers; i++) {
-        vtxOut << std::endl << "Vtx " << get_filename(fileOut) << "_vertex_" << i << "[" << (u16)vBuf[i].loadSize << "] = { /* " << (u16)vBuf[i].loadSize << " vertices out of " << (u16)vBuf[i].bufferSize << " */" << std::endl;
+        vtxOut << std::endl << labelize("Vtx ") << get_filename(fileOut) << "_vertex_" << i << "[" << (u16)vBuf[i].loadSize << "] = { /* " << (u16)vBuf[i].loadSize << " vertices out of " << (u16)vBuf[i].bufferSize << " */" << std::endl;
 
-        extern_data(fileOut, "extern Vtx* " + get_filename(fileOut) + "_vertex_" + std::to_string(i) + "[" + std::to_string((u16)vBuf[i].loadSize) + "];");
+        extern_data(fileOut, "extern Vtx " + get_filename(fileOut) + "_vertex_" + std::to_string(i) + "[" + std::to_string((u16)vBuf[i].loadSize) + "];");
 
         for (u16 j = 0; j < vBuf[i].bufferSize; j++) {
             Vertex vtx = vBuf[i].getVtx();
@@ -485,11 +485,8 @@ static void write_textures(const std::string &fileOut, Material *mat, const aiSc
 
     /* Phase 1: Copy lights */
 
-    texOut << std::endl << get_filename(fileOut) << "_ambient_light:" << std::endl
-           << ".byte " + hex_string(ambient[0]) + ", " + hex_string(ambient[1]) + ", " + hex_string(ambient[2]) + ", 0x00, " + hex_string(ambient[0]) + ", " + hex_string(ambient[1]) + ", " + hex_string(ambient[2]) + ", 0x00" << std::endl
-           << get_filename(fileOut) << "_diffuse_light:" << std::endl
-           << ".byte " + hex_string(diffuse[0]) + ", " + hex_string(diffuse[1]) + ", " + hex_string(diffuse[2]) + ", 0x00, " + hex_string(diffuse[0]) + ", " + hex_string(diffuse[1]) + ", " + hex_string(diffuse[2]) + ", 0x00" << std::endl
-           << ".byte " + hex_string(diffuse[3]) + ", " + hex_string(diffuse[4]) + ", " + hex_string(diffuse[5]) + ", 0x00, 0x00, 0x00, 0x00, 0x00" << std::endl;
+    texOut << std::endl << labelize("Ambient_t ") << get_filename(fileOut) << "_ambient_light = {{" << hex_string(ambient[0]) << ", " << hex_string(ambient[1]) << ", " + hex_string(ambient[2]) << "}, 0x00, {" << hex_string(ambient[0]) + ", " << hex_string(ambient[1]) << ", " + hex_string(ambient[2]) << "}, 0x00};" << std::endl
+           << labelize("Light_t ") << get_filename(fileOut) << "_diffuse_light = {{" << hex_string(diffuse[0]) + ", " + hex_string(diffuse[1]) + ", " + hex_string(diffuse[2]) + "}, 0x00, {" + hex_string(diffuse[0]) + ", " + hex_string(diffuse[1]) + ", " + hex_string(diffuse[2]) + "}, 0x00, {" << hex_string(diffuse[3]) + ", " + hex_string(diffuse[4]) + ", " + hex_string(diffuse[5]) + "}, 0x00};" << std::endl;
 
     /* Phase 2 - Find redundant textures */
 
@@ -523,12 +520,12 @@ static void write_textures(const std::string &fileOut, Material *mat, const aiSc
             }
 
             texOut << std::endl;
-            texOut << labelize(fileOut + "_texture_" + std::to_string(mat[i].index)) << "[] = {" << std::endl;
+            texOut << "ALIGNED8 " << labelize("u8 " + fileOut + "_texture_" + std::to_string(mat[i].index)) << "[] = {" << std::endl;
             texOut << "#include " << R"(")" << exportType << "/" << get_filename(fileOut) << "/" << get_tex_incbin(mat[i].getPath()) << R"(.inc.c")" << std::endl;
             texOut << "};" << std::endl;
 
             if (mat[i].getFileNameNoExtension().find("ci4") != std::string::npos || mat[i].getFileNameNoExtension().find("ci8") != std::string::npos) { /* CI palette */
-                texOut << std::endl << labelize(fileOut + "_palette_" + std::to_string(mat[i].index)) << "[] = {" << std::endl;
+                texOut << std::endl << "ALIGNED8" << labelize("u8 " + fileOut + "_palette_" + std::to_string(mat[i].index)) << "[] = {" << std::endl;
                 texOut << "#include " << R"(")" << exportType << "/" << get_filename(fileOut) << "/" << mat[i].getFileNameNoExtension() << R"(.pal.inc.c")" << std::endl;
                 texOut << "};" << std::endl;
             }
