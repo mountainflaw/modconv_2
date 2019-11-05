@@ -361,7 +361,7 @@ static void write_tri(const std::string &fileOut, const CollisionVtx* vtx, const
     /* Add waterboxes */
 
     if (waterBox.size() > 0) {
-        colOut << "    COL_WATERBOX_INIT(" << waterBox.size() << ")," << std::endl;
+        colOut << "    COL_WATER_BOX_INIT(" << waterBox.size() << ")," << std::endl;
         for (u8 i = 0; i < waterBox.size(); i++) {
             colOut << "    COL_WATER_BOX(" << std::right << std::setw(2)
                    << (u16)waterBox[i].type << ", " << std::right << std::setw(6)
