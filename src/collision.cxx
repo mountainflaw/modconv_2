@@ -296,19 +296,19 @@ static void configure_waterbox(const aiScene* scene, const aiNode* node, s16 sca
         if (waterBox.material == mesh->mMaterialIndex) {
             for (u32 j = 0; j < mesh->mNumFaces; j++) {
                 for (u8 k = 0; k < 3; k++) {
-                    if ((s16)((mesh->mVertices[mesh->mFaces[j].mIndices[k]].x * scale) * scaling_hack()) > waterBox.x1) {
+                    if ((s16)((mesh->mVertices[mesh->mFaces[j].mIndices[k]].x * scale) * scaling_hack()) < waterBox.x1) {
                         waterBox.x1 = (s16)((mesh->mVertices[mesh->mFaces[j].mIndices[k]].x * scale) * scaling_hack());
                     }
 
-                    if ((s16)((mesh->mVertices[mesh->mFaces[j].mIndices[k]].x * scale) * scaling_hack()) < waterBox.x2) {
+                    if ((s16)((mesh->mVertices[mesh->mFaces[j].mIndices[k]].x * scale) * scaling_hack()) > waterBox.x2) {
                         waterBox.x2 = (s16)((mesh->mVertices[mesh->mFaces[j].mIndices[k]].x * scale) * scaling_hack());
                     }
 
-                    if ((s16)((mesh->mVertices[mesh->mFaces[j].mIndices[k]].z * scale) * scaling_hack()) > waterBox.z1) {
+                    if ((s16)((mesh->mVertices[mesh->mFaces[j].mIndices[k]].z * scale) * scaling_hack()) < waterBox.z1) {
                         waterBox.z1 = (s16)((mesh->mVertices[mesh->mFaces[j].mIndices[k]].z * scale) * scaling_hack());
                     }
 
-                    if ((s16)((mesh->mVertices[mesh->mFaces[j].mIndices[k]].z * scale) * scaling_hack()) < waterBox.z2) {
+                    if ((s16)((mesh->mVertices[mesh->mFaces[j].mIndices[k]].z * scale) * scaling_hack()) > waterBox.z2) {
                         waterBox.z2 = (s16)((mesh->mVertices[mesh->mFaces[j].mIndices[k]].z * scale) * scaling_hack());
                     }
 
