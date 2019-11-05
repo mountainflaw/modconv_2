@@ -238,8 +238,8 @@ class DisplayList {
         gfxOut << dl_command("gsDPSetTextureLUT", "G_TT_NONE") << std::endl;
 
 
-        if (store[TEXFILTER] != "G_TF_BILERP\n") {
-            std::cout << "texfilter doesn't match :(\n";
+        if (store[TEXFILTER] != "    gsDPSetTextureFilter(G_TF_BILERP),\n") {
+            gfxOut << dl_command("gsDPSetTextureFilter", "G_TF_BILERP") << std::endl;
         }
 
         if (twoCycle) { /* Return back to 1 cycle */
