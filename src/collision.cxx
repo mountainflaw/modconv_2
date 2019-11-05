@@ -388,7 +388,7 @@ void collision_converter_main(const std::string &file, const std::string &fileOu
     collisionOut.open(fileOut + "/collision.inc.c", std::iostream::out | std::iostream::app);
     reset_file(fileOut + "/collision.inc.c");
     collisionOut << std::endl
-                 << "const Collision " << get_filename(fileOut) << "_collision[] = {"
+                 << "const s16 " << get_filename(fileOut) << "_collision[] = {"
                  << std::endl << "    COL_INIT()," << std::endl;
     collisionOut.close();
 

@@ -398,15 +398,15 @@ static void write_vtx(const std::string fileOut, const std::string &path, Vertex
             Vertex vtx = vBuf[i].getVtx();
             if (!vtx.useless) {
                 vtxOut << "    {"
-                       << "{ " << std::right << std::setw(6) << vtx.pos[AXIS_X] << ", " << std::right << std::setw(6)
+                       << "{{ " << std::right << std::setw(6) << vtx.pos[AXIS_X] << ", " << std::right << std::setw(6)
                        << vtx.pos[AXIS_Y] << ", " << std::right << std::setw(6)
-                       << vtx.pos[AXIS_Z] << "}, {" << std::right << std::setw(7)
+                       << vtx.pos[AXIS_Z] << "}, 0x00, {" << std::right << std::setw(7)
                        << vtx.st[AXIS_X]  << ", " << std::right << std::setw(6)
-                       << vtx.st[AXIS_Y]  << "}, 0x00, "
+                       << vtx.st[AXIS_Y]  << "}, "
                        << "{" << hex_string(vtx.col[C_RED])  << ", " << std::right << std::setw(4)
                        << hex_string(vtx.col[C_GRN])  << ", " << std::right << std::setw(4)
                        << hex_string(vtx.col[C_BLU])  << ", " << std::right << std::setw(4)
-                       << hex_string(vtx.col[C_APH])  << "}}," << std::endl;
+                       << hex_string(vtx.col[C_APH])  << "}}}," << std::endl;
             }
         }
         vtxOut << "};" << std::endl;
@@ -485,8 +485,8 @@ static void write_textures(const std::string &fileOut, Material *mat, const aiSc
 
     /* Phase 1: Copy lights */
 
-    texOut << std::endl << labelize("Ambient_t ") << get_filename(fileOut) << "_ambient_light = {{" << hex_string(ambient[0]) << ", " << hex_string(ambient[1]) << ", " + hex_string(ambient[2]) << "}, 0x00, {" << hex_string(ambient[0]) + ", " << hex_string(ambient[1]) << ", " + hex_string(ambient[2]) << "}, 0x00};" << std::endl
-           << labelize("Light_t ") << get_filename(fileOut) << "_diffuse_light = {{" << hex_string(diffuse[0]) + ", " + hex_string(diffuse[1]) + ", " + hex_string(diffuse[2]) + "}, 0x00, {" + hex_string(diffuse[0]) + ", " + hex_string(diffuse[1]) + ", " + hex_string(diffuse[2]) + "}, 0x00, {" << hex_string(diffuse[3]) + ", " + hex_string(diffuse[4]) + ", " + hex_string(diffuse[5]) + "}, 0x00};" << std::endl;
+    texOut << std::endl << labelize("Ambient ") << get_filename(fileOut) << "_ambient_light = {" << std::endl << "{{" << hex_string(ambient[0]) << ", " << hex_string(ambient[1]) << ", " + hex_string(ambient[2]) << "}, 0x00, {" << hex_string(ambient[0]) + ", " << hex_string(ambient[1]) << ", " + hex_string(ambient[2]) << "}, 0x00}" << std::endl << "};" << std::endl
+           << labelize("Light ") << get_filename(fileOut) << "_diffuse_light = {" << std::endl << "{{" << hex_string(diffuse[0]) + ", " + hex_string(diffuse[1]) + ", " + hex_string(diffuse[2]) + "}, 0x00, {" + hex_string(diffuse[0]) + ", " + hex_string(diffuse[1]) + ", " + hex_string(diffuse[2]) + "}, 0x00, {" << hex_string(diffuse[3]) + ", " + hex_string(diffuse[4]) + ", " + hex_string(diffuse[5]) + "}, 0x00}" << std::endl << "};" << std::endl;
 
     /* Phase 2 - Find redundant textures */
 
@@ -570,7 +570,7 @@ static INLINE std::string dl_tab(bool level) {
     if (level) {
         return "                    ";
     }
-    return "                ";
+    return "            ";
 }
 static void write_geometry_layout(const std::string &fileOut, bool level) {
     std::fstream geoOut;
@@ -578,7 +578,7 @@ static void write_geometry_layout(const std::string &fileOut, bool level) {
     geoOut.open(fileOut + "/geo.inc.c", std::ofstream::out | std::ofstream::app);
 
 
-    geoOut << std::endl << "const uintptr_t" << get_filename(fileOut) << "_geo[] = {" << std::endl;
+    geoOut << std::endl << "const GeoLayout " << get_filename(fileOut) << "_geo[] = {" << std::endl;
 
     if (level) {
         geoOut << "    GEO_NODE_SCREEN_AREA(10, SCREEN_WIDTH/2, SCREEN_HEIGHT/2, SCREEN_WIDTH/2, SCREEN_HEIGHT/2)," << std::endl
@@ -592,37 +592,41 @@ static void write_geometry_layout(const std::string &fileOut, bool level) {
                << "        GEO_CLOSE_NODE()," << std::endl
                << "        GEO_ZBUFFER(1)," << std::endl
                << "        GEO_OPEN_NODE()," << std::endl
-               << "            GEO_CAMERA_FRUSTRUM(45, 100, 30000, &geo_camera_fov)," << std::endl
+               << "            GEO_CAMERA_FRUSTRUM(45, 100, 30000, geo_camera_fov)," << std::endl
                << "            GEO_OPEN_NODE()," << std::endl
-               << "                GEO_CAMERA(1, 0, 2000, 6000, 3072, 0, -4608, &geo_camera_preset_and_pos)," << std::endl
+               << "                GEO_CAMERA(1, 0, 2000, 6000, 3072, 0, -4608, geo_camera_preset_and_pos)," << std::endl
                << "                GEO_OPEN_NODE()," << std::endl;
     } else { /* actors */
         geoOut << "    GEO_SHADOW(SHADOW_CIRCLE_4_VERTS, 0xC8, 60)," << std::endl
-               << "        GEO_OPEN_NODE()," << std::endl
-               << "            GEO_SCALE(0x00, 16384)," << std::endl
-               << "            GEO_OPEN_NODE()," << std::endl;
+               << "    GEO_OPEN_NODE()," << std::endl
+               << "        GEO_SCALE(0x00, 16384)," << std::endl
+               << "        GEO_OPEN_NODE()," << std::endl;
     }
 
     for (u8 i = 0; i < 8; i++) { /* Insert display lists */
         if (setLayer[i]) {
-            geoOut << dl_tab(level) << "GEO_DISPLAY_LIST(" << layerTypes[i] << " " << get_filename(fileOut) << "_dl_" << dlTypes[i] << ")," << std::endl;
+            geoOut << dl_tab(level) << "GEO_DISPLAY_LIST(" << layerTypes[i] << ", " << get_filename(fileOut) << "_dl_" << dlTypes[i] << ")," << std::endl;
         }
     }
     if (level) {
         geoOut << "                    GEO_RENDER_OBJ()," << std::endl
-               << "                    GEO_ASM(0, &geo_enfvx_main)," << std::endl
+               << "                    GEO_ASM(0, geo_enfvx_main)," << std::endl
                << "                GEO_CLOSE_NODE()," << std::endl
                << "            GEO_CLOSE_NODE()," << std::endl
                << "        GEO_CLOSE_NODE()," << std::endl
                << "        GEO_ZBUFFER(0)," << std::endl
                << "        GEO_OPEN_NODE()," << std::endl
                << "            GEO_ASM(0, Geo18_802CD1E8)," << std::endl;
-    }
-
-    geoOut     << "        GEO_CLOSE_NODE()," << std::endl
+        geoOut << "        GEO_CLOSE_NODE()," << std::endl
                << "    GEO_CLOSE_NODE()," << std::endl
                << "    GEO_END()" << std::endl
                << "};" << std::endl;
+    } else {
+        geoOut << "        GEO_CLOSE_NODE()," << std::endl
+               << "    GEO_CLOSE_NODE()," << std::endl
+               << "    GEO_END()" << std::endl
+               << "};" << std::endl;
+    }
 }
 
 /** Main function for the F3D build process. */
