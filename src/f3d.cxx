@@ -53,6 +53,8 @@ u16 vBuffers = 0,
 u8  layers   = 0;
 bool setLayer[8] = { false };
 
+static CullRegion cullBox;
+
 u8 diffuse[6] = {0xFF, 0xFF, 0xFF, 0x28, 0x28, 0x28}, ambient[3] = {0x66, 0x66, 0x66};
 
 u32 geometryState = 0;
@@ -85,24 +87,15 @@ const std::string layerTypes[8] = {
 };
 
 INLINE std::string dl_command(const std::string &cmd, const std::string &arg) {
-    if (gExportC) {
-        return "    " + cmd + "(" + arg + "),";
-    }
-    return cmd + " " + arg;
+    return "    " + cmd + "(" + arg + "),";
 }
 
 INLINE std::string dl_command(const std::string &cmd) {
-    if (gExportC) {
-        return "    " + cmd + "(),";
-    }
-    return cmd;
+    return "    " + cmd + "(),";
 }
 
 INLINE std::string dl_command_ref(const std::string &cmd, const std::string &arg) {
-    if (gExportC) {
-        return "    " + cmd + "(&" + arg + "),";
-    }
-    return cmd + " " + arg;
+    return "    " + cmd + "(&" + arg + "),";
 }
 
 void inspect_vtx(aiNode* node, const aiScene* scene) {
@@ -183,7 +176,7 @@ namespace uvutil {
      * this in Super Mario 64 ROM Manager.
      */
 
-    static void reset_uv(s32 uv[3][2], u16 w, u16 h) {
+    static void reset_uv(s32 uv[3][2], u16 w, u16 h, bool nearest) {
         u16 jump = w * 0x40;
         u8 sortUv[2][2] = {{sort_u_last(uv), sort_v_last(uv)}, {sort_u_first(uv), sort_v_first(uv)}};
 
@@ -219,6 +212,16 @@ namespace uvutil {
             uv[1][AXIS_Y] *= -1;
             uv[2][AXIS_Y] *= -1;
         }
+
+        if (!nearest) {
+            uv[0][AXIS_X] -= 32;
+            uv[1][AXIS_X] -= 32;
+            uv[2][AXIS_X] -= 32;
+
+            uv[0][AXIS_Y] -= 32;
+            uv[1][AXIS_Y] -= 32;
+            uv[2][AXIS_Y] -= 32;
+        }
     }
 }
 
@@ -242,7 +245,7 @@ void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                 uv[1][AXIS_Y] = mesh->mTextureCoords[0][mesh->mFaces[j].mIndices[1]].y * 32 * mat[mesh->mMaterialIndex].getDimension(AXIS_Y);
                 uv[2][AXIS_Y] = mesh->mTextureCoords[0][mesh->mFaces[j].mIndices[2]].y * 32 * mat[mesh->mMaterialIndex].getDimension(AXIS_Y);
 
-                uvutil::reset_uv(uv, mat[mesh->mMaterialIndex].getDimension(AXIS_X), mat[mesh->mMaterialIndex].getDimension(AXIS_Y));
+                uvutil::reset_uv(uv, mat[mesh->mMaterialIndex].getDimension(AXIS_X), mat[mesh->mMaterialIndex].getDimension(AXIS_Y), mat[mesh->mMaterialIndex].isNearest());
             }
 
             for (u8 k = 0; k < 3; k++) {
@@ -267,6 +270,20 @@ void setup_vtx(aiNode *node, const aiScene* scene, s16 scale,
                     pos[AXIS_X] = (s16)(((mesh->mVertices[currVtx].x) * scale) * scaling_hack());
                     pos[AXIS_Y] = (s16)(((mesh->mVertices[currVtx].y) * scale) * scaling_hack());
                     pos[AXIS_Z] = (s16)(((mesh->mVertices[currVtx].z) * scale) * scaling_hack());
+
+                    if (pos[AXIS_X] > cullBox.x0) { /* generate bounding box */
+                        cullBox.x0 = pos[AXIS_X];
+                    } else if (pos[AXIS_X] < cullBox.x1) {
+                        cullBox.x1 = pos[AXIS_X];
+                    } else if (pos[AXIS_Z] > cullBox.z0) {
+                        cullBox.z0 = pos[AXIS_Z];
+                    } else if (pos[AXIS_Z] < cullBox.z1) {
+                        cullBox.z1 = pos[AXIS_Z];
+                    } else if (pos[AXIS_Y] > cullBox.y0) {
+                        cullBox.y0 = pos[AXIS_Y];
+                    } else if (pos[AXIS_Y] < cullBox.y1) {
+                        cullBox.y1 = pos[AXIS_Y];
+                    }
 
                     s16 rgba[4] = {0xff, 0xff, 0xff, 0xff};
 
@@ -370,53 +387,33 @@ INLINE std::string hex_string(const u8 hex) {
 
 static void write_vtx(const std::string fileOut, const std::string &path, VertexBuffer *vBuf) {
     std::fstream vtxOut;
-
-    if (gExportC) {
-        vtxOut.open(fileOut + "/model.inc.c", std::ofstream::out | std::ofstream::app);
-    } else {
-        vtxOut.open(fileOut + "/model.s", std::ofstream::out | std::ofstream::app);
-    }
-
-    std::string vtxDelimiterStart = "vertex ",
-                vtxDelimiterEnd   = "\n";
-
-    if (gExportC) {
-        vtxDelimiterStart = "    {";
-        vtxDelimiterEnd   = "},\n";
-    }
+    vtxOut.open(fileOut + "/model.inc.c", std::ofstream::out | std::ofstream::app);
 
     for (u16 i = 0; i < vBuffers; i++) {
-        if (gExportC) {
-            vtxOut << std::endl << "Vtx " << get_filename(fileOut) << "_vertex_" << i << "[" << (u16)vBuf[i].loadSize << "] = { /* " << (u16)vBuf[i].loadSize << " vertices out of " << (u16)vBuf[i].bufferSize << " */" << std::endl;
-        } else { /* asm */
-            vtxOut << std::endl << labelize(get_filename(fileOut) + "_vertex_" + std::to_string(i)) << " /* " << (u16)vBuf[i].loadSize << " vertices out of " << (u16)vBuf[i].bufferSize << " */" << std::endl;
-        }
+        vtxOut << std::endl << labelize("Vtx ") << get_filename(fileOut) << "_vertex_" << i << "[" << (u16)vBuf[i].loadSize << "] = { /* " << (u16)vBuf[i].loadSize << " vertices out of " << (u16)vBuf[i].bufferSize << " */" << std::endl;
 
-        extern_data(fileOut, "extern Vtx* " + get_filename(fileOut) + "_vertex_" + std::to_string(i) + "[" + std::to_string((u16)vBuf[i].loadSize) + "];");
+        extern_data(fileOut, "extern Vtx " + get_filename(fileOut) + "_vertex_" + std::to_string(i) + "[" + std::to_string((u16)vBuf[i].loadSize) + "];");
 
         for (u16 j = 0; j < vBuf[i].bufferSize; j++) {
             Vertex vtx = vBuf[i].getVtx();
             if (!vtx.useless) {
-                vtxOut << vtxDelimiterStart << std::right << std::setw(6)
-                       << vtx.pos[AXIS_X] << ", " << std::right << std::setw(6)
+                vtxOut << "    {"
+                       << "{{ " << std::right << std::setw(6) << vtx.pos[AXIS_X] << ", " << std::right << std::setw(6)
                        << vtx.pos[AXIS_Y] << ", " << std::right << std::setw(6)
-                       << vtx.pos[AXIS_Z] << ", " << std::right << std::setw(6)
+                       << vtx.pos[AXIS_Z] << "}, 0x00, {" << std::right << std::setw(7)
                        << vtx.st[AXIS_X]  << ", " << std::right << std::setw(6)
-                       << vtx.st[AXIS_Y]  << ", " << std::right << std::setw(6);
-
-                if (gExportC) { /* flag (unused) */
-                    vtxOut << "0x00, "  << std::right << std::setw(4);
-                }
-
-                vtxOut << hex_string(vtx.col[C_RED])  << ", " << std::right << std::setw(4)
+                       << vtx.st[AXIS_Y]  << "}, "
+                       << "{" << hex_string(vtx.col[C_RED])  << ", " << std::right << std::setw(4)
                        << hex_string(vtx.col[C_GRN])  << ", " << std::right << std::setw(4)
                        << hex_string(vtx.col[C_BLU])  << ", " << std::right << std::setw(4)
-                       << hex_string(vtx.col[C_APH])  << vtxDelimiterEnd;
+                       << hex_string(vtx.col[C_APH])  << "}}}," << std::endl;
             }
         }
-                if (gExportC) {
-                    vtxOut << "};" << std::endl;
-                }
+        vtxOut << "};" << std::endl;
+    }
+
+    if (gCullDlist) {
+        vtxOut << labelize(get_filename(fileOut) + "_culling_vertex") << std::endl;
     }
 }
 
@@ -455,8 +452,6 @@ void configure_materials(const std::string &file, const std::string &fileOut, Ma
 
         mat[i].setName(aiName.data + lightingToggle);
         mat[i].setIndex(i);
-        //std::cout << "Texture (absolute) " << aiPath.data << std::endl;
-        //std::cout << "Texture (relative) " << get_path(file) + aiPath.data << std::endl;
     }
 }
 
@@ -481,20 +476,17 @@ static INLINE std::string get_tex_incbin(const std::string &incbin) {
 static void write_textures(const std::string &fileOut, Material *mat, const aiScene* scene, bool level) {
     std::fstream texOut;
     if (level) {
-        reset_file(fileOut + "/texture.s");
-        texOut.open(fileOut + "/texture.s", std::ofstream::out | std::ofstream::app);
+        reset_file(fileOut + "/texture.inc.c");
+        texOut.open(fileOut + "/texture.inc.c", std::ofstream::out | std::ofstream::app);
     } else { /* generating an actor */
-        texOut.open(fileOut + "/model.s", std::ofstream::out | std::ofstream::app);
+        texOut.open(fileOut + "/model.inc.c", std::ofstream::out | std::ofstream::app);
     }
 
 
     /* Phase 1: Copy lights */
 
-    texOut << std::endl << get_filename(fileOut) << "_ambient_light:" << std::endl
-           << ".byte " + hex_string(ambient[0]) + ", " + hex_string(ambient[1]) + ", " + hex_string(ambient[2]) + ", 0x00, " + hex_string(ambient[0]) + ", " + hex_string(ambient[1]) + ", " + hex_string(ambient[2]) + ", 0x00" << std::endl
-           << get_filename(fileOut) << "_diffuse_light:" << std::endl
-           << ".byte " + hex_string(diffuse[0]) + ", " + hex_string(diffuse[1]) + ", " + hex_string(diffuse[2]) + ", 0x00, " + hex_string(diffuse[0]) + ", " + hex_string(diffuse[1]) + ", " + hex_string(diffuse[2]) + ", 0x00" << std::endl
-           << ".byte " + hex_string(diffuse[3]) + ", " + hex_string(diffuse[4]) + ", " + hex_string(diffuse[5]) + ", 0x00, 0x00, 0x00, 0x00, 0x00" << std::endl;
+    texOut << std::endl << labelize("Ambient ") << get_filename(fileOut) << "_ambient_light = {" << std::endl << "{{" << hex_string(ambient[0]) << ", " << hex_string(ambient[1]) << ", " + hex_string(ambient[2]) << "}, 0x00, {" << hex_string(ambient[0]) + ", " << hex_string(ambient[1]) << ", " + hex_string(ambient[2]) << "}, 0x00}" << std::endl << "};" << std::endl
+           << labelize("Light ") << get_filename(fileOut) << "_diffuse_light = {" << std::endl << "{{" << hex_string(diffuse[0]) + ", " + hex_string(diffuse[1]) + ", " + hex_string(diffuse[2]) + "}, 0x00, {" + hex_string(diffuse[0]) + ", " + hex_string(diffuse[1]) + ", " + hex_string(diffuse[2]) + "}, 0x00, {" << hex_string(diffuse[3]) + ", " + hex_string(diffuse[4]) + ", " + hex_string(diffuse[5]) + "}, 0x00}" << std::endl << "};" << std::endl;
 
     /* Phase 2 - Find redundant textures */
 
@@ -528,14 +520,14 @@ static void write_textures(const std::string &fileOut, Material *mat, const aiSc
             }
 
             texOut << std::endl;
-            texOut << labelize(fileOut + "_texture_" + std::to_string(mat[i].index)) << std::endl;
-            texOut << ".incbin " << R"(")" << exportType << "/" << get_filename(fileOut) << "/" << get_tex_incbin(mat[i].getPath()) << R"(")" << std::endl;
-            std::cout << "material path " << mat[i].getPath() << std::endl;
-            std::cout << "material filename " << get_filename(mat[i].getPath()) << std::endl;
+            texOut << "ALIGNED8 " << labelize("u8 " + fileOut + "_texture_" + std::to_string(mat[i].index)) << "[] = {" << std::endl;
+            texOut << "#include " << R"(")" << exportType << "/" << get_filename(fileOut) << "/" << get_tex_incbin(mat[i].getPath()) << R"(.inc.c")" << std::endl;
+            texOut << "};" << std::endl;
 
             if (mat[i].getFileNameNoExtension().find("ci4") != std::string::npos || mat[i].getFileNameNoExtension().find("ci8") != std::string::npos) { /* CI palette */
-                texOut << std::endl << labelize(fileOut + "_palette_" + std::to_string(mat[i].index)) << std::endl;
-                texOut << ".incbin " << R"(")" << exportType << "/" << get_filename(fileOut) << "/" << mat[i].getFileNameNoExtension() << R"(.pal")" << std::endl;
+                texOut << std::endl << "ALIGNED8" << labelize("u8 " + fileOut + "_palette_" + std::to_string(mat[i].index)) << "[] = {" << std::endl;
+                texOut << "#include " << R"(")" << exportType << "/" << get_filename(fileOut) << "/" << mat[i].getFileNameNoExtension() << R"(.pal.inc.c")" << std::endl;
+                texOut << "};" << std::endl;
             }
 
             if (file_exists(fileOut + "/" + texturePath)) {
@@ -548,15 +540,6 @@ static void write_textures(const std::string &fileOut, Material *mat, const aiSc
 }
 
 /** Write display list commands to file. */
-/*
- * PROCESS:
- * 1.) Setup (Add glabel and disable G_LIGHTING)
- * 2.) Check if materials are different by looking at the mesh ids a vertex corresponds to.
- * 3.) Check if TRI2 is possible within either the vertex buffer range AND if it doesnt go into
- * a vertex with a different material.
- * 4.) End displaylist after all of that crap is done.
- */
-
 static INLINE void set_layers_amt() {
     for (u8 i = 0; i < 8; i++) {
         if (setLayer[i]) {
@@ -587,60 +570,62 @@ static INLINE std::string dl_tab(bool level) {
     if (level) {
         return "                    ";
     }
-    return "                ";
+    return "            ";
 }
 static void write_geometry_layout(const std::string &fileOut, bool level) {
     std::fstream geoOut;
-    reset_file(fileOut + "/geo.s");
-    geoOut.open(fileOut + "/geo.s", std::ofstream::out | std::ofstream::app);
+    reset_file(fileOut + "/geo.inc.c");
+    geoOut.open(fileOut + "/geo.inc.c", std::ofstream::out | std::ofstream::app);
 
 
-    geoOut << std::endl << "glabel " << get_filename(fileOut) << "_geo" << std::endl;
+    geoOut << std::endl << "const GeoLayout " << get_filename(fileOut) << "_geo[] = {" << std::endl;
 
     if (level) {
-        geoOut << "    geo_node_screen_area 10, SCREEN_WIDTH/2, SCREEN_HEIGHT/2, SCREEN_WIDTH/2, SCREEN_HEIGHT/2" << std::endl
-               << "    geo_open_node" << std::endl
-               << "        geo_zbuffer 0" << std::endl
-               << "        geo_open_node" << std::endl
-               << "            geo_node_ortho 100" << std::endl
-               << "            geo_open_node" << std::endl
-               << "                geo_background BACKGROUND_OCEAN_SKY, geo_skybox_main" << std::endl
-               << "            geo_close_node" << std::endl
-               << "        geo_close_node" << std::endl
-               << "        geo_zbuffer 1" << std::endl
-               << "        geo_open_node" << std::endl
-               << "            geo_camera_frustum 45, 100, 30000, geo_camera_fov" << std::endl
-               << "            geo_open_node" << std::endl
-               << "                geo_camera 1, 0, 2000, 6000, 3072, 0, -4608, geo_camera_preset_and_pos" << std::endl
-               << "                geo_open_node" << std::endl;
+        geoOut << "    GEO_NODE_SCREEN_AREA(10, SCREEN_WIDTH/2, SCREEN_HEIGHT/2, SCREEN_WIDTH/2, SCREEN_HEIGHT/2)," << std::endl
+               << "    GEO_OPEN_NODE()," << std::endl
+               << "        GEO_ZBUFFER(0)," << std::endl
+               << "        GEO_OPEN_NODE()," << std::endl
+               << "            GEO_NODE_ORTHO(100)," << std::endl
+               << "            GEO_OPEN_NODE()," << std::endl
+               << "                GEO_BACKGROUND(BACKGROUND_OCEAN_SKY, geo_skybox_main)," << std::endl
+               << "            GEO_CLOSE_NODE()," << std::endl
+               << "        GEO_CLOSE_NODE()," << std::endl
+               << "        GEO_ZBUFFER(1)," << std::endl
+               << "        GEO_OPEN_NODE()," << std::endl
+               << "            GEO_CAMERA_FRUSTRUM(45, 100, 30000, geo_camera_fov)," << std::endl
+               << "            GEO_OPEN_NODE()," << std::endl
+               << "                GEO_CAMERA(1, 0, 2000, 6000, 3072, 0, -4608, geo_camera_preset_and_pos)," << std::endl
+               << "                GEO_OPEN_NODE()," << std::endl;
     } else { /* actors */
-        geoOut << "    geo_shadow SHADOW_CIRCLE_4_VERTS, 0xC8, 60" << std::endl
-               << "        geo_open_node" << std::endl
-               << "            geo_scale 0x00, 16384" << std::endl
-               << "            geo_open_node" << std::endl;
+        geoOut << "    GEO_SHADOW(SHADOW_CIRCLE_4_VERTS, 0xC8, 60)," << std::endl
+               << "    GEO_OPEN_NODE()," << std::endl
+               << "        GEO_SCALE(0x00, 16384)," << std::endl
+               << "        GEO_OPEN_NODE()," << std::endl;
     }
 
     for (u8 i = 0; i < 8; i++) { /* Insert display lists */
         if (setLayer[i]) {
-            geoOut << dl_tab(level) << "geo_display_list " << layerTypes[i] << " " << get_filename(fileOut) << "_dl_" << dlTypes[i] << std::endl;
+            geoOut << dl_tab(level) << "GEO_DISPLAY_LIST(" << layerTypes[i] << ", " << get_filename(fileOut) << "_dl_" << dlTypes[i] << ")," << std::endl;
         }
     }
     if (level) {
-        geoOut << "                    geo_render_obj" << std::endl
-               << "                    geo_asm 0, geo_enfvx_main" << std::endl
-               << "                geo_close_node" << std::endl
-               << "            geo_close_node" << std::endl
-               << "        geo_close_node" << std::endl
-               << "        geo_zbuffer 0" << std::endl
-               << "        geo_open_node" << std::endl
-               << "            geo_asm 0, Geo18_802CD1E8" << std::endl
-               << "        geo_close_node" << std::endl
-               << "    geo_close_node" << std::endl
-               << "    geo_end" << std::endl;
+        geoOut << "                    GEO_RENDER_OBJ()," << std::endl
+               << "                    GEO_ASM(0, geo_enfvx_main)," << std::endl
+               << "                GEO_CLOSE_NODE()," << std::endl
+               << "            GEO_CLOSE_NODE()," << std::endl
+               << "        GEO_CLOSE_NODE()," << std::endl
+               << "        GEO_ZBUFFER(0)," << std::endl
+               << "        GEO_OPEN_NODE()," << std::endl
+               << "            GEO_ASM(0, Geo18_802CD1E8)," << std::endl;
+        geoOut << "        GEO_CLOSE_NODE()," << std::endl
+               << "    GEO_CLOSE_NODE()," << std::endl
+               << "    GEO_END()" << std::endl
+               << "};" << std::endl;
     } else {
-        geoOut << "            geo_close_node" << std::endl
-               << "        geo_close_node" << std::endl
-               << "    geo_end" << std::endl;
+        geoOut << "        GEO_CLOSE_NODE()," << std::endl
+               << "    GEO_CLOSE_NODE()," << std::endl
+               << "    GEO_END()" << std::endl
+               << "};" << std::endl;
     }
 }
 
@@ -649,13 +634,9 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
     Assimp::Importer importer;
 
     /* We don't use ASSIMP's built in tristripping because of the vertex buffer. */
-    const aiScene* scene = importer.ReadFile(file, aiProcess_ValidateDataStructure | aiProcess_Triangulate | aiProcess_PreTransformVertices | aiProcess_GenUVCoords);
+    const aiScene* scene = importer.ReadFile(file, aiProcess_ValidateDataStructure | aiProcess_Triangulate | aiProcess_PreTransformVertices);
 
-    if (gExportC) {
-        reset_file(fileOut + "/model.inc.c");
-    } else { /* asm */
-        reset_file(fileOut + "/model.s");
-    }
+    reset_file(fileOut + "/model.inc.c");
 
     inspect_vtx(scene->mRootNode, scene);
 
@@ -667,6 +648,11 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
 
     info_message("Vertices " + std::to_string(vert));
     info_message("Triangles " + std::to_string(vert / 3));
+
+
+    if (gCullDlist &&gCullDlist &&  vert < 3) {
+        error_message("Cannot use culldl on single triangle models!");
+    }
 
     VertexBuffer vBuf[vBuffers];
     cycle_vbuffers(vBuf, BUFFER, microcode);

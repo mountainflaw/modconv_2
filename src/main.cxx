@@ -31,10 +31,12 @@
 bool glabel = false;
 bool scalingHack = true;
 bool gUvFlip = false;
-bool gExportC = false;
 bool gGeneric = false;
+bool gCullDlist = false;
 u8 leniencyFactor = 1;
 /* std::string glabelData; */
+
+AnimconvParameters animconvParams = {false, true, 30};
 
 u8 output = OUTPUT_F3D;
 
@@ -58,7 +60,7 @@ INLINE void info_message(const std::string &message)
 { std::cout << print_bold("INFO: ") << message << std::endl; }
 
 void print_help(const std::string &name) {
-    std::cout << print_bold("- MODCONV 3.5 HELP -") << std::endl
+    std::cout << print_bold("- MODCONV 3.7 HELP -") << std::endl
               << std::endl
               << print_bold("SYNOPSIS: ") << std::endl
               << name << " <parameters> <model>" << std::endl
@@ -73,6 +75,10 @@ void print_help(const std::string &name) {
               << "  - rej       - Optimize for Fast3DEX Rej (64 vtx)" << std::endl
               << "  - collision - Export collision mesh" << std::endl
               << "  - goddard   - Export Mario head mesh" << std::endl
+              << "  - animation - Export animations" << std::endl
+              << "    - --alphasort         - Sort nodes alphabetically" << std::endl
+              << "    - --targetfps <fps>   - Interpolate to <fps> instead of 30 FPS" << std::endl
+              << "    - --keyframes         - Write keyframes instead of interpolating between them" << std::endl
               << "--uvflip - Flip the UV mask Y axis" << std::endl
               << "--glabel - Use global labels instead of local labels" << std::endl
               << "  - Allows for editing data in C" << std::endl
@@ -97,7 +103,6 @@ void print_help(const std::string &name) {
               << "--noscalehack - Disable the scaling hack (disables multiplying scale by 0.01)" << std::endl
               << "--leniencyfactor - Sets the triangle optimization leniency factor. Defaults to 1." << std::endl
               << "--generic     - Export display list in generic format (contains rendermode sets)" << std::endl
-              << "--export-c    - Exports display list data in C format instead of gas format." << std::endl
               << "--help   - Bring up this menu and quit" << std::endl
               << std::endl
               << print_bold("TIPS: ") << std::endl
@@ -110,11 +115,10 @@ void print_help(const std::string &name) {
 
 /** Used to generate assembler labels so we can easily use glabel mode. */
 std::string labelize(const std::string &label) {
-    if (glabel) {
-        return "glabel " + label;
-    } else { /* Regular labels (default behavior) */
-        return label + ":";
+    if (!glabel) {
+        return "static const " + label;
     }
+    return "";
 }
 
 void extern_data(const std::string &fileOut, const std::string &a) {
@@ -136,7 +140,7 @@ f32 scaling_hack() {
 }
 
 int main(int argc, char* argv[]) {
-    std::cout << print_bold("- MODCONV 3.5 BY RED -") << std::endl;
+    std::cout << print_bold("- MODCONV 3.7 BY RED -") << std::endl;
     std::string filePath = argv[argc - 1],
                 fileOut  = "model";
     s16 scale            = DEFAULT_SCALE;
@@ -231,12 +235,24 @@ int main(int argc, char* argv[]) {
             scalingHack = false;
         }
 
-        if (arg.compare("--export-c") == 0) {
-            gExportC = true;
-        }
-
         if (arg.compare("--generic") == 0) {
             gGeneric = true;
+        }
+
+        if (arg.compare("--cull-dl") == 0) {
+            gCullDlist = true;
+        }
+
+        if (arg.compare("--alphasort") == 0) {
+            animconvParams.alphaSort = true;
+        }
+
+        if (arg.compare("--targetfps") == 0) {
+            animconvParams.interpolationFPS = std::stoi(flw);
+        }
+
+        if (arg.compare("--keyframes") == 0) {
+            animconvParams.interpolate = false;
         }
 
         if (arg.compare("--help") == 0) {
@@ -285,7 +301,7 @@ int main(int argc, char* argv[]) {
         //break;
 
         case OUTPUT_ANIMATION:
-        animconv_main(filePath, fileOut, level);
+        animconv_main(filePath, fileOut, level, &animconvParams);
         break;
     }
 

@@ -250,17 +250,17 @@ static void clean_vtx(CollisionVtx* vtx) {
 
 static void write_vtx(const std::string &fileOut, const CollisionVtx* vtx) {
     std::fstream colOut;
-    colOut.open(fileOut + "/collision.s", std::iostream::out | std::iostream::app);
+    colOut.open(fileOut + "/collision.inc.c", std::iostream::out | std::iostream::app);
     if (writeSize == 0) {
         writeSize = vertex; /* handle case with no stripping */
     }
-    colOut << "colVertexInit " << writeSize << std::endl;
+    colOut << "    COL_VERTEX_INIT(" << writeSize << ")," << std::endl;
     for (u32 i = 0; i < vertex; i++) {
         if (vtx[i].useless == false) {
-            colOut << "colVertex " << std::right << std::setw(6)
+            colOut << "    COL_VERTEX(" << std::right << std::setw(6)
                                    << vtx[i].pos[AXIS_X] << ", " << std::right << std::setw(6)
                                    << vtx[i].pos[AXIS_Y] << ", " << std::right << std::setw(6)
-                                   << vtx[i].pos[AXIS_Z] << std::endl;
+                                   << vtx[i].pos[AXIS_Z] << ")," << std::endl;
 
         }
     }
@@ -333,47 +333,47 @@ static void write_tri(const std::string &fileOut, const CollisionVtx* vtx, const
     u16 currSurf = 0;
 
     std::fstream colOut;
-    colOut.open(fileOut + "/collision.s", std::iostream::out | std::iostream::app);
+    colOut.open(fileOut + "/collision.inc.c", std::iostream::out | std::iostream::app);
 
     for (u32 i = 0; i < vertex; i += 3) {
         if (vtx[i].material != currSurf || i == 0) {
             colOut << std::endl;
             currSurf = vtx[i].material;
-            colOut << "colTriInit " << mat[vtx[i].material].surf << ", " << mat[vtx[i].material].tri << std::endl;
+            colOut << "    COL_TRI_INIT(" << mat[vtx[i].material].surf << ", " << mat[vtx[i].material].tri << ")," << std::endl;
         }
 
         if (mat[vtx[i].material].isSpecial) {
-            colOut << "colTriSpecial " << std::right << std::setw(6)
+            colOut << "    COL_TRI_SPECIAL(" << std::right << std::setw(6)
                                        << get_vtx_index(vtx, i) << ", " << std::right << std::setw(6)
                                        << get_vtx_index(vtx, i + 1) << ", " << std::right << std::setw(6)
                                        << get_vtx_index(vtx, i + 2) << ", " << std::right << std::setw(6)
-                                       << mat[vtx[i].material].special << std::endl;
+                                       << mat[vtx[i].material].special << ")," << std::endl;
         } else {
-            colOut << "colTri " << std::right << std::setw(6)
+            colOut << "    COL_TRI(" << std::right << std::setw(6)
                                 << get_vtx_index(vtx, i) << ", " << std::right << std::setw(6)
                                 << get_vtx_index(vtx, i + 1) << ", " << std::right << std::setw(6)
-                                << get_vtx_index(vtx, i + 2) << std::endl;
+                                << get_vtx_index(vtx, i + 2) << ")," << std::endl;
         }
     }
 
-    colOut << "colTriStop" << std::endl;
+    colOut << "    COL_TRI_STOP()," << std::endl;
 
     /* Add waterboxes */
 
     if (waterBox.size() > 0) {
-        colOut << "colWaterBoxInit " << waterBox.size() << std::endl;
+        colOut << "    COL_WATERBOX_INIT(" << waterBox.size() << ")," << std::endl;
         for (u8 i = 0; i < waterBox.size(); i++) {
-            colOut << "colWaterBox " << std::right << std::setw(2)
+            colOut << "    COL_WATER_BOX(" << std::right << std::setw(2)
                    << (u16)waterBox[i].type << ", " << std::right << std::setw(6)
                    << waterBox[i].x1 << ", " << std::right << std::setw(6)
                    << waterBox[i].z1 << ", " << std::right << std::setw(6)
                    << waterBox[i].x2 << ", " << std::right << std::setw(6)
                    << waterBox[i].z2 << ", " << std::right << std::setw(6)
-                   << waterBox[i].y << std::endl;
+                   << waterBox[i].y << ")," << std::endl;
         }
     }
 
-    colOut << "colEnd" << std::endl;
+    colOut << "    COL_END()" << std::endl << "};" << std::endl;
 }
 
 /**
@@ -385,11 +385,11 @@ void collision_converter_main(const std::string &file, const std::string &fileOu
     const aiScene* scene = importer.ReadFile(file, aiProcess_ValidateDataStructure | aiProcess_Triangulate | aiProcess_PreTransformVertices);
 
     std::fstream collisionOut;
-    collisionOut.open(fileOut + "/collision.s", std::iostream::out | std::iostream::app);
-    reset_file(fileOut + "/collision.s");
+    collisionOut.open(fileOut + "/collision.inc.c", std::iostream::out | std::iostream::app);
+    reset_file(fileOut + "/collision.inc.c");
     collisionOut << std::endl
-                 << "glabel " << get_filename(fileOut) << "_collision"
-                 << std::endl << "colInit" << std::endl;
+                 << "const s16 " << get_filename(fileOut) << "_collision[] = {"
+                 << std::endl << "    COL_INIT()," << std::endl;
     collisionOut.close();
 
     CollisionMat mat[scene->mNumMaterials];

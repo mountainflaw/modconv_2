@@ -141,6 +141,13 @@ class DisplayList {
         return ret;
     }
 
+    INLINE std::string is_const() {
+        if (!glabel) {
+            return "const ";
+        }
+        return "";
+    }
+
     public:
     INLINE void setLayer(u8 l) { layer = l; }
 
@@ -150,15 +157,9 @@ class DisplayList {
 
         fOut = fileOut;
 
-        if (gExportC) {
-            gfxOut.open(fileOut + "/model.inc.c", std::ofstream::out | std::ofstream::app);
-            gfxOut << std::endl << "/* Render order: " << (u16)layer << " */";
-            gfxOut << std::endl << "Gfx " << fileOut + "_dl_" + dlTypes[layer] << "[] = {" << std::endl;
-        } else {
-            gfxOut.open(fileOut + "/model.s", std::ofstream::out | std::ofstream::app);
-            gfxOut << std::endl << "/* Render order: " << (u16)layer << " */" << std::endl;
-            gfxOut << std::endl << "glabel " << fileOut + "_dl_" + dlTypes[layer] << std::endl;
-        }
+        gfxOut.open(fileOut + "/model.inc.c", std::ofstream::out | std::ofstream::app);
+        gfxOut << std::endl << "/* Render order: " << (u16)layer << " */";
+        gfxOut << std::endl << is_const() << "Gfx " << fileOut + "_dl_" + dlTypes[layer] << "[] = {" << std::endl;
 
         gfxOut << dl_command("gsSPClearGeometryMode", "G_LIGHTING") << std::endl;
 
@@ -189,38 +190,29 @@ class DisplayList {
                 if (vBuf[i].getLayeredVtxMat(layer) != currMat && vBuf[i].getLayeredVtxMat(layer) != MAT_NOT_LAYER) { /* load before vtx load if possible */
                     currMat = vBuf[i].getLayeredVtxMat(layer);
 
-                    if (gExportC) {
-                        gfxOut << "    /* " << mat[currMat].getName() << " */" << std::endl;
-                    } else {
-                        gfxOut << "/* " << mat[currMat].getName() << " */" << std::endl;
-                    }
+                    gfxOut << "    /* " << mat[currMat].getName() << " */" << std::endl;
 
                     gfxOut << GetMaterial(mat, currMat, first);
                     first = false;
                 }
 
-                gfxOut << dl_command_ref("gsSPVertex", get_filename(fileOut) + "_vertex_" + std::to_string(i) + ", " + std::to_string(vBuf[i].loadSize) + ", 0") << std::endl;
+                gfxOut << dl_command("gsSPVertex", get_filename(fileOut) + "_vertex_" + std::to_string(i) + ", " + std::to_string(vBuf[i].loadSize) + ", 0") << std::endl;
 
                 while (!vBuf[i].isBufferComplete()) {
                     if (vBuf[i].getVtxMat() != currMat && vBuf[i].getLayeredVtxMat(layer) != MAT_NOT_LAYER) {
                         currMat = vBuf[i].getLayeredVtxMat(layer);
                         bool resetVtxCache = mat[currMat].getLighting(&geometryState);
 
-                        if (gExportC) {
-                            gfxOut << "    /* " << mat[currMat].getName() << " */" << std::endl;
-                        } else {
-                            gfxOut << "/* " << mat[currMat].getName() << " */" << std::endl;
-                        }
-
+                        gfxOut << "    /* " << mat[currMat].getName() << " */" << std::endl;
                         gfxOut << GetMaterial(mat, currMat, first);
                         first = false;
 
                         if (resetVtxCache) {
-                            gfxOut << dl_command_ref("gsSPVertex", get_filename(fileOut) + "_vertex_" + std::to_string(i) + ", " + std::to_string(vBuf[i].loadSize) + ", 0") << std::endl;
+                            gfxOut << dl_command("gsSPVertex", get_filename(fileOut) + "_vertex_" + std::to_string(i) + ", " + std::to_string(vBuf[i].loadSize) + ", 0") << std::endl;
                         }
                     }
 
-                    if (vBuf[i].canLayeredTri2(layer) && vBuf[i].bufferSize > 15) { /* Don't tri2 on stock F3D */
+                    if (vBuf[i].canLayeredTri2(layer)) {
                         s16 triTwo[6] = { vBuf[i].getLayeredVtxIndex(layer), vBuf[i].getLayeredVtxIndex(layer), vBuf[i].getLayeredVtxIndex(layer),
                                           vBuf[i].getLayeredVtxIndex(layer), vBuf[i].getLayeredVtxIndex(layer), vBuf[i].getLayeredVtxIndex(layer) };
                         if (WriteTri(triTwo, 6)) {
@@ -238,12 +230,17 @@ class DisplayList {
         }
         //bool clearOring = false;
         /* Reset display list settings */
-        gfxOut << dl_command("gsSPTexture", "-1, -1, 0, 0, 0") << std::endl
+        gfxOut << dl_command("gsSPTexture", "0xFFFF, 0xFFFF, 0, 0, G_OFF") << std::endl
                << dl_command("gsDPPipeSync") << std::endl
-               << dl_command("gsDPSetCombineModeLERP", "G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE, G_CCMUX_0, G_CCMUX_0, G_CCMUX_0, G_CCMUX_SHADE, G_ACMUX_0, G_ACMUX_0, G_ACMUX_0, G_ACMUX_SHADE") << std::endl;
+               << dl_command("gsDPSetCombineMode", "G_CC_SHADE, G_CC_SHADE") << std::endl;
 
         gfxOut << dl_command("gsSPSetGeometryMode", "G_LIGHTING") << std::endl;
         gfxOut << dl_command("gsDPSetTextureLUT", "G_TT_NONE") << std::endl;
+
+
+        if (store[TEXFILTER] != "G_TF_BILERP\n") {
+            std::cout << "texfilter doesn't match :(\n";
+        }
 
         if (twoCycle) { /* Return back to 1 cycle */
             gfxOut << "gsDPSetCycleType G_CYC_1CYCLE" << std::endl;
@@ -271,8 +268,6 @@ class DisplayList {
 
         gfxOut << dl_command("gsSPEndDisplayList") << std::endl;
 
-        if (gExportC) {
-            gfxOut << "};" << std::endl;
-        }
+        gfxOut << "};" << std::endl;
     }
 };
