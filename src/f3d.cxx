@@ -392,7 +392,9 @@ static void write_vtx(const std::string fileOut, const std::string &path, Vertex
     for (u16 i = 0; i < vBuffers; i++) {
         vtxOut << std::endl << labelize("Vtx ") << get_filename(fileOut) << "_vertex_" << i << "[" << (u16)vBuf[i].loadSize << "] = { /* " << (u16)vBuf[i].loadSize << " vertices out of " << (u16)vBuf[i].bufferSize << " */" << std::endl;
 
-        extern_data(fileOut, "extern Vtx " + get_filename(fileOut) + "_vertex_" + std::to_string(i) + "[" + std::to_string((u16)vBuf[i].loadSize) + "];");
+        if (glabel) {
+            extern_data(fileOut, "extern Vtx " + get_filename(fileOut) + "_vertex_" + std::to_string(i) + "[" + std::to_string((u16)vBuf[i].loadSize) + "];");
+        }
 
         for (u16 j = 0; j < vBuf[i].bufferSize; j++) {
             Vertex vtx = vBuf[i].getVtx();
@@ -418,7 +420,7 @@ static void write_vtx(const std::string fileOut, const std::string &path, Vertex
 }
 
 void configure_materials(const std::string &file, const std::string &fileOut, Material* mat, const aiScene* scene) {
-    aiColor4D aiDiffuse; 
+    aiColor4D aiDiffuse;
     for (u16 i = 0; i < scene->mNumMaterials; i++) {
         aiString aiPath, aiName;
         scene->mMaterials[i]->Get(AI_MATKEY_NAME, aiName);
@@ -608,6 +610,7 @@ static void write_geometry_layout(const std::string &fileOut, bool level) {
             geoOut << dl_tab(level) << "GEO_DISPLAY_LIST(" << layerTypes[i] << ", " << get_filename(fileOut) << "_dl_" << dlTypes[i] << ")," << std::endl;
         }
     }
+
     if (level) {
         geoOut << "                    GEO_RENDER_OBJ()," << std::endl
                << "                    GEO_ASM(0, geo_enfvx_main)," << std::endl
@@ -672,4 +675,14 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
     set_layers(dl);
     write_display_list_obj(fileOut, vBuf, dl, mat);
     write_geometry_layout(fileOut, level);
+
+    for (u8 i = 0; i < 8; i++) { /* Insert display lists in header */
+        if (setLayer[i]) {
+            if (glabel) {
+                extern_data(fileOut, "extern Gfx " + get_filename(fileOut) + "_dl_" + dlTypes[i] + ";\n");
+            } else {
+                extern_data(fileOut, "extern const Gfx " + get_filename(fileOut) + "_dl_" + dlTypes[i] + ";\n");
+            }
+        }
+    }
 }
