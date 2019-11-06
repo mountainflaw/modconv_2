@@ -276,7 +276,7 @@ int main(int argc, char* argv[]) {
     reset_file(fileOut + "/" + fileOut + ".h");
     std::fstream header;
     header.open(fileOut + "/" + fileOut + ".h", std::iostream::out | std::iostream::app);
-    header << std::endl;
+    header << std::endl << "extern const s16 " << get_filename(fileOut) << "_collision[];" << std::endl;
     header.close();
 
     switch (output) {
