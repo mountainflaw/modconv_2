@@ -687,8 +687,8 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
     }
 
     if (glabel) {
-        extern_data(fileOut, "extern GeoLayout " + get_filename(fileOut) + "_geo[]\n");
+        extern_data(fileOut, "extern GeoLayout " + get_filename(fileOut) + "_geo[];\n");
     } else {
-        extern_data(fileOut, "extern const GeoLayout " + get_filename(fileOut) + "_geo[]\n");
+        extern_data(fileOut, "extern const GeoLayout " + get_filename(fileOut) + "_geo[];\n");
     }
 }
