@@ -594,7 +594,7 @@ static void write_geometry_layout(const std::string &fileOut, bool level) {
                << "        GEO_CLOSE_NODE()," << std::endl
                << "        GEO_ZBUFFER(1)," << std::endl
                << "        GEO_OPEN_NODE()," << std::endl
-               << "            GEO_CAMERA_FRUSTRUM(45, 100, 30000, geo_camera_fov)," << std::endl
+               << "            GEO_CAMERA_FRUSTUM_WITH_FUNC(45, 100, 30000, geo_camera_fov)," << std::endl
                << "            GEO_OPEN_NODE()," << std::endl
                << "                GEO_CAMERA(1, 0, 2000, 6000, 3072, 0, -4608, geo_camera_preset_and_pos)," << std::endl
                << "                GEO_OPEN_NODE()," << std::endl;
@@ -679,10 +679,16 @@ void f3d_main(const std::string &file, const std::string &fileOut, s16 scale, u8
     for (u8 i = 0; i < 8; i++) { /* Insert display lists in header */
         if (setLayer[i]) {
             if (glabel) {
-                extern_data(fileOut, "extern Gfx " + get_filename(fileOut) + "_dl_" + dlTypes[i] + ";\n");
+                extern_data(fileOut, "extern Gfx " + get_filename(fileOut) + "_dl_" + dlTypes[i] + "[];\n");
             } else {
-                extern_data(fileOut, "extern const Gfx " + get_filename(fileOut) + "_dl_" + dlTypes[i] + ";\n");
+                extern_data(fileOut, "extern const Gfx " + get_filename(fileOut) + "_dl_" + dlTypes[i] + "[];\n");
             }
         }
+    }
+
+    if (glabel) {
+        extern_data(fileOut, "extern GeoLayout " + get_filename(fileOut) + "_geo[]\n");
+    } else {
+        extern_data(fileOut, "extern const GeoLayout " + get_filename(fileOut) + "_geo[]\n");
     }
 }
